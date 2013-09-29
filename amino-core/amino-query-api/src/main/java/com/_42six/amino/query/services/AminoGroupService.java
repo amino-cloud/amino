@@ -32,16 +32,17 @@ public interface AminoGroupService{
 	 * @param group   The group to remove from
 	 * @param members The members to remove from the group
 	 */
-	public void removeFromGroup(final String group, List<String> members) throws Exception;
+	public void removeUsersFromGroup(final String group, List<String> members) throws Exception;
 
 	/**
 	 * Removes the user from a group.  If no group is provided, they are removed from all of the groups
 	 *
+     * @param requester  The ID or the person requesting that the user be removed
 	 * @param userId     The ID of the user to remove
 	 * @param groups     The group to remove from
 	 * @param visibility The db visibility strings
 	 */
-	public void removeFromGroups(String userId, Set<String> groups, String[] visibility) throws Exception;
+	public void removeUserFromGroups(String requester, String userId, Set<String> groups, String[] visibility) throws Exception;
 
 	/**
 	 * Fetches the groups that a particular id belongs to

@@ -23,8 +23,17 @@ import java.util.List;
  * Scanning and Writing
  */
 public class AccumuloPersistenceService {
+
     /**
-     * Creates the service for interactings with the Accumulo instance
+     * Creates the service for interacting with the Cloudbase instance
+     * @param connector The Connector for interacting with the database
+     */
+    public AccumuloPersistenceService(Connector connector){
+        this.connector = connector;
+    }
+
+    /**
+     * Creates the service for interacting with the Accumulo instance
      * @param instanceName The instance to connect to
      * @param zooKeepers The zookeeper to connect to
      * @param accumuloUser The user for Accumulo

@@ -1,6 +1,7 @@
 package com._42six.amino.query.services.accumulo;
 
 import com._42six.amino.common.Group;
+import com._42six.amino.common.GroupMember;
 import com._42six.amino.common.MorePreconditions;
 import com._42six.amino.common.entity.Hypothesis;
 import com._42six.amino.common.query.requests.AddUsersRequest;
@@ -33,7 +34,6 @@ public class AccumuloGroupService implements AminoGroupService {
 
     /** The group that everyone belongs to by default.  Used to share something with everyone */
     public static final String PUBLIC_GROUP = "GROUP|public";
-
 
     /** The groups to Hypothesis Look Up Table */
 	private String groupHypothesisLUT;
@@ -132,7 +132,7 @@ public class AccumuloGroupService implements AminoGroupService {
         final String[] tokens = Preconditions.checkNotNull(request.getSecurityTokens(), "Security tokens were null");
         final Authorizations auths = Preconditions.checkNotNull(new Authorizations(tokens), "Could not create Authorizations");
         final Group group = Preconditions.checkNotNull(request.getGroup(), "Group was missing");
-        final Set<Group.GroupMember> members = Preconditions.checkNotNull(group.getMembers(), "Missing members");
+        final Set<GroupMember> members = Preconditions.checkNotNull(group.getMembers(), "Missing members");
         final String groupName = GROUP_PREFIX + MorePreconditions.checkNotNullOrEmpty(group.getGroupName(), "Missing group name");
         final String requestor = MorePreconditions.checkNotNullOrEmpty(request.getRequestor(), "Missing requestor");
 
@@ -149,7 +149,7 @@ public class AccumuloGroupService implements AminoGroupService {
         }
 
         // Create the mutations for the group_metadata and group_membership tables and insert them
-        for(Group.GroupMember member : members){
+        for(GroupMember member : members){
             final String memberName = USER_PREFIX + MorePreconditions.checkNotNullOrEmpty(member.getName(), "Group member missing name");
             final Set<Group.GroupRole> roles = Preconditions.checkNotNull(member.getRoles(), "Member " + memberName + " missing roles");
 
@@ -171,103 +171,153 @@ public class AccumuloGroupService implements AminoGroupService {
 	 * @param request The incoming request containing the Group to add to the database
 	 */
 	public void createGroup(CreateGroupRequest request) throws Exception {
-		Preconditions.checkNotNull(request);
-		final Group group = Preconditions.checkNotNull(request.getGroup());
-		final String groupName = GROUP_PREFIX + MorePreconditions.checkNotNullOrEmpty(group.getGroupName(), "Group Name not set");
+        Preconditions.checkNotNull(request);
+        final Group group = Preconditions.checkNotNull(request.getGroup());
+        final String groupName = GROUP_PREFIX + MorePreconditions.checkNotNullOrEmpty(group.getGroupName(), "Group Name not set");
         final String[] tokens = Preconditions.checkNotNull(request.getSecurityTokens(), "Security tokens were null");
         final Authorizations auths = Preconditions.checkNotNull(new Authorizations(tokens), "Could not create Authorizations");
-		final Collection<Group.GroupMember> members = MorePreconditions.checkNotNullOrEmpty(group.getMembers(), "Must provide at least one group member");
+        final Collection<GroupMember> members = MorePreconditions.checkNotNullOrEmpty(group.getMembers(), "Must provide at least one group member");
+        final String createdBy = USER_PREFIX + MorePreconditions.checkNotNullOrEmpty(group.getCreatedBy(), "Created by was empty");
 
-		boolean adminProvided = false;
-		final ArrayList<Mutation> metadataRows = new ArrayList<Mutation>();
+        final long createdDate = System.currentTimeMillis() / 1000L;
+
+        boolean adminProvided = false;
+        final ArrayList<Mutation> metadataRows = new ArrayList<Mutation>();
         final ArrayList<Mutation> membershipRows = new ArrayList<Mutation>();
 
         // Check to see if the group already exists
-		final org.apache.accumulo.core.client.Scanner groupScanner = persistenceService.createScanner(groupMetadataTable, auths);
-		groupScanner.setRange(new Range(groupName));
-		if (groupScanner.iterator().hasNext()) {
-			throw new IllegalStateException("Group '" + groupName + "' already exists");
-		}
+        final Scanner groupScanner = persistenceService.createScanner(groupMetadataTable, auths);
+        groupScanner.setRange(new Range(groupName));
+        if (groupScanner.iterator().hasNext()) {
+            throw new IllegalStateException("Group '" + groupName + "' already exists");
+        }
 
         // Create membership entries
-		for(Group.GroupMember gm : members){
-			for(Group.GroupRole role : gm.getRoles()){
+        for(GroupMember gm : members){
+            for(Group.GroupRole role : gm.getRoles()){
                 final String memberName = USER_PREFIX + MorePreconditions.checkNotNullOrEmpty(gm.getName(), "Group member name was empty");
                 metadataRows.add(persistenceService.createInsertMutation(groupName, MorePreconditions.checkNotNullOrEmpty(role.toString()),
                         memberName, "", ""));
 
                 membershipRows.add(persistenceService.createInsertMutation(memberName, groupName, "", "", ""));
 
-				// Note that an admin was provided for the group
-				if (role.equals(Group.GroupRole.ADMIN)){
-					adminProvided = true;
-				}
-			}
-		}
+                // Note that an admin was provided for the group
+                if (role.equals(Group.GroupRole.ADMIN)){
+                    adminProvided = true;
+                }
+            }
+        }
 
         // Add the entries if at least one admin was provided
-		Preconditions.checkArgument(adminProvided, "There must be at least one Admin user per group");
-		persistenceService.insertRows(metadataRows, groupMetadataTable);
+        Preconditions.checkArgument(adminProvided, "There must be at least one Admin user per group");
+        persistenceService.insertRow(groupName, "created_by", createdBy, "", "", groupMetadataTable);
+        persistenceService.insertRow(groupName, "created_date", String.valueOf(createdDate), "", "", groupMetadataTable);
+        persistenceService.insertRows(metadataRows, groupMetadataTable);
         persistenceService.insertRows(membershipRows, groupMembershipTable);
-		log.info("Created group " + groupName);
-	}
+        log.info("Created group " + groupName);
+    }
 
     /**
-	 * Remove the members from the group
-	 *
-	 * @param group   The group to remove from
-	 * @param members The members to remove from the group
-	 */
-	public void removeFromGroup(final String group, List<String> members) throws Exception {
-		MorePreconditions.checkNotNullOrEmpty(group);
-		MorePreconditions.checkNotNullOrEmpty(members);
-		final Collection<Mutation> entries = new ArrayList<Mutation>();
+     * Remove the members from the group
+     *
+     * @param group   The group to remove from
+     * @param members The members to remove from the group
+     */
+    public void removeUsersFromGroup(final String group, List<String> members) throws Exception {
+        MorePreconditions.checkNotNullOrEmpty(group);
+        MorePreconditions.checkNotNullOrEmpty(members);
+        final Collection<Mutation> entries = new ArrayList<Mutation>();
 
-		for(String it : members){
-			entries.add(persistenceService.createDeleteMutation(it, group, "", ""));
-		}
+        for(String it : members){
+            entries.add(persistenceService.createDeleteMutation(it, group, "", ""));
+        }
 
-		persistenceService.insertRows(entries, groupMembershipTable);
-	}
+        persistenceService.insertRows(entries, groupMembershipTable);
+    }
 
-	/**
-	 * Removes the user from a group.  If no group is provided, they are removed from all of the groups
-	 *
-	 * @param userId     The ID of the user to remove
-	 * @param groups     The group to remove from
-	 * @param visibility The db visibility strings
-	 */
-	public void removeFromGroups(String userId, Set<String> groups, String[] visibility) throws Exception {
-		Preconditions.checkNotNull(visibility);
-		removeFromGroups(userId, groups, new Authorizations(visibility));
-	}
+    /**
+     * Removes the user from a group.  If no group is provided, they are removed from all of the groups
+     *
+     * @param requester  The ID of the person requesting that the user be removed
+     * @param userId     The ID of the user to remove
+     * @param groups     The group to remove from
+     * @param visibility The db visibility strings
+     */
+    public void removeUserFromGroups(String requester, String userId, Set<String> groups, String[] visibility) throws Exception {
+        Preconditions.checkNotNull(visibility);
+        removeUserFromGroups(requester, userId, groups, new Authorizations(visibility));
+    }
 
-	/**
-	 * Removes the user from a group.  If no group is provided, they are removed from all of the groups
-	 *
-	 * @param userId The ID of the user to remove
-	 * @param groups The group to remove from
-	 * @param auths  The authorization strings
-	 */
-	public void removeFromGroups(final String userId, Set<String> groups, Authorizations auths) throws Exception {
-		MorePreconditions.checkNotNullOrEmpty(userId);
-		Preconditions.checkNotNull(auths);
+    /**
+     * Removes the user from a group.  If no group is provided, they are removed from all of the groups
+     *
+     * @param requester The ID of the person requesting that the user be removed
+     * @param userId    The ID of the user to remove
+     * @param groups    The group to remove from
+     * @param auths     The authorization strings
+     */
+    public void removeUserFromGroups(String requester, final String userId, Set<String> groups, Authorizations auths) throws Exception {
+        MorePreconditions.checkNotNullOrEmpty(userId);
+        MorePreconditions.checkNotNullOrEmpty(requester);
+        Preconditions.checkNotNull(auths);
 
-		final Collection<Mutation> entries = new ArrayList<Mutation>();
+        final Collection<Mutation> groupMembershipMutations = new ArrayList<Mutation>();
+        final Collection<Mutation> groupMetadataMutations = new ArrayList<Mutation>();
+        final Collection<Range> metaGroupsToPurgeFrom = new HashSet<Range>();
 
-		if (groups != null && groups.size() > 0) {
-			for(String it : groups){
-				entries.add(persistenceService.createDeleteMutation(userId, it, "", ""));
-			}
-		} else {
-			entries.add(persistenceService.createDeleteMutation(userId, "", "", ""));
-		}
+        // If no groups provided, remove from any group they might be a part of
+        if(groups == null || groups.size() == 0){
+            groups = getGroups(userId, auths);
+        }
 
+        for(String group : groups){
+            if(checkCanRemove(requester, userId, group, auths)){
+                metaGroupsToPurgeFrom.add(new Range(group));
+                groupMembershipMutations.add(persistenceService.createDeleteMutation(userId, group, "", ""));
+            } else {
+                log.warn(String.format("'%s' does not have permission to remove '%s' from group '%s'", requester, userId, group));
+            }
+        }
 
-		log.info("Removing from groups: " + entries);
-		persistenceService.insertRows(entries, groupMembershipTable);
-	}
+        // Find all of the places in the group_metadata table where the user appears and we have permission to remove them
+        final BatchScanner metaGroupScanner = persistenceService.createBatchScanner(groupMetadataTable, auths);
+        metaGroupScanner.setRanges(metaGroupsToPurgeFrom);
+        for(Map.Entry<Key, Value> entry : metaGroupScanner){
+            Text user = entry.getKey().getColumnQualifier();
+            if(user.toString().compareTo(userId) == 0){
+                groupMetadataMutations.add(persistenceService.createDeleteMutation(entry.getKey().getRow().toString(),
+                        entry.getKey().getColumnFamily().toString(), user.toString(), entry.getKey().getColumnVisibility().toString()));
+            }
+        }
 
+        // Do the deletions
+        persistenceService.insertRows(groupMembershipMutations, groupMembershipTable);
+        persistenceService.insertRows(groupMetadataMutations, groupMetadataTable);
+    }
+
+    /**
+     * Checks to see if the the requester has permission to remove the user from the given table
+     *
+     * @param requester The ID asking that the userId be removed
+     * @param userId    The ID to be removed
+     * @param group     The group to be removed from
+     * @param auths     The BigTable authorizations
+     * @return          true if there are sufficient permissions to remove the userId, false otherwise
+     * @throws TableNotFoundException
+     */
+    private boolean checkCanRemove(String requester, String userId, String group, Authorizations auths) throws TableNotFoundException {
+        // Can always remove self from group
+        if(requester.compareTo(userId) == 0){
+            return true;
+        }
+
+        // See if the requester is an admin for the group and has permissions to remove the user
+        final Scanner groupMetaScanner = persistenceService.createScanner(groupMetadataTable, auths);
+        groupMetaScanner.setRange(new Range(group));
+        groupMetaScanner.fetchColumn(new Text("admin"), new Text(requester));
+
+        return groupMetaScanner.iterator().hasNext();
+    }
 	/**
 	 * Fetches the groups that a particular id belongs to
 	 *

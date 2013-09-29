@@ -32,8 +32,26 @@ public class Group {
 	
 	private String groupName;
 	private Set<GroupMember> members;
-	
-	// Getters and Setters
+	private String createdBy;
+    private long dateCreated;
+
+    // Getters and Setters
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public long getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(long dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
 	public String getGroupName(){ return this.groupName; }
 	public void setGroupName(String name){ this.groupName = name; }
 	
@@ -44,21 +62,4 @@ public class Group {
 		// EMPTY Constructor
 	}
 
-	public class GroupMember{
-		private String name;
-		private Set<GroupRole> roles;
-		
-		public GroupMember(){ 
-			// EMPTY  Constructor
-		}
-		
-		// Getters and Setters
-		public String getName(){return this.name; }
-		public void setName(String name){ this.name = name; }
-		
-		public Set<GroupRole> getRoles(){ return this.roles; }
-		public void setRole(Set<GroupRole> roles){ this.roles = roles; }
-			
-	}
-	
 }
