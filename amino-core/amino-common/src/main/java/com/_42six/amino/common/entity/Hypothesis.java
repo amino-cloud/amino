@@ -128,7 +128,7 @@ public class Hypothesis implements Comparable<Hypothesis> {
 	public String bucketValue;
 
 	/**
-	 * The Accumulo ColumnVisibility string
+	 * The Big Table ColumnVisibility string
 	 */
 	public String btVisibility;
 

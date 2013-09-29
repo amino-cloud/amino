@@ -1304,10 +1304,10 @@ public class AccumuloQueryService implements AminoQueryService {
                         // TODO - HACK - Need to do this a more flexible way
                         if(FeatureFactType.dateIntervalTypes.contains(feature.type)){
                             ranges.add(new Range(new Key(rowid, DS_BN + feature.featureMetadataId, translator.fromDate(feature.timestampFrom).toString()),
-                                    new Key(rowid,DS_BN + feature.featureMetadataId, translator.fromDate(feature.timestampTo).toString())));
+                                    new Key(rowid,DS_BN + feature.featureMetadataId, translator.fromDate(feature.timestampTo).toString()).followingKey(PartialKey.ROW_COLFAM_COLQUAL)));
                         } else {
                             ranges.add(new Range(new Key(rowid, DS_BN + feature.featureMetadataId, translator.fromRatio(feature.min).toString()),
-                                    new Key(rowid,DS_BN + feature.featureMetadataId, translator.fromRatio(feature.max).toString())));
+                                    new Key(rowid, DS_BN + feature.featureMetadataId, translator.fromRatio(feature.max).toString()).followingKey(PartialKey.ROW_COLFAM_COLQUAL)));
                         }
                     } else {
                         andIds.add(new AbstractMap.SimpleImmutableEntry<String, String>(DS_BN + feature.featureMetadataId, feature.value));
