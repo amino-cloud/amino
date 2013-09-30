@@ -276,4 +276,19 @@ public class AccumuloGroupServiceTest {
         groupService.removeUserFromGroups("USER|member1", "USER|member1", Sets.newHashSet("GROUP|group1"), auths);
     }
 
+    @Test
+    public void verifyUserExists() throws Exception {
+        initalizeTables();
+
+        Assert.isTrue(groupService.verifyUserExists("USER|member1", perms));
+        Assert.isTrue(!groupService.verifyUserExists("USER|BogusUser", perms));
+    }
+
+    @Test
+    public void verifyGroupExists() throws Exception {
+        initalizeTables();
+
+        Assert.isTrue(groupService.verifyGroupExists("GROUP|group1", perms));
+        Assert.isTrue(!groupService.verifyGroupExists("GROUP|BogusGroup", perms));
+    }
 }
