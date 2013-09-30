@@ -276,6 +276,7 @@ public class AccumuloGroupService implements AminoGroupService {
                 groupMembershipMutations.add(persistenceService.createDeleteMutation(userId, group, "", ""));
             } else {
                 log.warn(String.format("'%s' does not have permission to remove '%s' from group '%s'", requester, userId, group));
+                throw new Exception(String.format("'%s' does not have permission to remove '%s' from group '%s'", requester, userId, group));
             }
         }
 
