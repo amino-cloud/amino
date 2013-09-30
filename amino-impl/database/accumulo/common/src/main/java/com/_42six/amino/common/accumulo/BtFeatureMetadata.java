@@ -26,7 +26,7 @@ public class BtFeatureMetadata extends FeatureMetadata implements BtMetadata {
     @Override
     public Mutation createMutation() {
         final Mutation mutation = new Mutation(TableConstants.FEATURE_PREFIX + this.id);
-        final ColumnVisibility cv = new ColumnVisibility(this.visibility.getBytes());
+        final ColumnVisibility cv = new ColumnVisibility(this.btVisibility.getBytes());
 
         putIfNotNull(mutation, TableConstants.API_FIELD, cv, this.api_version);
         putIfNotNull(mutation, TableConstants.DATASOURCEIDS_FIELD, cv, gson.toJson(this.datasources));

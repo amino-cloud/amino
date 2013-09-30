@@ -23,7 +23,7 @@ public class BtBucketMetadata extends BucketMetadata implements BtMetadata {
     @Override
     public Mutation createMutation() {
         final Mutation mutation = new Mutation(TableConstants.BUCKET_PREFIX + this.id);
-        final ColumnVisibility cv = new ColumnVisibility(this.visibility.getBytes());
+        final ColumnVisibility cv = new ColumnVisibility(this.btVisibility.getBytes());
 
         mutation.put(TableConstants.NAME_FIELD, TableConstants.EMPTY_FIELD, cv, new Value(this.name.getBytes()));
         mutation.put(TableConstants.DISPLAYNAME_FIELD, TableConstants.EMPTY_FIELD,  cv, new Value(this.displayName.getBytes()));
