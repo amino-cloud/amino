@@ -18,7 +18,7 @@ public class BucketMetadata extends Metadata{
     public String visibility;
     
     /** Accumulo columnVisibility string */
-    public transient String btVisibility;
+    public String btVisibility;
     
     /** Name of the domain id */
     public String domainIdName;
