@@ -26,10 +26,10 @@ public class AccumuloGroupService implements AminoGroupService {
 
 	public static final Logger log = Logger.getLogger(AccumuloGroupService.class);
 
-    /** The prefix pre-prended to groups to signify that the String is a group and not an individual user */
+    /** The prefix pre-pended to groups to signify that the String is a group and not an individual user */
     public static final String GROUP_PREFIX = "GROUP|";
 
-    /** The prefix pre-prended to users to signify that the String is an user and not a group  */
+    /** The prefix pre-pended to users to signify that the String is an user and not a group  */
     public static final String USER_PREFIX = "USER|";
 
     /** The group that everyone belongs to by default.  Used to share something with everyone */
@@ -217,23 +217,23 @@ public class AccumuloGroupService implements AminoGroupService {
         log.info("Created group " + groupName);
     }
 
-    /**
-     * Remove the members from the group
-     *
-     * @param group   The group to remove from
-     * @param members The members to remove from the group
-     */
-    public void removeUsersFromGroup(final String group, List<String> members) throws Exception {
-        MorePreconditions.checkNotNullOrEmpty(group);
-        MorePreconditions.checkNotNullOrEmpty(members);
-        final Collection<Mutation> entries = new ArrayList<Mutation>();
-
-        for(String it : members){
-            entries.add(persistenceService.createDeleteMutation(it, group, "", ""));
-        }
-
-        persistenceService.insertRows(entries, groupMembershipTable);
-    }
+//    /**
+//     * Remove the members from the group
+//     *
+//     * @param group   The group to remove from
+//     * @param members The members to remove from the group
+//     */
+//    public void removeUsersFromGroup(final String group, List<String> members) throws Exception {
+//        MorePreconditions.checkNotNullOrEmpty(group);
+//        MorePreconditions.checkNotNullOrEmpty(members);
+//        final Collection<Mutation> entries = new ArrayList<Mutation>();
+//
+//        for(String it : members){
+//            entries.add(persistenceService.createDeleteMutation(it, group, "", ""));
+//        }
+//
+//        persistenceService.insertRows(entries, groupMembershipTable);
+//    }
 
     /**
      * Removes the user from a group.  If no group is provided, they are removed from all of the groups
@@ -307,18 +307,29 @@ public class AccumuloGroupService implements AminoGroupService {
      * @throws TableNotFoundException
      */
     private boolean checkCanRemove(String requester, String userId, String group, Authorizations auths) throws TableNotFoundException {
-        // Can always remove self from group
-        if(requester.compareTo(userId) == 0){
-            return true;
-        }
-
         // See if the requester is an admin for the group and has permissions to remove the user
         final Scanner groupMetaScanner = persistenceService.createScanner(groupMetadataTable, auths);
         groupMetaScanner.setRange(new Range(group));
-        groupMetaScanner.fetchColumn(new Text("admin"), new Text(requester));
+        groupMetaScanner.fetchColumnFamily(new Text("admin"));
 
-        return groupMetaScanner.iterator().hasNext();
+        boolean requesterIsAdmin = false;
+        int adminsFound = 0;
+        for(Map.Entry<Key, Value> entry : groupMetaScanner){
+            adminsFound++;
+            if(entry.getKey().getColumnQualifier().toString().compareTo(requester) == 0){
+                requesterIsAdmin = true;
+            }
+        }
+
+        if(requesterIsAdmin){
+            // If the requester is the only admin, can't remove self.
+            return (adminsFound > 1) || (requester.compareTo(userId) != 0);
+        } else {
+            // If not an admin, can only remove self
+            return requester.compareTo(userId) == 0;
+        }
     }
+
 	/**
 	 * Fetches the groups that a particular id belongs to
 	 *

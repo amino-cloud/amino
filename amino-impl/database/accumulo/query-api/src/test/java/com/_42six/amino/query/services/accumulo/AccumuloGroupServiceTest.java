@@ -142,6 +142,7 @@ public class AccumuloGroupServiceTest {
         persistenceService.insertRow("GROUP|group1", "created_date" , "12345", "", "", METADATA_TABLE);
 
         persistenceService.insertRow("GROUP|group2", "admin" , "USER|member1", "", "", METADATA_TABLE);
+        persistenceService.insertRow("GROUP|group2", "admin" , "USER|member2", "", "", METADATA_TABLE);
         persistenceService.insertRow("GROUP|group2", "contributor" , "USER|member1", "", "", METADATA_TABLE);
         persistenceService.insertRow("GROUP|group2", "contributor" , "USER|member2", "", "", METADATA_TABLE);
         persistenceService.insertRow("GROUP|group2", "viewer" , "USER|member1", "", "", METADATA_TABLE);
@@ -259,6 +260,20 @@ public class AccumuloGroupServiceTest {
             }
         }
         Assert.isTrue(entries == 20);
+    }
+
+    @Test
+    /**
+     * Tests to make sure that we can't remove the last admin from a group
+     */
+    public void removeLastAdmin_admin() throws Exception{
+        initalizeTables();
+
+        // We expect there to be an exception as the admin can't remove the last admin
+        exception.expect(Exception.class);
+        exception.expectMessage(String.format("'USER|member1' does not have permission to remove 'USER|member1' from group 'GROUP|group1'"));
+
+        groupService.removeUserFromGroups("USER|member1", "USER|member1", Sets.newHashSet("GROUP|group1"), auths);
     }
 
 }

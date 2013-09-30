@@ -26,13 +26,13 @@ public interface AminoGroupService{
 	 */
 	public void createGroup(CreateGroupRequest request) throws Exception;
 
-	/**
-	 * Remove the members from the group
-	 *
-	 * @param group   The group to remove from
-	 * @param members The members to remove from the group
-	 */
-	public void removeUsersFromGroup(final String group, List<String> members) throws Exception;
+//	/**
+//	 * Remove the members from the group
+//	 *
+//	 * @param group   The group to remove from
+//	 * @param members The members to remove from the group
+//	 */
+//	public void removeUsersFromGroup(final String group, List<String> members) throws Exception;
 
 	/**
 	 * Removes the user from a group.  If no group is provided, they are removed from all of the groups
