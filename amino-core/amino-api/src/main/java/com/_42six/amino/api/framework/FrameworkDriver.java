@@ -300,11 +300,6 @@ public final class FrameworkDriver extends Configured implements Tool
 			AminoOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
 			JobUtilities.deleteDirectory(conf, output);
 
-            // Clear out any previous metadata that might be hanging around
-            final String metadir = output + "/cache/metadata";
-            System.out.println("Clearing out the metadata dir: " + PathUtils.getJobDataPath(metadir));
-            JobUtilities.deleteDirectory(conf, metadir);
-
 			BucketCacheBuilder.buildBucketCache(AminoDataUtils.getDataLoader(conf), aj, output, conf);
 			return JOB_TYPE_NORMAL;
 		}

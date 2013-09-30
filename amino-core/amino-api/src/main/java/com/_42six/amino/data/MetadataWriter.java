@@ -26,11 +26,11 @@ public class MetadataWriter {
         final public BucketMetadata metadata;
         final public String visibility;
         
-        public BucketHolder(String source, BucketMetadata metadata, String visibility, String humanReadableVisability) {
+        public BucketHolder(String source, BucketMetadata metadata, String visibility, String humanReadableVisibility) {
             this.source = source;
             this.metadata = metadata;
             this.metadata.btVisibility = visibility;
-            this.metadata.visibility = humanReadableVisability;
+            this.metadata.visibility = humanReadableVisibility;
             this.visibility = visibility;
         }
     }
@@ -40,11 +40,11 @@ public class MetadataWriter {
         final public FeatureMetadata metadata;
         final public String visibility;
         
-        public FeatureHolder(String source, FeatureMetadata metadata, String visibility, String humanReadableVisability) {
+        public FeatureHolder(String source, FeatureMetadata metadata, String visibility, String humanReadableVisibility) {
             this.source = source;
             this.metadata = metadata;
             this.metadata.btVisibility = visibility;
-            this.metadata.visibility = humanReadableVisability;
+            this.metadata.visibility = humanReadableVisibility;
             this.metadata.api_version = version;
             // TODO job version....once data gets moved into api and we don't have the circular dependency problem
             this.visibility = visibility;
@@ -81,11 +81,7 @@ public class MetadataWriter {
 
                 // Add features
                 for (FeatureHolder holder : featureList.values()) {
-                    final FeatureMetadata meta = holder.metadata;
-                    meta.visibility = holder.visibility;
-                    meta.btVisibility = holder.visibility;
-
-                    writer.append(FEATURE_TEXT, new Text(meta.toJson()));
+                    writer.append(FEATURE_TEXT, new Text(holder.metadata.toJson()));
                 }
 
                 // Create the special RESTRICT feature
@@ -127,12 +123,8 @@ public class MetadataWriter {
                 // Add buckets
                 for (BucketHolder holder : bucketList.values()) {
                     final BucketMetadata meta = holder.metadata;
-                    meta.id = new Text(Integer.toString(BitmapIndex.getBucketNameIndex(holder.source, holder.metadata.name))).toString();
-                    meta.visibility = holder.visibility;
-                    meta.btVisibility = holder.visibility;
-
+                    meta.id = new Text(Integer.toString(BitmapIndex.getBucketNameIndex(holder.source, meta.name))).toString();
                     writer.append(BUCKET_TEXT, new Text(meta.toJson()));
-                    System.out.println("Serialized buccket: " + meta.toJson());
                 }
             } finally {
                 if(writer != null){

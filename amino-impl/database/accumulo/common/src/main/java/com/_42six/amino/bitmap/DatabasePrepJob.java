@@ -26,8 +26,6 @@ import java.io.IOException;
  */
 public class DatabasePrepJob extends Configured implements Tool {
 
-    static Text metaTableText;
-
     private static boolean createTables(Configuration conf) throws IOException
     {
         // AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
@@ -59,26 +57,41 @@ public class DatabasePrepJob extends Configured implements Tool {
             extends Reducer<Text, Text, Text, Mutation> {
 
         static final Gson gson = new Gson();
+        static Text metadataTableText;
 
+        @Override
+        protected void setup(Context context){
+            metadataTableText = new Text(context.getConfiguration().get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX);
+        }
 
         private <T extends Metadata & BtMetadata> void writeMutations(Class<T> cls, Iterable<Text> jsonValues, Context context)
                 throws IOException, InterruptedException {
             T combinedMeta = null;
             for(Text value : jsonValues){
                 final T meta = gson.fromJson(value.toString(), cls);
+                if(meta == null){
+                    throw new IOException("Could not serialize Metadata from JSON: " + value.toString());
+                }
+
+                // Set the combinedMeta if it's the first one
                 if(combinedMeta == null) {
                     combinedMeta = meta;
                 } else {
+                    // The metadata is in sorted order.  Keep combining until we reach a different metadata type
                     if(combinedMeta.id.compareTo(meta.id) == 0){
                         combinedMeta.combine(meta);
                     } else {
-                        context.write(metaTableText, combinedMeta.createMutation());
+                        // Found a new metadata type. Write the current combined metadata row out to the table
+                        context.write(metadataTableText, combinedMeta.createMutation());
                         combinedMeta = meta;
                     }
                 }
             }
-            final Mutation mutation = combinedMeta.createMutation();
-            context.write(metaTableText, mutation);
+
+            if(combinedMeta != null){
+                final Mutation mutation = combinedMeta.createMutation();
+                context.write(metadataTableText, mutation);
+            }
         }
 
         /**
@@ -123,7 +136,6 @@ public class DatabasePrepJob extends Configured implements Tool {
         final byte[] password = conf.get("bigtable.password").getBytes();
         //final String metadataTable = conf.get("amino.metadataTable");
         final String metadataTable = conf.get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
-        metaTableText = new Text(metadataTable);
         final String metadataDir = conf.get("amino.output") + "/cache/metadata";
 
         // TODO - Verify that all of the params above were not null
@@ -155,7 +167,7 @@ public class DatabasePrepJob extends Configured implements Tool {
     }
 
     public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration();
+        final Configuration conf = new Configuration();
         conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, args[0]); // TODO: use flag instead of positional
         AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
 
