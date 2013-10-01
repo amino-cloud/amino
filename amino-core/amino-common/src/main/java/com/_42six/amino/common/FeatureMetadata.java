@@ -3,10 +3,7 @@ package com._42six.amino.common;
 import com.google.gson.Gson;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Metadata about features to be serialized/deserialized from Accumulo.
@@ -40,28 +37,20 @@ public class FeatureMetadata extends Metadata{
 
 	/** The Datasources that the feature is associated with */
 	public Set<String> datasources;
-    
-//    /** Minimum value (for interval features) */
-//    public Double min;
-//    
-//    /** Maximum value (for interval features) */
-//    public Double max;
-    
+
     /** Minimum value (for interval features) */
     public Hashtable<String,Double> min;
     
     /** Maximum value (for interval features) */
     public Hashtable<String,Double> max;
     
-    /** Allowed values (for nominal features) */
-    public Set<String> allowedValues;
+    /** Sorted set of allowed values (for nominal features) */
+    public TreeSet<String> allowedValues;
     
     /** Total number of feature facts that were found in this feature */
-    //public Double featureFactCount;
     public Hashtable<String,Long> featureFactCount;
     
     /** Total number of bucket values that were found in this feature */
-    //public Double bucketValueCount;
     public Hashtable<String,Long> bucketValueCount;
     
     /** Average ratio value for each bucket for this feature */
@@ -106,7 +95,7 @@ public class FeatureMetadata extends Metadata{
             this.max = new Hashtable<String, Double>(that.max);
         }
         if (that.allowedValues != null) {
-            this.allowedValues = new HashSet<String>(that.allowedValues);
+            this.allowedValues = new TreeSet<String>(that.allowedValues);
         }
         if (that.featureFactCount != null) {
             this.featureFactCount = new Hashtable<String, Long>(that.featureFactCount);
@@ -164,22 +153,19 @@ public class FeatureMetadata extends Metadata{
     }
     
     public String toJson() {
-        Gson gson = new Gson();
-        
-        return gson.toJson(this);
+        return new Gson().toJson(this);
     }
     
     /**
      * Factory method for deserializing FeatureMetadata and subclasses from json
      */
     public static FeatureMetadata fromJson(String json) {
-        Gson gson = new Gson();
-        FeatureMetadata meta = gson.fromJson(json, FeatureMetadata.class);
+        final FeatureMetadata meta = new Gson().fromJson(json, FeatureMetadata.class);
         return fromJson(json, (meta != null)? meta.type : null);
     }
     public static FeatureMetadata fromJson(String json, String type) {
-        FeatureMetadata meta = null;
-        Gson gson = new Gson();
+        FeatureMetadata meta;
+        final Gson gson = new Gson();
 
         if (FeatureFactType.dateIntervalTypes.contains(type)) {
             meta = gson.fromJson(json, DateFeatureMetadata.class);
@@ -191,7 +177,7 @@ public class FeatureMetadata extends Metadata{
     }
     
     public static FeatureMetadata fromFeature(Feature feature, FeatureFact fact) {
-        FeatureMetadata meta = new FeatureMetadata();
+        final FeatureMetadata meta = new FeatureMetadata();
 
         meta.id = String.valueOf(feature.hashCode());
         meta.name = feature.getName();
@@ -214,7 +200,6 @@ public class FeatureMetadata extends Metadata{
         }
 
         FeatureMetadata that = (FeatureMetadata) with;
-
 
         // Verify that we can actually combine the metadatas together
         if(this.id.compareTo(that.id) != 0){
@@ -255,7 +240,7 @@ public class FeatureMetadata extends Metadata{
             if(this.allowedValues != null) {
                 this.allowedValues.addAll(that.allowedValues);
             } else {
-                this.allowedValues = new HashSet<String>(that.allowedValues);
+                this.allowedValues = new TreeSet<String>(that.allowedValues);
             }
         }
 

@@ -38,8 +38,6 @@ import java.util.Map.Entry;
 
 public final class FeatureMetadataJob extends Configured implements Tool {
 
-	private static final String AMINO_NUM_REDUCERS = "amino.num.reducers";
-	private static final int DEFAULT_NUM_REDUCERS = 14;
 	private static final String MAX_NUMBER_OF_NOMINALS = "amino.num.nominals.max";
 	private static final int MAX_NUMBER_OF_NOMINALS_DEFAULT = 250;
 	private static final String MAX_NUMBER_OF_TOP_NOMINALS = "amino.num.top.nominals.max";
@@ -71,85 +69,85 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 			this.meta = meta;
 		}
 
-		public void handle(Scanner scanner) { }
-		public void summarize() {};
+		public void handle(Scanner scanner) {}
+		public void summarize() {}
 		public Mutation createMutation(ColumnVisibility cv) { return null; }
 	}
 
-        private static class DateHandler extends FeatureHandler {
-            private FeatureFactTranslatorInt translator = new FeatureFactTranslatorImpl();;
-            private Hashtable<String, String> min = new Hashtable<String, String>();
-            private Hashtable<String, String> max = new Hashtable<String, String>();
+    private static class DateHandler extends FeatureHandler {
+        private FeatureFactTranslatorInt translator = new FeatureFactTranslatorImpl();
+        private Hashtable<String, String> min = new Hashtable<String, String>();
+        private Hashtable<String, String> max = new Hashtable<String, String>();
 
-            protected DateHandler(FeatureMetadata meta) {
-                super(new DateFeatureMetadata(meta));
-                DateFeatureMetadata dmeta = (DateFeatureMetadata)this.meta;
-                dmeta.minDate = new Hashtable<String, Long>();
-                dmeta.maxDate = new Hashtable<String, Long>();
-            }
-
-            @Override
-            public void handle(Scanner scanner) {
-                for (Entry<Key, Value> entry : scanner) {
-                    final String columnType = entry.getKey().getColumnQualifier().toString();
-                    final String date = entry.getKey().getColumnFamily().toString();
-
-                    if (columnType.contains("COUNT")) {
-                        final long count = Long.parseLong(entry.getValue().toString());
-                        final String[] typeParts = columnType.split(":");
-                        final String bucket = typeParts[0];
-
-                        // Add the bucket value count
-                        meta.addToBucketValueCount(bucket, count);
-
-                        // Get (possibly set) the min/max
-                        String minDate = min.get(bucket);
-                        String maxDate = max.get(bucket);
-
-                        if (minDate == null) {
-                            minDate = date;
-                        } else {
-                            minDate = (date.compareTo(minDate) < 0)? date : minDate;
-                        }
-                        min.put(bucket, minDate);
-
-                        if (maxDate == null) {
-                            maxDate = date;
-                        } else {
-                            maxDate = (date.compareTo(maxDate) > 0)? date : maxDate;
-                        }
-                        max.put(bucket, maxDate);
-
-
-                    }
-                }
-            }
-
-            @Override
-            public void summarize() {
-                DateFeatureMetadata dmeta = (DateFeatureMetadata)this.meta;
-                for (Entry<String, String> entry : min.entrySet()) {
-                    dmeta.minDate.put(entry.getKey(), translator.toDate(entry.getValue()));
-                }
-                for (Entry<String, String> entry : max.entrySet()) {
-                    dmeta.maxDate.put(entry.getKey(), translator.toDate(entry.getValue()));
-                }
-            }
-
-            @Override
-            public Mutation createMutation(ColumnVisibility cv) {
-                final Gson gson = new Gson();
-                DateFeatureMetadata dmeta = (DateFeatureMetadata)this.meta;
-                final Mutation mutation = new Mutation(TableConstants.FEATURE_PREFIX + meta.id);
-
-                mutation.put("bucketValueCount", "", cv, gson.toJson(meta.bucketValueCount));
-                mutation.put("max", "", cv, gson.toJson(dmeta.maxDate));
-                mutation.put("min", "", cv, gson.toJson(dmeta.minDate));
-
-                return mutation;
-            }
-
+        protected DateHandler(FeatureMetadata meta) {
+            super(new DateFeatureMetadata(meta));
+            DateFeatureMetadata dmeta = (DateFeatureMetadata)this.meta;
+            dmeta.minDate = new Hashtable<String, Long>();
+            dmeta.maxDate = new Hashtable<String, Long>();
         }
+
+        @Override
+        public void handle(Scanner scanner) {
+            for (Entry<Key, Value> entry : scanner) {
+                final String columnType = entry.getKey().getColumnQualifier().toString();
+                final String date = entry.getKey().getColumnFamily().toString();
+
+                if (columnType.contains("COUNT")) {
+                    final long count = Long.parseLong(entry.getValue().toString());
+                    final String[] typeParts = columnType.split(":");
+                    final String bucket = typeParts[0];
+
+                    // Add the bucket value count
+                    meta.addToBucketValueCount(bucket, count);
+
+                    // Get (possibly set) the min/max
+                    String minDate = min.get(bucket);
+                    String maxDate = max.get(bucket);
+
+                    if (minDate == null) {
+                        minDate = date;
+                    } else {
+                        minDate = (date.compareTo(minDate) < 0)? date : minDate;
+                    }
+                    min.put(bucket, minDate);
+
+                    if (maxDate == null) {
+                        maxDate = date;
+                    } else {
+                        maxDate = (date.compareTo(maxDate) > 0)? date : maxDate;
+                    }
+                    max.put(bucket, maxDate);
+
+
+                }
+            }
+        }
+
+        @Override
+        public void summarize() {
+            DateFeatureMetadata dmeta = (DateFeatureMetadata)this.meta;
+            for (Entry<String, String> entry : min.entrySet()) {
+                dmeta.minDate.put(entry.getKey(), translator.toDate(entry.getValue()));
+            }
+            for (Entry<String, String> entry : max.entrySet()) {
+                dmeta.maxDate.put(entry.getKey(), translator.toDate(entry.getValue()));
+            }
+        }
+
+        @Override
+        public Mutation createMutation(ColumnVisibility cv) {
+            final Gson gson = new Gson();
+            DateFeatureMetadata dmeta = (DateFeatureMetadata)this.meta;
+            final Mutation mutation = new Mutation(TableConstants.FEATURE_PREFIX + meta.id);
+
+            mutation.put("bucketValueCount", "", cv, gson.toJson(meta.bucketValueCount));
+            mutation.put("max", "", cv, gson.toJson(dmeta.maxDate));
+            mutation.put("min", "", cv, gson.toJson(dmeta.minDate));
+
+            return mutation;
+        }
+
+    }
 
 	private static class NominalHandler extends FeatureHandler {
 		private boolean overflow = false;
@@ -161,7 +159,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 		protected NominalHandler(FeatureMetadata meta, int maxNominals, int maxTopNominals) {
 			super(meta);
 			this.maxNominals = maxNominals;
-			meta.allowedValues = new HashSet<String>();
+			meta.allowedValues = new TreeSet<String>();
 			this.maxTopNominals = maxTopNominals;
 		}
 
@@ -319,7 +317,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 			public int compareTo(FeatureFactCount ffc)
 			{
 				//reverse sort
-				return new Long(Long.MAX_VALUE - this.count).compareTo(new Long(Long.MAX_VALUE - ffc.count));
+				return new Long(Long.MAX_VALUE - this.count).compareTo(Long.MAX_VALUE - ffc.count);
 			}
 		}
 	}
@@ -727,7 +725,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 
 		public Distribution(Configuration conf)
 		{
-			this.ratioBinCount = conf.getInt(MAX_NUMBER_OF_RATIO_BINS, MAX_NUMBER_OF_RATIO_BINS_DEFAULT);;
+			this.ratioBinCount = conf.getInt(MAX_NUMBER_OF_RATIO_BINS, MAX_NUMBER_OF_RATIO_BINS_DEFAULT);
 		}
 
 		public void increment(double x)
@@ -884,7 +882,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 
 	/**
 	 * Bulk delete tables
-	 * @param tableOps
+	 * @param tableOps TableOperations for manipulating the tables
 	 * @param fireAndForget true will simply log any errors without throwing an exception
 	 * @param tables tables to delete
 	 * @throws java.io.IOException
