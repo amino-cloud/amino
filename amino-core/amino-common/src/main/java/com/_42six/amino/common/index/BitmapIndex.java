@@ -15,12 +15,32 @@ import java.io.IOException;
 public class BitmapIndex {
 
     private static final int HASH_TYPE = Hash.MURMUR_HASH;
+    private static final int EWAH_DIFFERENCE = 64; // TODO - look at getting this from EWAH wordinbits
+    private static final int MAX_EWAH = Integer.MAX_VALUE - EWAH_DIFFERENCE;
+
+    /**
+     * Hack for EWAH since it can't handle set'ing a position greater than MAX_EWAH.  This will lead to some extra potential
+     * collisions, but hey, at least it works.
+     */
+    private static int getEwah(int position){
+        if(position == Integer.MIN_VALUE){
+            return 0;
+        }
+
+        int normalized = Math.abs(position);
+
+        if(normalized > MAX_EWAH){
+            return normalized - EWAH_DIFFERENCE;
+        } else {
+            return normalized;
+        }
+    }
 
     private static int getBucketNameIndex(String dataSource, String name, int seed) {
         Hash hasher = Hash.getInstance(HASH_TYPE);
         int hashcode = hasher.hash(dataSource.getBytes(), seed);
         hashcode = hasher.hash(name.getBytes(), hashcode);
-        return Math.abs(hashcode);
+        return getEwah(hashcode);
     }
     
     public static int getBucketNameIndex(String dataSource, String name) {
@@ -37,7 +57,7 @@ public class BitmapIndex {
 
     public static int getFeatureIndex(Feature feature) {
         int hashcode = feature.hashCode();
-        return Math.abs(hashcode);
+        return getEwah(hashcode);
     }
 
     /*public static int getFeatureNameIndex(String name) {
@@ -58,19 +78,19 @@ public class BitmapIndex {
         byte[] factBytes = getFeatureFactBytes(fact);
         hashcode = hasher.hash(factBytes, hashcode); // XXX value.getBytes()? need to see where value ends up
 
-        return Math.abs(hashcode);
+        return getEwah(hashcode);
     }
 
     public static int getBucketValueIndex(Bucket bucket) {
         Hash hasher = Hash.getInstance(HASH_TYPE);
         int hashcode = getBucketNameIndex(bucket);
         hashcode = hasher.hash(bucket.getBucketValue().toString().getBytes(), hashcode);
-        return Math.abs(hashcode);
+        return getEwah(hashcode);
     }
     
     public static int getBucketValueIndex(BucketStripped bucketStripped) {
     	Hash hasher = Hash.getInstance(HASH_TYPE);
-    	return Math.abs(hasher.hash(bucketStripped.getBucketValue().toString().getBytes(), bucketStripped.getCacheHash().get()));
+    	return getEwah(hasher.hash(bucketStripped.getBucketValue().toString().getBytes(), bucketStripped.getCacheHash().get()));
     }
     
     public static int getBucketCacheIndex(Bucket bucket) {
@@ -90,7 +110,7 @@ public class BitmapIndex {
         Hash hasher = Hash.getInstance(HASH_TYPE);
         int hashcode = hasher.hash(bucket.getBucketName().toString().getBytes(), seed);
         hashcode = hasher.hash(bucket.getBucketValue().getBytes(), hashcode);
-        return Math.abs(hashcode);
+        return getEwah(hashcode);
     }
 
     private static byte[] getFeatureFactBytes(FeatureFact ff) {
