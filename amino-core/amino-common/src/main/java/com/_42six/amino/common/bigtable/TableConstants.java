@@ -3,7 +3,7 @@ package com._42six.amino.common.bigtable;
 import org.apache.hadoop.io.Text;
 
 /**
- * Class for holding constants for the Accumulo tables such as field names, etc
+ * Class for holding constants for the BigTable tables such as field names, etc
  */
 public class TableConstants {
 
@@ -38,7 +38,7 @@ public class TableConstants {
 	public static final Text DOMAIN_END = new Text("domain" + ROW_TERMINATOR);
 	public static final Text FEATURE_END = new Text("feature" + ROW_TERMINATOR);
 
-	// Ranges for grabbing an entitiy from the metadata table
+	// Ranges for grabbing an entity from the metadata table
 //	public static final Range BUCKET_RANGE = new Range(new Text(BUCKET_PREFIX), BUCKET_END);
 //	public static final Range DATASOURCE_RANGE = new Range(new Text(DATASOURCE_PREFIX), DATASOURCE_END);
 //	public static final Range DOMAIN_RANGE = new Range(new Text(DOMAIN_PREFIX), DOMAIN_END);
@@ -47,6 +47,13 @@ public class TableConstants {
 	public static final Text HASHCOUNT_FIELD = new Text("hashcount");
 	public static final Text SHARDCOUNT_FIELD = new Text("shardcount");
 
+    /** The prefix pre-pended to groups to signify that the String is a group and not an individual user */
+    public static final String GROUP_PREFIX = "GROUP|";
 
+    /** The prefix pre-pended to users to signify that the String is an user and not a group  */
+    public static final String USER_PREFIX = "USER|";
+
+    /** The group that everyone belongs to by default.  Used to share something with everyone */
+    public static final String PUBLIC_GROUP = "GROUP|public";
 
 }

@@ -1,5 +1,7 @@
 package com._42six.amino.common.query.requests;
 
+import com._42six.amino.common.bigtable.TableConstants;
+
 /**
  * Base class representing requests for information.  This is used to pass various confuration paramters to functions.
  * It has a verify method to ensure that all of the parameters that are needed are set.
@@ -18,7 +20,7 @@ public class Request {
     }
 
     public void setRequestor(String requestor){
-        this.requestor = requestor;
+        this.requestor = (requestor.startsWith(TableConstants.USER_PREFIX)) ? requestor : TableConstants.USER_PREFIX + requestor;
     }
 
     public String[] getSecurityTokens(){

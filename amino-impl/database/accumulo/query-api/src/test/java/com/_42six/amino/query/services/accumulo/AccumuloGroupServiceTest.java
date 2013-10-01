@@ -2,6 +2,7 @@ package com._42six.amino.query.services.accumulo;
 
 import com._42six.amino.common.Group;
 import com._42six.amino.common.GroupMember;
+import com._42six.amino.common.query.requests.AddUsersRequest;
 import com._42six.amino.common.query.requests.CreateGroupRequest;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -23,6 +24,8 @@ import org.junit.rules.ExpectedException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import static org.junit.Assert.assertTrue;
 
 public class AccumuloGroupServiceTest {
 
@@ -290,5 +293,73 @@ public class AccumuloGroupServiceTest {
 
         Assert.isTrue(groupService.verifyGroupExists("GROUP|group1", perms));
         Assert.isTrue(!groupService.verifyGroupExists("GROUP|BogusGroup", perms));
+    }
+
+    @Test
+    /**
+     * Tests that an admin for the group can add a user to the group, and that a non-admin can not
+     */
+    public void addToGroup() throws Exception {
+        initalizeTables();
+
+        final Group g = new Group();
+        final Set<GroupMember> members = new HashSet<GroupMember>();
+        members.add(new GroupMember("newMemberAll", Sets.newHashSet(Group.GroupRole.VIEWER, Group.GroupRole.ADMIN, Group.GroupRole.CONTRIBUTOR)));
+
+        g.setGroupName("group1");
+        g.setMembers(members);
+
+        AddUsersRequest request = new AddUsersRequest(g);
+        request.setSecurityTokens(perms);
+        request.setRequestor("member1");
+
+        groupService.addToGroup(request);
+
+        // Check the membership table
+        final Scanner memberScanner = persistenceService.createScanner(MEMBERSHIP_TABLE, auths);
+        memberScanner.setRange(new Range());
+        int entries = 0;
+        for(Map.Entry<Key, Value> entry : memberScanner){
+            entries++;
+            if(entry.getKey().getRow().toString().compareTo("USER|newMemberAll") == 0){
+                String group = entry.getKey().getColumnFamily().toString();
+                Assert.isTrue(group.compareTo("GROUP|group1") == 0);
+            }
+        }
+        // Make sure that only the one record was added
+        Assert.isTrue(entries == 10);
+
+        // Check the metadata table
+        final Scanner metadataScanner = persistenceService.createScanner(METADATA_TABLE, auths);
+        metadataScanner.setRange(new Range("GROUP|group1"));
+        metadataScanner.fetchColumn(new Text("admin"), new Text("USER|newMemberAll"));
+        metadataScanner.fetchColumn(new Text("contributor"), new Text("USER|newMemberAll"));
+        metadataScanner.fetchColumn(new Text("viewer"), new Text("USER|newMemberAll"));
+        entries = 0;
+        for(Map.Entry<Key, Value> entry : metadataScanner){
+            entries++;
+        }
+        // Make sure all the rows were added
+        Assert.isTrue(entries == 3);
+
+        // Verify other rows
+        metadataScanner.clearColumns();
+        metadataScanner.setRange(new Range());
+        entries = 0;
+        for(Map.Entry<Key, Value> entry : metadataScanner){
+            entries++;
+        }
+        // Make sure those were the only rows added
+        Assert.isTrue(entries == 28);
+        assertTrue("", true);
+
+
+        //
+        // Now try to add a new user as a non-admin
+        //
+        exception.expect(Exception.class);
+        exception.expectMessage(String.format("USER|member2 does not have admin rights to the group GROUP|group1"));
+        request.setRequestor("member2");
+        groupService.addToGroup(request);
     }
 }

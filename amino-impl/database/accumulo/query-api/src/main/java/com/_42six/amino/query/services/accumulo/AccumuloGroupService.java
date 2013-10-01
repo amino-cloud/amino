@@ -3,6 +3,7 @@ package com._42six.amino.query.services.accumulo;
 import com._42six.amino.common.Group;
 import com._42six.amino.common.GroupMember;
 import com._42six.amino.common.MorePreconditions;
+import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.entity.Hypothesis;
 import com._42six.amino.common.query.requests.AddUsersRequest;
 import com._42six.amino.common.query.requests.CreateGroupRequest;
@@ -25,15 +26,6 @@ import java.util.*;
 public class AccumuloGroupService implements AminoGroupService {
 
 	public static final Logger log = Logger.getLogger(AccumuloGroupService.class);
-
-    /** The prefix pre-pended to groups to signify that the String is a group and not an individual user */
-    public static final String GROUP_PREFIX = "GROUP|";
-
-    /** The prefix pre-pended to users to signify that the String is an user and not a group  */
-    public static final String USER_PREFIX = "USER|";
-
-    /** The group that everyone belongs to by default.  Used to share something with everyone */
-    public static final String PUBLIC_GROUP = "GROUP|public";
 
     /** The groups to Hypothesis Look Up Table */
 	private String groupHypothesisLUT;
@@ -90,8 +82,9 @@ public class AccumuloGroupService implements AminoGroupService {
      * @throws IOException if the group_metadata table does not exist
      */
     public boolean verifyGroupExists(String group, String[] vis) throws IOException {
-        final Authorizations auths = new Authorizations(vis);
-        final String groupName = (group.startsWith(GROUP_PREFIX)) ? group : GROUP_PREFIX + group;
+        MorePreconditions.checkNotNullOrEmpty(group);
+        final Authorizations auths = new Authorizations(Preconditions.checkNotNull(vis));
+        final String groupName = (group.startsWith(TableConstants.GROUP_PREFIX)) ? group : TableConstants.GROUP_PREFIX + group;
         final Scanner groupMetaScanner;
         try {
             groupMetaScanner = persistenceService.createScanner(groupMetadataTable, auths);
@@ -110,8 +103,9 @@ public class AccumuloGroupService implements AminoGroupService {
      * @throws IOException if the group_membership table does not exist
      */
     public boolean verifyUserExists(String user, String[] vis) throws IOException {
-        final Authorizations auths = new Authorizations(vis);
-        final String userName = (user.startsWith(USER_PREFIX)) ? user : USER_PREFIX + user;
+        MorePreconditions.checkNotNullOrEmpty(user);
+        final Authorizations auths = new Authorizations(Preconditions.checkNotNull(vis));
+        final String userName = (user.startsWith(TableConstants.USER_PREFIX)) ? user : TableConstants.USER_PREFIX + user;
         final Scanner groupMembershipScanner;
         try {
             groupMembershipScanner = persistenceService.createScanner(groupMembershipTable, auths);
@@ -133,8 +127,12 @@ public class AccumuloGroupService implements AminoGroupService {
         final Authorizations auths = Preconditions.checkNotNull(new Authorizations(tokens), "Could not create Authorizations");
         final Group group = Preconditions.checkNotNull(request.getGroup(), "Group was missing");
         final Set<GroupMember> members = Preconditions.checkNotNull(group.getMembers(), "Missing members");
-        final String groupName = GROUP_PREFIX + MorePreconditions.checkNotNullOrEmpty(group.getGroupName(), "Missing group name");
-        final String requestor = MorePreconditions.checkNotNullOrEmpty(request.getRequestor(), "Missing requestor");
+        String groupName = MorePreconditions.checkNotNullOrEmpty(group.getGroupName(), "Missing group name");
+        String requestor = MorePreconditions.checkNotNullOrEmpty(request.getRequestor(), "Missing requestor");
+
+        // Make sure prefixed properly
+        groupName = groupName.startsWith(TableConstants.GROUP_PREFIX) ? groupName : TableConstants.GROUP_PREFIX + groupName;
+        requestor = requestor.startsWith(TableConstants.USER_PREFIX) ? requestor : TableConstants.USER_PREFIX + requestor;
 
 		final ArrayList<Mutation> memberEntries = new ArrayList<Mutation>(members.size());
         final ArrayList<Mutation> metaEntries = new ArrayList<Mutation>();
@@ -150,7 +148,8 @@ public class AccumuloGroupService implements AminoGroupService {
 
         // Create the mutations for the group_metadata and group_membership tables and insert them
         for(GroupMember member : members){
-            final String memberName = USER_PREFIX + MorePreconditions.checkNotNullOrEmpty(member.getName(), "Group member missing name");
+            String memberName = MorePreconditions.checkNotNullOrEmpty(member.getName(), "Group member missing name");
+            if(!memberName.startsWith(TableConstants.USER_PREFIX)) { memberName = TableConstants.USER_PREFIX + memberName; }
             final Set<Group.GroupRole> roles = Preconditions.checkNotNull(member.getRoles(), "Member " + memberName + " missing roles");
 
             // group_membership
@@ -173,11 +172,13 @@ public class AccumuloGroupService implements AminoGroupService {
 	public void createGroup(CreateGroupRequest request) throws Exception {
         Preconditions.checkNotNull(request);
         final Group group = Preconditions.checkNotNull(request.getGroup());
-        final String groupName = GROUP_PREFIX + MorePreconditions.checkNotNullOrEmpty(group.getGroupName(), "Group Name not set");
+        String groupName = MorePreconditions.checkNotNullOrEmpty(group.getGroupName(), "Group Name not set");
+        if(!groupName.startsWith(TableConstants.GROUP_PREFIX)){ groupName = TableConstants.GROUP_PREFIX + groupName; }
         final String[] tokens = Preconditions.checkNotNull(request.getSecurityTokens(), "Security tokens were null");
         final Authorizations auths = Preconditions.checkNotNull(new Authorizations(tokens), "Could not create Authorizations");
         final Collection<GroupMember> members = MorePreconditions.checkNotNullOrEmpty(group.getMembers(), "Must provide at least one group member");
-        final String createdBy = USER_PREFIX + MorePreconditions.checkNotNullOrEmpty(group.getCreatedBy(), "Created by was empty");
+        String createdBy = MorePreconditions.checkNotNullOrEmpty(group.getCreatedBy(), "Created by was empty");
+        if(!createdBy.startsWith(TableConstants.USER_PREFIX)){ createdBy = TableConstants.USER_PREFIX + createdBy; }
 
         final long createdDate = System.currentTimeMillis() / 1000L;
 
@@ -195,7 +196,7 @@ public class AccumuloGroupService implements AminoGroupService {
         // Create membership entries
         for(GroupMember gm : members){
             for(Group.GroupRole role : gm.getRoles()){
-                final String memberName = USER_PREFIX + MorePreconditions.checkNotNullOrEmpty(gm.getName(), "Group member name was empty");
+                final String memberName = TableConstants.USER_PREFIX + MorePreconditions.checkNotNullOrEmpty(gm.getName(), "Group member name was empty");
                 metadataRows.add(persistenceService.createInsertMutation(groupName, MorePreconditions.checkNotNullOrEmpty(role.toString()),
                         memberName, "", ""));
 
@@ -354,7 +355,7 @@ public class AccumuloGroupService implements AminoGroupService {
 
 		// Everybody is part of the public group
 		Set<String> groups = new HashSet<String>();
-        groups.add(PUBLIC_GROUP);
+        groups.add(TableConstants.PUBLIC_GROUP);
 
         Scanner scan;
         try{
@@ -458,7 +459,6 @@ public class AccumuloGroupService implements AminoGroupService {
 				}
 			}
 		}
-
 
 		return foundHypotheses;
 	}
