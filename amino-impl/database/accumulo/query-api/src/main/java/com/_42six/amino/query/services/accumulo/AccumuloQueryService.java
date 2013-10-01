@@ -1348,6 +1348,11 @@ public class AccumuloQueryService implements AminoQueryService {
             revByBucketScanner.close();
         }
 
+        // Check to see if there is anything to lookup
+        if(lookupRanges.size() ==0){
+            return results;
+        }
+
         // Create the Scanner and set the iterator to de-conflict hash collisions
         final BatchScanner lookupScanner = persistenceService.createBatchScanner(reverseFeatureLookupTable, auths);
         lookupScanner.setRanges(lookupRanges);
