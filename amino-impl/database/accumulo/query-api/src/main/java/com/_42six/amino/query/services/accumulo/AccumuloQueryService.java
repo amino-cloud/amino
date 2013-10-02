@@ -81,6 +81,8 @@ public class AccumuloQueryService implements AminoQueryService {
 	public String auditSystemTo = "";
 	public String auditVisibility = "";
 
+    public String reverseItrMemThreshold = "100000000";
+
     /**
      * Constructs a new AccumuloQueryService. Use of this constructor acknowledges that you will manually set the persistenceService and metadataService properties before calling any methods.
      */
@@ -99,6 +101,10 @@ public class AccumuloQueryService implements AminoQueryService {
         this.metadataService = metadataService;
         this.translator = new FeatureFactTranslatorImpl();
         this.visibilityTranslator = new DefaultVisibilityTranslator();
+    }
+
+    public void setReverseItrMemThreshold(String threshold){
+        this.reverseItrMemThreshold = threshold;
     }
 
 	public void setTimedUserExecutionService(TimedUserExecutionService service){
@@ -1326,6 +1332,7 @@ public class AccumuloQueryService implements AminoQueryService {
         if(orIds.size() > 0){
             revByBucketScanner.setScanIteratorOption(revByBucketItr, ReverseByBucketCombiner.OPTION_OR_IDS, new Gson().toJson(orIds));
         }
+        revByBucketScanner.setScanIteratorOption(revByBucketItr, ReverseByBucketCombiner.OPTION_BITMAP_MEM_THRESHOLD, reverseItrMemThreshold);
 
         // Set up the ranges and get ready to scan the amino_reverse_bitmap_byBucket table
         revByBucketScanner.setRanges(ranges);
