@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com._42six.amino.impl</groupId>
+	<artifactId>amino-impl</artifactId>
+	<packaging>pom</packaging>
+	<version>1.7.0-SNAPSHOT</version>
+
+	<!-- - To change the Amino version, from the amino-impl directory execute: 
+		mvn versions:set versions:commit -DnewVersion=1.0 - This will change the 
+		amino-impl version in this pom and the pom of all modules referenced in this 
+		pom. -->
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<!-- Build order and modules to build -->
+	<modules>
+		<module>reducer</module>
+		<module>ingestion-tools</module>
+		<module>database</module>
+		<module>dataloader</module>
+		<module>job</module>
+		<module>security</module>
+	</modules>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>2.1</version>
+					<configuration>
+						<source>1.6</source>
+						<target>1.6</target>
+						<compilerArgument>-Xlint:all</compilerArgument>
+						<showWarnings>true</showWarnings>
+						<showDeprecation>true</showDeprecation>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<profiles>
+		<!-- This profile is here so that the modules below can reference this 
+			pom as a parent. Using "mvn versions:set" will change the parent version 
+			in child modules. -->
+		<profile>
+			<id>expensive-modules-to-build</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+		</profile>
+	</profiles>
+
+	<dependencies>
+		<dependency>
+			<groupId>com._42six.amino.core</groupId>
+			<artifactId>amino-api</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.10</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-core</artifactId>
+			<version>0.20.203.0</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+</project>

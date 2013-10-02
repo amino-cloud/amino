@@ -1,0 +1,14 @@
+setiter -t BitmapOutput_byBucket -agg -minc -majc -scan -p 10
+
+INTERVAL com._42six.amino.bitmap.iterators.Aggregator
+NOMINAL com._42six.amino.bitmap.iterators.Aggregator
+ORDINAL com._42six.amino.bitmap.iterators.Aggregator
+RATIO com._42six.amino.bitmap.iterators.Aggregator
+SPATIAL com._42six.amino.bitmap.iterators.Aggregator
+
+
+
+
+formatter -f com._42six.amino.bitmap.iterators.BitmapFormatter 
+formatter -f com._42six.amino.bitmap.iterators.BitmapFormatterSummary
+

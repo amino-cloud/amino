@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+
+<configuration>
+	<property>
+		<name>amino.bitmap.instance</name>
+		<value>accumulo</value>
+    <description>Accumulo instance name</description>
+	</property>
+	<property>
+		<name>amino.bitmap.zookeepers</name>
+		<value>localhost:2181</value>
+		<description>csv list of zookeeper servers</description>
+	</property>
+  <property>
+    <name>amino.bitmap.username</name>
+    <value>root</value>
+    <description>Accumulo username to use</description>
+  </property>
+  <property>
+    <name>amino.bitmap.password</name>
+    <value>secret</value>
+    <description>Password for accumulo user name</description>
+  </property>
+  <property>
+    <name>amino.bitmap.table.bucket</name>
+    <value>BitmapOutput_byBucket</value>
+    <description>Table to store feature bitmaps by bucket</description>
+  </property>
+  <property>
+    <name>amino.bitmap.table.index</name>
+    <value>BitmapOutput_bitLookup</value>
+    <description>Table to store feature bitmap index</description>
+  </property>
+  <property>
+    <name>amino.bitmap.table.featurefact</name>
+    <value>BitmapOutput_byFeatureFact</value>
+    <description>Table to store feature fact index</description>
+  </property>
+  <property>
+    <name>amino.bitmap.job.name</name>
+    <value>Amino Bitmap Generation</value>
+    <description>Hadoop job name to display</description>
+  </property>
+</configuration>

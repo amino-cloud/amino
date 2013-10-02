@@ -1,0 +1,17 @@
+package com._42six.amino.common.bigtable;
+
+message ColumnValue
+{
+	required bytes column_family = 1;
+	required bytes column_qualifier = 2;
+	required bytes column_visibility = 3;
+	required uint64 timestamp = 4;
+	required bool isDelete = 5;
+	optional bytes value = 6;	
+}
+
+message MutationCodec 
+{
+	required bytes row = 1;
+	repeated ColumnValue columnValues = 2;
+}
