@@ -9,6 +9,7 @@ import com._42six.amino.common.query.requests.AddUsersRequest;
 import com._42six.amino.common.query.requests.CreateGroupRequest;
 import com._42six.amino.query.services.AminoGroupService;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.TableNotFoundException;
@@ -329,6 +330,96 @@ public class AccumuloGroupService implements AminoGroupService {
             // If not an admin, can only remove self
             return requester.compareTo(userId) == 0;
         }
+    }
+
+    /**
+     * Returns the Group object that corresponds with the underlying group in the tables.  The requestor must be a member
+     * in order to get the Group.
+     * @param requestor   The person trying to fetch the Group
+     * @param group       The Group to lookup in the tables
+     * @param visibility  The BigTable visibility strings
+     * @return Group representing all of of the members of the group
+     * @throws IOException
+     */
+    public Group getGroup(String requestor, String group, String[] visibility) throws IOException {
+        return getGroup(requestor, group, new Authorizations( Preconditions.checkNotNull(visibility)));
+    }
+
+    /**
+     * Returns the Group object that corresponds with the underlying group in the tables.  The requestor must be a member
+     * in order to get the Group.  If the group doesn't exist, null is returned
+     * @param requestor   The person trying to fetch the Group
+     * @param group       The Group to lookup in the tables
+     * @param auths       The BigTable authorizations
+     * @return Group representing all of of the members of the group
+     * @throws IOException
+     */
+    public Group getGroup(String requestor, String group, Authorizations auths) throws IOException {
+        MorePreconditions.checkNotNullOrEmpty(requestor);
+        MorePreconditions.checkNotNullOrEmpty(group);
+        Preconditions.checkNotNull(auths);
+
+        final Group returnGroup = new Group(group);
+        boolean requestorPartOfGroup = false;
+
+        // Make sure prefixes are present
+        if(!requestor.startsWith(TableConstants.USER_PREFIX)){ requestor = TableConstants.USER_PREFIX + requestor; }
+        if(!group.startsWith(TableConstants.GROUP_PREFIX)){ group = TableConstants.GROUP_PREFIX + group; }
+
+        try{
+            final Scanner metadataScanner = persistenceService.createScanner(groupMetadataTable, auths);
+            metadataScanner.setRange(new Range(group));
+
+            if(!metadataScanner.iterator().hasNext()){
+                throw new IOException("Group was not found");
+            }
+
+            final Set<GroupMember> members = returnGroup.getMembers();
+
+            Text roleText = new Text();
+            Text memberText = new Text();
+
+            // Serialize the group members
+            for(Map.Entry<Key, Value> entry : metadataScanner){
+                entry.getKey().getColumnFamily(roleText);
+                entry.getKey().getColumnQualifier(memberText);
+                String role = roleText.toString();
+                String member = memberText.toString();
+
+                if(member.equals(requestor)){
+                    requestorPartOfGroup = true;
+                }
+
+                if(role.equals("created_by")){
+                    returnGroup.setCreatedBy(member);
+                } else if(role.equals("created_date")){
+                    returnGroup.setDateCreated(Long.parseLong(member));
+                } else {
+                    // See if the member already exists, and if so, add the role, otherwise create a new member
+                    // TODO - Could make this faster if need be
+                    boolean found = false;
+                    for(GroupMember m : members){
+                        if(m.getName().equals(member)){
+                            Set<Group.GroupRole> roles = m.getRoles();
+                            roles.add(Group.GroupRole.fromString(role));
+                            found = true;
+                            break;
+                        }
+                    }
+                    if(!found){
+                        members.add(new GroupMember(member, Sets.newHashSet(Group.GroupRole.fromString(role))));
+                    }
+                }
+            }
+        } catch (TableNotFoundException ex) {
+            throw new IOException(ex);
+        }
+
+        if(!requestorPartOfGroup){
+            throw new IOException(String.format("User <%s> is not part of group <%s> and does not have permission to list members", requestor, group));
+        }
+
+        return returnGroup;
     }
 
 	/**

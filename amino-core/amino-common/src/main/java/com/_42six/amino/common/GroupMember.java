@@ -1,5 +1,8 @@
 package com._42six.amino.common;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
+
 import java.util.Set;
 
 /**
@@ -39,6 +42,28 @@ public class GroupMember {
 
     public void setRole(Set<Group.GroupRole> roles) {
         this.roles = roles;
+    }
+
+    @Override
+    public boolean equals(final Object obj){
+        if (obj == null) {
+            return false;
+        }
+
+        if (!this.getClass().equals(obj.getClass())) {
+            return false;
+        }
+
+        GroupMember member = (GroupMember) obj;
+
+        return new EqualsBuilder().append(this.name, member.name)
+                .append(this.roles, member.roles)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37).append(this.name).append(this.roles).toHashCode();
     }
 
 }

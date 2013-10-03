@@ -14,6 +14,7 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.io.Text;
 import org.eclipse.jdt.internal.core.Assert;
 import org.junit.BeforeClass;
@@ -25,7 +26,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class AccumuloGroupServiceTest {
 
@@ -362,4 +363,73 @@ public class AccumuloGroupServiceTest {
         request.setRequestor("member2");
         groupService.addToGroup(request);
     }
+
+    @Test
+    /**
+     * Tests that we can retrieve a Group from the DB and rehydrate the object
+     * @throws Exception
+     */
+    public void getGroup() throws Exception {
+        initalizeTables();
+
+        final Group actual = groupService.getGroup("USER|member1", "GROUP|group1", auths);
+        assertNotNull("Fetched null group", actual);
+
+        final Set<GroupMember> members = new HashSet<GroupMember>();
+        members.add(new GroupMember("USER|member1", Sets.newHashSet(Group.GroupRole.ADMIN, Group.GroupRole.CONTRIBUTOR, Group.GroupRole.VIEWER)));
+        members.add(new GroupMember("USER|member2", Sets.newHashSet(Group.GroupRole.CONTRIBUTOR, Group.GroupRole.VIEWER)));
+        members.add(new GroupMember("USER|member3", Sets.newHashSet(Group.GroupRole.VIEWER)));
+
+        final Group expected = new Group();
+        expected.setDateCreated(12345);
+        expected.setCreatedBy("USER|creator");
+        expected.setMembers(members);
+        expected.setGroupName("GROUP|group1");
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void useReverseWithRestriction() throws Exception {
+        throw new NotImplementedException();
+        // Reverse the order of doing the lookups if there is a restriction involved
+    }
+
+//    @Test
+//    public void removeUsersFromGroup() throws Exception {
+//        initalizeTables();
+//        List<String> users = Lists.newArrayList("USER|member2", "USER|member3");
+//        groupService.removeUsersFromGroup("GROUP|group1", users);
+//
+//        // Check the membership table
+//        final Scanner memberScanner = persistenceService.createScanner(MEMBERSHIP_TABLE, auths);
+//        memberScanner.setRange(new Range());
+//        int entries = 0;
+//        for(Map.Entry<Key, Value> entry : memberScanner){
+//            entries++;
+//            if(users.contains(entry.getKey().getRow().toString())){
+//                String group = entry.getKey().getColumnFamily().toString();
+//                Assert.isTrue(group.compareTo("GROUP|group1") != 0);
+//            }
+//        }
+//        Assert.isTrue(entries == 7);
+//
+//        // Check the metadata table
+//        final Scanner metadataScanner = persistenceService.createScanner(METADATA_TABLE, auths);
+//        metadataScanner.setRange(new Range());
+//        entries = 0;
+//        for(Map.Entry<Key, Value> entry : metadataScanner){
+//            entries++;
+//            // Found a group that they shouldn't be in.  Make sure they aren't
+//            if(entry.getKey().getRow().toString().compareTo("GROUP|group1") == 0){
+//                // Don't care if they are still listed as the creator of the group
+//                if(entry.getKey().getColumnFamily().toString().compareTo("created_by") != 0){
+//                    Assert.isTrue(!users.contains(entry.getKey().getColumnQualifier().toString()));
+//                }
+//            }
+//        }
+//        Assert.isTrue(entries == 21);
+//    }
+
+
 }

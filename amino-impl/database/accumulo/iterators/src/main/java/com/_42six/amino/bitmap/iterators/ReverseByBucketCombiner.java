@@ -46,6 +46,7 @@ public class ReverseByBucketCombiner extends WrappingIterator implements OptionD
     /** The option that signifies how many Ranges are being iterated over */
     public static final String OPTION_NUM_RANGES = "num_ranges";
 
+    /** The amount of memory to use when trying to optimize combining of bitmaps.  This is is the trigger, not the upper limit */
     public static final String OPTION_BITMAP_MEM_THRESHOLD = "max_bitmap_memory_bytes";
 
     // PRIVATE VARS
