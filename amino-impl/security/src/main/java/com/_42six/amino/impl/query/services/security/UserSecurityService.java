@@ -1,9 +1,9 @@
 package com._42six.amino.impl.query.services.security;
 
-import java.util.Set;
 import java.util.Arrays;
+import java.util.Set;
 
-class UserSecurityService {
+public class UserSecurityService {
     
     private SecurityService serviceImpl;
     private String aminoAuths;
