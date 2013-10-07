@@ -2,19 +2,26 @@ package com._42six.amino.bitmap.reverse;
 
 
 import com._42six.amino.bitmap.BitmapConfigHelper;
+import com._42six.amino.bitmap.HypothesisKeyComparator;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.JobUtilities;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.util.PathUtils;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.impl.ConnectorImpl;
+import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
+import org.apache.accumulo.core.client.mapreduce.lib.partition.RangePartitioner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.thrift.AuthInfo;
+import org.apache.accumulo.core.util.TextUtil;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -22,6 +29,7 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.SortedSet;
@@ -63,10 +71,10 @@ public class ReverseHypothesisJob extends Configured implements Tool
         SequenceFileInputFormat.setInputPaths(job, inputPaths); 
         
         job.setMapperClass(ReverseHypothesisMapper.class);
-        //job.setMapOutputKeyClass(Text.class);
-        //job.setMapOutputValueClass(ReverseHypothesisBitmapValue.class);
-        job.setMapOutputKeyClass(Key.class);
-        job.setMapOutputValueClass(NullWritable.class);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(ReverseHypothesisValue.class);
+        //job.setMapOutputKeyClass(Key.class);
+        //job.setMapOutputValueClass(NullWritable.class);
 
         job.setReducerClass(ReverseHypothesisReducer.class); 
         job.setOutputKeyClass(Key.class);
@@ -107,35 +115,32 @@ public class ReverseHypothesisJob extends Configured implements Tool
         	//final int numberOfHashes = conf.getInt("amino.bitmap.num-hashes", 1);
         	SortedSet<Text> splits = new TreeSet<Text>();
 
-        	for (int shard = 0; shard < numberOfShards; shard++)
+        	for (int shard = 1; shard < numberOfShards; shard++)
         	{
         		splits.add(new Text(Integer.toString(shard)));
         	}
-        	job.setNumReduceTasks(splits.size());
-//
-//        	FileSystem fs = FileSystem.get(conf);
-//        	out = new PrintStream(new BufferedOutputStream(fs.create(new Path(workingDir + "/splits.txt"))));
-//        	for (Text split : splits)
-//        	{
-//        		out.println(new String(Base64.encodeBase64(TextUtil.getBytes(split))));
-//        	}
-//        	out.flush();
-//        	out.close();
+        	job.setNumReduceTasks(numberOfShards);
+
+        	FileSystem fs = FileSystem.get(conf);
+        	out = new PrintStream(new BufferedOutputStream(fs.create(new Path(workingDir + "/splits.txt"))));
+        	for (Text split : splits)
+        	{
+        		out.println(new String(Base64.encodeBase64(TextUtil.getBytes(split))));
+        	}
+        	out.flush();
+        	out.close();
 
         	success = IteratorUtils.createTable(c.tableOperations(), tableName, splits, blastIndex, blastIndex);
         	
-        	//job.setOutputFormatClass(CloudbaseFileOutputFormat.class);
-        	//CloudbaseFileOutputFormat.setOutputPath(job, new Path(workingDir + "/files"));
-        	//job.setPartitionerClass(RangePartitioner.class);
-            //job.setPartitionerClass(KeyRangePartitioner.class);
-        	//job.setSortComparatorClass(HypothesisKeyComparator.class); //This will ensure the values come in sorted so we don't have to do that TreeMap...
-        	//job.setSortComparatorClass(CbKeyRowidCombiner.class);
-            //RangePartitioner.setSplitFile(job, workingDir + "/splits.txt");
-            //KeyRangePartitioner.setSplitFile(job, workingDir + "/splits.txt");
+        	job.setOutputFormatClass(AccumuloFileOutputFormat.class);
+        	AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDir + "/files"));
+        	job.setPartitionerClass(RangePartitioner.class);
+        	job.setSortComparatorClass(HypothesisKeyComparator.class); //This will ensure the values come in sorted so we don't have to do that TreeMap...
+            RangePartitioner.setSplitFile(job, workingDir + "/splits.txt");
 
-            job.setOutputFormatClass(AccumuloOutputFormat.class);
-            AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-            AccumuloOutputFormat.setOutputInfo(job, user, password.getBytes(), true, null);
+//            job.setOutputFormatClass(AccumuloOutputFormat.class);
+//            AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
+//            AccumuloOutputFormat.setOutputInfo(job, user, password.getBytes(), true, null);
 
 
         	//success = true;
@@ -155,34 +160,32 @@ public class ReverseHypothesisJob extends Configured implements Tool
         	result = job.waitForCompletion(true) ? 0 : -1;
         }
         
-//        if (c != null && success)
-//        {
-//        	System.out.println("Importing job results to accumulo");
-//        	try
-//        	{
-//        		String tb = tableName + temp;
-//        		if (!blastIndex){
-//                    tb = tableName;
-//                }
-//        		c.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", 20, 4, false);
-//        		result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
-//        	}
-//        	catch (CBException e)
-//        	{
-//        		result = 1;
-//        		e.printStackTrace();
-//        	}
-//        	catch (CBSecurityException e)
-//        	{
-//        		result = 1;
-//				e.printStackTrace();
-//			}
-//        	catch (IOException e)
-//			{
-//				result = 1;
-//				e.printStackTrace();
-//			}
-//        }
+        if (c != null && success)
+        {
+        	System.out.println("Importing job results to accumulo");
+        	try
+        	{
+        		String tb = tableName + temp;
+        		if (!blastIndex){
+                    tb = tableName;
+                }
+        		c.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", 20, 4, false);
+        		result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
+        	}
+        	
+        	catch (IOException e)
+			{
+				result = 1;
+				e.printStackTrace();
+			} 
+        	catch (AccumuloException e) 
+			{
+				e.printStackTrace();
+			} catch (AccumuloSecurityException e) 
+			{
+				e.printStackTrace();
+			}
+        }
         
         return result;
 	}

@@ -10,11 +10,12 @@ import org.apache.accumulo.core.data.Key;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 
 import java.io.IOException;
 
 //public class ReverseHypothesisMapper extends Mapper<BucketStripped, AminoWritable, Text, ReverseHypothesisBitmapValue>
-public class ReverseHypothesisMapper extends Mapper<BucketStripped, AminoWritable, Key, NullWritable>
+public class ReverseHypothesisMapper extends Mapper<BucketStripped, AminoWritable, Text, ReverseHypothesisValue>
 {
 	private BucketCache bucketCache;
     private static BucketStripped lastBS;
@@ -60,19 +61,20 @@ public class ReverseHypothesisMapper extends Mapper<BucketStripped, AminoWritabl
 
         //final ReverseHypothesisBitmapValue rhbv = new ReverseHypothesisBitmapValue(index, BUCKETNAME, bucket.getBucketValue().toString(), VISIBILITY.toString());
         final String BUCKET_VALUE = bucket.getBucketValue().toString();
-		System.out.println("Working on bucket: " + BUCKETNAME + " value: " + BUCKET_VALUE + " BS: " + bs.toString());
+        ReverseHypothesisValue rhv = new ReverseHypothesisValue(index, DATASOURCE, BUCKETNAME, 0, BUCKET_VALUE, VISIBILITY.toString());
 
         Key cbKey = new Key(SHARD, new Text(Integer.toString(index) + "#" + DATASOURCE + "#" + BUCKETNAME + "#0"), new Text(BUCKET_VALUE), VISIBILITY);
-        context.write(cbKey, NullWritable.get());
-        System.out.println("Key:" + cbKey.toString());
+        //context.write(cbKey, NullWritable.get());
+        context.write(new Text(cbKey.toStringNoTime()), rhv);
 
         // Do the rest of the salts
         for (int salt = 1; salt < numberOfHashes; salt++)
         {
         	index = BitmapIndex.getValueIndex(bucket, salt);
             cbKey = new Key(SHARD, new Text(Integer.toString(index) + "#" + DATASOURCE + "#" + BUCKETNAME + "#" + salt), new Text(BUCKET_VALUE), VISIBILITY);
-            context.write(cbKey, NullWritable.get());
-            System.out.println("Key:" + cbKey.toString());
+        	rhv = new ReverseHypothesisValue(index, DATASOURCE, BUCKETNAME, salt, BUCKET_VALUE, VISIBILITY.toString());
+            //context.write(cbKey, NullWritable.get());
+            context.write(new Text(cbKey.toStringNoTime()), rhv);
         }
 	}
 }
