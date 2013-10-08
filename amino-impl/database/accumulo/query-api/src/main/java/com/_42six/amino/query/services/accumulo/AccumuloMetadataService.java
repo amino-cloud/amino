@@ -547,7 +547,6 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		MorePreconditions.checkNotNullOrEmpty(hypothesis.owner, "Can not have null owner strings for hypothesis");
 		Preconditions.checkNotNull(hypothesis.queries, "Can not have null queries");
 		Preconditions.checkNotNull(hypothesis.created, "Created time can not be null");
-		Preconditions.checkNotNull(hypothesis.executed, "Executed time can not be null");
 		Preconditions.checkNotNull(hypothesis.updated, "Updated time can not be null");
 
 		// TODO Add in logic to make sure that the person adding the hypothesis should be able to do this
@@ -617,7 +616,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		String cq 	= entry.getKey().getColumnQualifier().toString();
 		String value = entry.getValue().toString();
 
-		if (fieldsToAdd == null || fieldsToAdd.contains(cq)){
+		if ((fieldsToAdd == null || fieldsToAdd.contains(cq)) && !value.equals("null")){
 			if (cq.equals("features")) {
 				hypothesis.hypothesisFeatures = new Gson().fromJson(value, new TypeToken<Set<HypothesisFeature>>(){}.getType());
 			} else if (cq.equals("bucket")) {

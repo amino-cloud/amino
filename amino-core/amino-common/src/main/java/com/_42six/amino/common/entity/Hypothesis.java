@@ -16,7 +16,52 @@ import java.util.TreeSet;
  */
 public class Hypothesis implements Comparable<Hypothesis> {
 	/**
-	 * Sort Hypothesis bases on their name
+	 * Create an empty Hypothesis
+	 */
+	public Hypothesis(){
+	/*
+    this.owner = null;
+    this.name = null;
+    this.bucketid = null;
+    this.canEdit = null;
+    this.canView = null;
+    this.datasourceid = null;
+    this.justification = null;
+    this.bucketValue = null;
+    this.btVisibility = null;
+    this.visibility = null;
+    this.hypothesisFeatures = null;
+    this.created = null;
+    this.updated = null;
+    this.executed = null;
+   */
+	}
+
+	/**
+	 * Create a Hypothesis as a copy of another Hypothesis
+	 */
+  public Hypothesis(Hypothesis otherHyp, String owner, String name){
+    this.owner = (owner != null) ? owner : otherHyp.owner;
+    this.name = (name != null) ? name : otherHyp.name;
+
+    this.bucketid = otherHyp.bucketid;
+    this.canEdit = otherHyp.canEdit;
+    this.canView = otherHyp.canView;
+    this.datasourceid = otherHyp.datasourceid;
+    this.justification = otherHyp.justification;
+    this.bucketValue = otherHyp.bucketValue;
+    this.btVisibility = otherHyp.btVisibility;
+    this.visibility = otherHyp.visibility;
+    this.hypothesisFeatures = otherHyp.hypothesisFeatures;
+
+    Long now = System.currentTimeMillis();
+    this.created = now;
+    this.updated = now;
+    this.executed = null;
+  }
+
+	/**
+	 * Sort Hypothesis based on their name
 	 */
 	public int compareTo(Hypothesis other) {
 		return this.name.compareTo(other.name);
