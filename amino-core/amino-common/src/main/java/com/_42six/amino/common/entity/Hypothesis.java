@@ -19,22 +19,6 @@ public class Hypothesis implements Comparable<Hypothesis> {
 	 * Create an empty Hypothesis
 	 */
 	public Hypothesis(){
-	/*
-    this.owner = null;
-    this.name = null;
-    this.bucketid = null;
-    this.canEdit = null;
-    this.canView = null;
-    this.datasourceid = null;
-    this.justification = null;
-    this.bucketValue = null;
-    this.btVisibility = null;
-    this.visibility = null;
-    this.hypothesisFeatures = null;
-    this.created = null;
-    this.updated = null;
-    this.executed = null;
-   */
 	}
 
 	/**
