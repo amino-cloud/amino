@@ -350,12 +350,14 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		//Iterator<Map.Entry<Key, Value>> itr = scan.iterator();
 		for(Map.Entry<Key, Value> entry : scan){
 			String id = entry.getKey().getColumnFamily().toString();
+      String owner = entry.getKey().getRow().toString();
 
 			// Hypothesis are made up of multiple rows.  Since the results are sorted, if we
 			// come across a new row, then need to create a new Hypothesis
 			if (activeEntity == null || id.compareTo(activeEntity.id) != 0){
 				activeEntity = new Hypothesis();
 				activeEntity.id = id;
+        activeEntity.owner = owner;
 				activeEntity.hypothesisFeatures = new HashSet<HypothesisFeature>();
 				entities.add(activeEntity);
 			}
