@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com._42six.amino</groupId>
+	<artifactId>amino-parent</artifactId>
+	<packaging>pom</packaging>
+	<version>1.7.0-SNAPSHOT</version>
+	<description>
+        	Amino is the codename of the analytic framework project. Which allows
+        	analysts and developers to create and query analytics/map reduce output.
+	</description>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	</properties>
+
+	<!-- - To change the Amino version, from the amino core directory execute: 
+		mvn versions:set versions:commit -DnewVersion=1.0 - This will change the 
+		amino-core version in this pom and the pom of all modules referenced in this 
+		pom. -->
+
+	<build>
+		<pluginManagement>
+			<plugins>
+			<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-jar-plugin</artifactId>
+					<inherited>true</inherited>
+					<configuration>
+						<archive>
+							<manifest>
+								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+								<addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+							</manifest>
+						</archive>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>2.1</version>
+					<configuration>
+						<source>1.6</source>
+						<target>1.6</target>
+						<compilerArgument>-Xlint:all</compilerArgument>
+						<showWarnings>true</showWarnings>
+						<showDeprecation>true</showDeprecation>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+
+	<modules>
+		<module>amino-core</module>
+		<module>amino-impl</module>
+	</modules>
+
+	<repositories>
+		<repository>
+			<id>java.net</id>
+			<name>Java.net Maven Repository</name>
+			<url>http://download.java.net/maven/2</url>
+		</repository>
+	</repositories>
+</project>
