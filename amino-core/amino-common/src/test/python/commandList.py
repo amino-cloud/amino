@@ -8,15 +8,15 @@ commands = [
 [['/opt/hadoop/bin/hadoop fs -rmr /amino/numbers/out', False]],
 
 #execute the jobs to create the features sequentially
-[['/opt/hadoop/bin/hadoop jar number-1.7.0-SNAPSHOT-job.jar com._42six.amino.api.framework.FrameworkDriver --amino_default_config_path /amino/numbers/config', False]],
+[['/opt/hadoop/bin/hadoop jar number-2.0.0-job.jar com._42six.amino.api.framework.FrameworkDriver --amino_default_config_path /amino/numbers/config', False]],
 
 #run the indexing jobs in parallel
-[['/opt/hadoop/bin/hadoop jar amino-bitmap-1.7.0-SNAPSHOT-job.jar com._42six.amino.bitmap.BtMetadataImporterJob /amino/numbers/config', True],
-['/opt/hadoop/bin/hadoop jar amino-bitmap-1.7.0-SNAPSHOT-job.jar com._42six.amino.bitmap.BitmapJob /amino/numbers/out /amino/numbers/config', True],
-['/opt/hadoop/bin/hadoop jar amino-bitmap-1.7.0-SNAPSHOT-job.jar com._42six.amino.bitmap.StatsJob /amino/numbers/out /amino/numbers/config', True],
-['/opt/hadoop/bin/hadoop jar amino-bitmap-1.7.0-SNAPSHOT-job.jar com._42six.amino.bitmap.HypothesisJob /amino/numbers/out /amino/numbers/config /amino/numbers/working', True]],
+[['/opt/hadoop/bin/hadoop jar amino-bitmap-2.0.0-job.jar com._42six.amino.bitmap.BtMetadataImporterJob /amino/numbers/config', True],
+['/opt/hadoop/bin/hadoop jar amino-bitmap-2.0.0-job.jar com._42six.amino.bitmap.BitmapJob /amino/numbers/out /amino/numbers/config', True],
+['/opt/hadoop/bin/hadoop jar amino-bitmap-2.0.0-job.jar com._42six.amino.bitmap.StatsJob /amino/numbers/out /amino/numbers/config', True],
+['/opt/hadoop/bin/hadoop jar amino-bitmap-2.0.0-job.jar com._42six.amino.bitmap.HypothesisJob /amino/numbers/out /amino/numbers/config /amino/numbers/working', True]],
 
 #write some final values and swap the tables
-[['/opt/hadoop/bin/hadoop jar amino-bitmap-1.7.0-SNAPSHOT-job.jar com._42six.amino.bitmap.FeatureMetadataJob /amino/numbers/config', True]]
+[['/opt/hadoop/bin/hadoop jar amino-bitmap-2.0.0-job.jar com._42six.amino.bitmap.FeatureMetadataJob /amino/numbers/config', True]]
 
 ]
