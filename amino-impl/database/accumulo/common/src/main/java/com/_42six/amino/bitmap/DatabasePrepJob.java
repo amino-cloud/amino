@@ -1,16 +1,13 @@
 package com._42six.amino.bitmap;
 
-import com._42six.amino.common.AminoConfiguration;
-import com._42six.amino.common.Metadata;
-import com._42six.amino.common.accumulo.*;
-import com._42six.amino.common.bigtable.TableConstants;
-import com.google.gson.Gson;
+import java.io.IOException;
+
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.data.Mutation;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -18,7 +15,17 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import java.io.IOException;
+import com._42six.amino.common.AminoConfiguration;
+import com._42six.amino.common.Metadata;
+import com._42six.amino.common.accumulo.BtBucketMetadata;
+import com._42six.amino.common.accumulo.BtDatasourceMetadata;
+import com._42six.amino.common.accumulo.BtDomainMetadata;
+import com._42six.amino.common.accumulo.BtFeatureMetadata;
+import com._42six.amino.common.accumulo.BtMetadata;
+import com._42six.amino.common.accumulo.IteratorUtils;
+import com._42six.amino.common.bigtable.TableConstants;
+import com._42six.amino.common.util.PathUtils;
+import com.google.gson.Gson;
 
 /**
  * Job for importing the metadata information from the framework driver into the Accumulo metadata table. Also creates
@@ -136,7 +143,8 @@ public class DatabasePrepJob extends Configured implements Tool {
         final byte[] password = conf.get("bigtable.password").getBytes();
         //final String metadataTable = conf.get("amino.metadataTable");
         final String metadataTable = conf.get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
-        final String metadataDir = conf.get("amino.output") + "/cache/metadata";
+        final String metadataPaths = StringUtils.join(PathUtils.getJobMetadataPaths(conf, args[0]), ',');
+        System.out.println("Metadata paths: [" + metadataPaths + "].");
 
         // TODO - Verify that all of the params above were not null
 
@@ -149,7 +157,7 @@ public class DatabasePrepJob extends Configured implements Tool {
         job.setReducerClass(MetadataConsolidatorReducer.class);
 
         // Inputs
-        SequenceFileInputFormat.addInputPath(job, new Path(metadataDir));
+        SequenceFileInputFormat.setInputPaths(job, metadataPaths);
         job.setInputFormatClass(SequenceFileInputFormat.class);
 
         // Outputs
@@ -168,7 +176,7 @@ public class DatabasePrepJob extends Configured implements Tool {
 
     public static void main(String[] args) throws Exception {
         final Configuration conf = new Configuration();
-        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, args[0]); // TODO: use flag instead of positional
+        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, args[1]); // TODO: use flag instead of positional
         AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
 
         int res = ToolRunner.run(conf, new DatabasePrepJob(), args);

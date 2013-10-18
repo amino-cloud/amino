@@ -15,6 +15,7 @@ public class PathUtils {
 	private static final String JOB_DATA_FOLDER = "data";
 	private static final String JOB_METADATA_FOLDER = "cache";
 	private static final String CACHE_PATH_PROPERTY = "amino.job.cache.path";
+	private static final String JOB_CACHE_METADATA_FOLDER = "metadata";
 	
 	public static String getJobDataPath(String rootPath) {
 		return rootPath.endsWith("/") ? rootPath + JOB_DATA_FOLDER : rootPath + "/" + JOB_DATA_FOLDER;
@@ -84,6 +85,27 @@ public class PathUtils {
 		else {
 			return new HashSet<String>() {{ add(getJobCachePath(rootPath)); }};
 		}
+	}
+	
+	public static Set<String> getJobMetadataPaths(Configuration conf, final String rootPath) throws IOException {
+		Set<String> cachePaths = getJobCachePaths(conf, rootPath);
+		
+		FileSystem fs = FileSystem.get(conf);
+		Set<String> metadataPaths = new HashSet<String>();
+		for (String cachePath : cachePaths) {
+			Path metadataFolder = new Path(cachePath + "/" + JOB_CACHE_METADATA_FOLDER);
+			if (!fs.exists(metadataFolder)) {
+				throw new IOException("Missing metadata directory [" + metadataFolder 
+						+ "] in directory [" + cachePath + "]");
+			}
+			else if (fs.isFile(metadataFolder)) {
+				throw new IOException("Metadata path [" + metadataFolder + "] exists, but is a file, not a folder");
+			}
+			else {
+				metadataPaths.add(metadataFolder.toString());
+			}
+		}
+		return metadataPaths;
 	}
 	
 	public static String getCachePath(Configuration conf) {
