@@ -265,7 +265,7 @@ public class AccumuloQueryService implements AminoQueryService {
 					
 		// If the requester isn't the owner, make sure they can see the hypothesis via groups
 		if(requester.compareTo(resultOwner) != 0){
-			groups = groupService.getGroups(requester, auths);
+			groups = groupService.getGroupsForUser(requester, auths);
 			if(groups == null || groups.size() <= 0){
 				throw new EntityNotFoundException("user <" + requester + "> is not allowed to view this result");
 			}

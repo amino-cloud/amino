@@ -281,7 +281,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		// Check to see if we are checking against the owner of the hypothesis.  If not, we need to
 		// make sure that the requester is allowed to fetch the hypothesis
 		if (userId.compareTo(owner) != 0) {
-			groups = groupService.getGroups(userId, auths);
+			groups = groupService.getGroupsForUser(userId, auths);
 			if (groups.size() <= 0) {
 				throw new EntityNotFoundException("No hypothesis found with id of " + ((hypothesisId != null) ? hypothesisId : "Empty"));
 			}
@@ -387,7 +387,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 
 		// Check to make sure that the requester can "edit" this hypothesis
 		if (requester.compareTo(hypothesis.owner) != 0) {
-			Set<String> groups = groupService.getGroups(requester, auths);
+			Set<String> groups = groupService.getGroupsForUser(requester, auths);
 
 			// Make sure the requester even has a chance of being in an edit group
 			if (groups == null || groups.size() <= 0) {

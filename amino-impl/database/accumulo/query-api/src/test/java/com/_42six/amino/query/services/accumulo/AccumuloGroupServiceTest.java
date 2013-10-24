@@ -134,6 +134,7 @@ public class AccumuloGroupServiceTest {
         persistenceService.insertRow("USER|member3", "GROUP|group1" , "", "", "", MEMBERSHIP_TABLE);
         persistenceService.insertRow("USER|member3", "GROUP|group2" , "", "", "", MEMBERSHIP_TABLE);
         persistenceService.insertRow("USER|member3", "GROUP|group3" , "", "", "", MEMBERSHIP_TABLE);
+        persistenceService.insertRow("USER|public", "GROUP|group3", "", "", "", MEMBERSHIP_TABLE);
 
         // Initialize the metadata table
         persistenceService.insertRow("GROUP|group1", "admin" , "USER|member1", "", "", METADATA_TABLE);
@@ -161,6 +162,7 @@ public class AccumuloGroupServiceTest {
         persistenceService.insertRow("GROUP|group3", "viewer" , "USER|member1", "", "", METADATA_TABLE);
         persistenceService.insertRow("GROUP|group3", "viewer" , "USER|member2", "", "", METADATA_TABLE);
         persistenceService.insertRow("GROUP|group3", "viewer" , "USER|member3", "", "", METADATA_TABLE);
+        persistenceService.insertRow("GROUP|group3", "viewer" , "USER|public", "", "", METADATA_TABLE);
         persistenceService.insertRow("GROUP|group3", "created_by" , "USER|creator", "", "", METADATA_TABLE);
         persistenceService.insertRow("GROUP|group3", "created_date" , "12345", "", "", METADATA_TABLE);
     }
@@ -187,7 +189,7 @@ public class AccumuloGroupServiceTest {
                 Assert.isTrue(!groups.contains(group));
             }
         }
-        Assert.isTrue(entries == 7);
+        assertEquals(8, entries);
 
         // Check the metadata table
         final Scanner metadataScanner = persistenceService.createScanner(METADATA_TABLE, auths);
@@ -203,7 +205,7 @@ public class AccumuloGroupServiceTest {
                 }
             }
         }
-        Assert.isTrue(entries == 20);
+        assertEquals(21, entries);
     }
 
     @Rule
@@ -247,7 +249,7 @@ public class AccumuloGroupServiceTest {
                 Assert.isTrue(!groups.contains(group));
             }
         }
-        Assert.isTrue(entries == 7);
+        assertEquals(8, entries);
 
         // Check the metadata table
         final Scanner metadataScanner = persistenceService.createScanner(METADATA_TABLE, auths);
@@ -263,7 +265,7 @@ public class AccumuloGroupServiceTest {
                 }
             }
         }
-        Assert.isTrue(entries == 20);
+        assertEquals(21, entries);
     }
 
     @Test
@@ -328,7 +330,7 @@ public class AccumuloGroupServiceTest {
             }
         }
         // Make sure that only the one record was added
-        Assert.isTrue(entries == 10);
+        assertEquals(11, entries);
 
         // Check the metadata table
         final Scanner metadataScanner = persistenceService.createScanner(METADATA_TABLE, auths);
@@ -341,7 +343,7 @@ public class AccumuloGroupServiceTest {
             entries++;
         }
         // Make sure all the rows were added
-        Assert.isTrue(entries == 3);
+        assertEquals(3, entries);
 
         // Verify other rows
         metadataScanner.clearColumns();
@@ -351,7 +353,7 @@ public class AccumuloGroupServiceTest {
             entries++;
         }
         // Make sure those were the only rows added
-        Assert.isTrue(entries == 28);
+        assertEquals(29, entries);
         assertTrue("", true);
 
 
@@ -387,6 +389,39 @@ public class AccumuloGroupServiceTest {
         expected.setGroupName("GROUP|group1");
 
         assertEquals(expected, actual);
+    }
+
+    @Test
+    /**
+     * Test that we can get the groups that a user belongs to
+     */
+    public void getGroupsForUser() throws Exception{
+        initalizeTables();
+
+        final Set<String> expected = Sets.newHashSet("public", "group1", "group2", "group3");
+
+        // Check to see that it works with the prefix
+        assertEquals(expected, groupService.getGroupsForUser("USER|member1", auths));
+
+        // Check to see that it works without the prefix
+        assertEquals(expected, groupService.getGroupsForUser("member1", auths));
+
+        // Check for a user that doesn't exist
+        assertEquals(Sets.newHashSet("public"), groupService.getGroupsForUser("memberFake", auths));
+    }
+
+    @Test
+    /**
+     * Test that we can get all of the groups that a user can see, which includes the groups they are in plus the public groups
+     */
+    public void listGroups() throws Exception {
+        initalizeTables();
+        Set<String> expected = Sets.newHashSet("group1", "group2", "group3", "public");
+
+        // Remove member2 from group3 so that we can see that we still get group3 because of the public member
+        groupService.removeUserFromGroups("USER|member2", "USER|member2", Sets.newHashSet("GROUP|group3"), auths);
+
+        assertEquals(expected, groupService.listGroups("member2", auths));
     }
 
     @Test

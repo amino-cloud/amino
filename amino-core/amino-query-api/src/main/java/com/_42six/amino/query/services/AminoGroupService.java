@@ -26,6 +26,15 @@ public interface AminoGroupService{
 	 */
 	public void createGroup(CreateGroupRequest request) throws Exception;
 
+
+    /**
+     * List all of the groups that a particular user can see
+     *
+     * @param userId The person for which groups can be seen
+     * @param visibility the db visibility strings
+     */
+    public Set<String> listGroups(String userId, String[] visibility) throws IOException;
+
 //	/**
 //	 * Remove the members from the group
 //	 *
@@ -51,7 +60,7 @@ public interface AminoGroupService{
 	 * @param visibility The Accumulo authorizations
 	 * @return Set<String> of groups for the particular userId
 	 */
-	public Set<String> getGroups(String userId, String[] visibility) throws IOException;
+	public Set<String> getGroupsForUser(String userId, String[] visibility) throws IOException;
 
 	/**
 	 * Returns the Hypotheses for the groups that the userId belongs to

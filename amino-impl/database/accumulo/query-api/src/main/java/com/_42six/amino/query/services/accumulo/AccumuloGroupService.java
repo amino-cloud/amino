@@ -219,6 +219,33 @@ public class AccumuloGroupService implements AminoGroupService {
         log.info("Created group " + groupName);
     }
 
+
+    /**
+     * List all of the groups that a particular user can see
+     *
+     * @param userId     The person for which groups can be seen
+     * @param visibility the db visibility strings
+     */
+    public Set<String> listGroups(String userId, String[] visibility) throws IOException {
+        return listGroups(userId, new Authorizations(visibility));
+    }
+
+    /**
+     * List all of the groups that a particular user can see
+     *
+     * @param userId     The person for which groups can be seen
+     * @param auths      the db authorizations
+     */
+    public Set<String> listGroups(String userId, Authorizations auths) throws IOException {
+        MorePreconditions.checkNotNullOrEmpty(userId);
+        Preconditions.checkNotNull(auths);
+
+        final Set<String> groups = getGroupsForUser(userId, auths);
+        groups.addAll(getGroupsForUser("public",auths));
+
+        return groups;
+    }
+
 //    /**
 //     * Remove the members from the group
 //     *
@@ -269,7 +296,7 @@ public class AccumuloGroupService implements AminoGroupService {
 
         // If no groups provided, remove from any group they might be a part of
         if(groups == null || groups.size() == 0){
-            groups = getGroups(userId, auths);
+            groups = getGroupsForUser(userId, auths);
         }
 
         for(String group : groups){
@@ -429,43 +456,46 @@ public class AccumuloGroupService implements AminoGroupService {
 	 * @param visibility The Accumulo authorizations
 	 * @return Set<String> of groups for the particular userId
 	 */
-	public Set<String> getGroups(String userId, String[] visibility) throws IOException {
+	public Set<String> getGroupsForUser(String userId, String[] visibility) throws IOException {
 		Preconditions.checkNotNull(visibility);
-		return getGroups(userId, new Authorizations(visibility));
+		return getGroupsForUser(userId, new Authorizations(visibility));
 	}
 
-	/**
-	 * Fetches the groups that a particular id belongs to
-	 *
-	 * @param userId The userId to fetch the groups for or empty to fetch them all
-	 * @param auths  The Accumulo authorizations
-	 * @return Set<String> of groups for the particular userId
-	 */
-	public Set<String> getGroups(String userId, Authorizations auths) throws IOException {
-		Preconditions.checkNotNull(auths);
+    /**
+     * Fetches the groups that a particular id belongs to
+     *
+     * @param userId The userId to fetch the groups for or empty to fetch them all
+     * @param auths  The Accumulo authorizations
+     * @return Set<String> of groups for the particular userId
+     */
+    public Set<String> getGroupsForUser(String userId, Authorizations auths) throws IOException {
+        MorePreconditions.checkNotNullOrEmpty(userId);
+        Preconditions.checkNotNull(auths);
 
-		// Everybody is part of the public group
-		Set<String> groups = new HashSet<String>();
-        groups.add(TableConstants.PUBLIC_GROUP);
+        // Make sure we have the internal USER prefix appended if it's not already there
+        if(!userId.startsWith(TableConstants.USER_PREFIX)){
+            userId = TableConstants.USER_PREFIX + userId;
+        }
+
+        // Everybody is part of the public group
+        Set<String> groups = new HashSet<String>();
+        groups.add(TableConstants.PUBLIC_GROUP.substring(TableConstants.GROUP_PREFIX.length()));
 
         Scanner scan;
         try{
-            scan = persistenceService.createScanner(groupMetadataTable, auths);
+            scan = persistenceService.createScanner(groupMembershipTable, auths);
         }  catch (TableNotFoundException ex){
-            log.error("Table '" + groupHypothesisLUT + "' was not found");
+            log.error("Table '" + groupMembershipTable + "' was not found");
             throw new IOException(ex);
         }
-		scan.setRange(new Range(userId));
+        scan.setRange(new Range(userId));
 
-        // TODO FIX THIS ======================================================================
+        for(Map.Entry<Key, Value> entry : scan){
+            groups.add(entry.getKey().getColumnFamily().toString().substring(TableConstants.GROUP_PREFIX.length()));
+        }
 
-
-		for(Map.Entry<Key, Value> entry : scan){
-			groups.add(entry.getKey().getColumnFamily().toString());
-		}
-
-		return groups;
-	}
+        return groups;
+    }
 
 	/**
 	 * Returns the Hypotheses for the groups that the userId belongs to
@@ -483,7 +513,7 @@ public class AccumuloGroupService implements AminoGroupService {
 		List<Range> hypothesesToFind = new ArrayList<Range>();
 
 		// Fetch which groups the userId belongs to
-		Set<String> groups = getGroups(userId, auths);
+		Set<String> groups = getGroupsForUser(userId, auths);
 		List<Range> ranges = new ArrayList<Range>(groups.size());
 
 		// Find which Hypotheses are visible for each group
