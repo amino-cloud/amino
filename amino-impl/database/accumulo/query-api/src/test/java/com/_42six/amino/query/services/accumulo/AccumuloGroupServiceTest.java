@@ -18,6 +18,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.io.Text;
 import org.eclipse.jdt.internal.core.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -64,7 +65,14 @@ public class AccumuloGroupServiceTest {
 
     @Test
     public void createGroup() throws Exception {
+        if(tableOps.exists(MEMBERSHIP_TABLE)){
+            tableOps.delete(MEMBERSHIP_TABLE);
+        }
         tableOps.create(MEMBERSHIP_TABLE);
+
+        if(tableOps.exists(METADATA_TABLE)){
+            tableOps.delete(METADATA_TABLE);
+        }
         tableOps.create(METADATA_TABLE);
 
         final Set<GroupMember> members = new HashSet<GroupMember>();
@@ -424,47 +432,101 @@ public class AccumuloGroupServiceTest {
         assertEquals(expected, groupService.listGroups("member2", auths));
     }
 
-    @Test
+    @Test @Ignore
+    /**
+     * This tests that we can use the ReverseFeatureCombiner when using a restriction feature
+     */
     public void useReverseWithRestriction() throws Exception {
         throw new NotImplementedException();
-        // Reverse the order of doing the lookups if there is a restriction involved
+        // TODO - Reverse the order of doing the lookups if there is a restriction involved
     }
 
-//    @Test
-//    public void removeUsersFromGroup() throws Exception {
-//        initalizeTables();
-//        List<String> users = Lists.newArrayList("USER|member2", "USER|member3");
-//        groupService.removeUsersFromGroup("GROUP|group1", users);
-//
-//        // Check the membership table
-//        final Scanner memberScanner = persistenceService.createScanner(MEMBERSHIP_TABLE, auths);
-//        memberScanner.setRange(new Range());
-//        int entries = 0;
-//        for(Map.Entry<Key, Value> entry : memberScanner){
-//            entries++;
-//            if(users.contains(entry.getKey().getRow().toString())){
-//                String group = entry.getKey().getColumnFamily().toString();
-//                Assert.isTrue(group.compareTo("GROUP|group1") != 0);
-//            }
-//        }
-//        Assert.isTrue(entries == 7);
-//
-//        // Check the metadata table
-//        final Scanner metadataScanner = persistenceService.createScanner(METADATA_TABLE, auths);
-//        metadataScanner.setRange(new Range());
-//        entries = 0;
-//        for(Map.Entry<Key, Value> entry : metadataScanner){
-//            entries++;
-//            // Found a group that they shouldn't be in.  Make sure they aren't
-//            if(entry.getKey().getRow().toString().compareTo("GROUP|group1") == 0){
-//                // Don't care if they are still listed as the creator of the group
-//                if(entry.getKey().getColumnFamily().toString().compareTo("created_by") != 0){
-//                    Assert.isTrue(!users.contains(entry.getKey().getColumnQualifier().toString()));
-//                }
-//            }
-//        }
-//        Assert.isTrue(entries == 21);
-//    }
+    @Test
+    public void removeUsersFromGroup_notAdmin() throws Exception {
+        initalizeTables();
+        exception.expect(IllegalArgumentException.class);
+        exception.expectMessage("requestor was not an admin for the group");
+        groupService.removeUsersFromGroup("USER|NotAdmin", "GROUP|group1", Sets.newHashSet("USER|member1"), auths);
+    }
 
+    @Test
+    public void removeUsersFromGroup_noMoreAdmins() throws Exception {
+        initalizeTables();
+        Set<String> users = Sets.newHashSet("USER|member1", "USER|member3");
+        exception.expect(IllegalArgumentException.class);
+        exception.expectMessage("Can not remove all of the admins for the group");
+        groupService.removeUsersFromGroup("USER|member1", "GROUP|group3", users, auths);
+    }
 
+    @Test
+    public void removeUsersFromGroup_invalidUsers() throws Exception {
+        initalizeTables();
+        Set<String> users = Sets.newHashSet("USER|member2", "USER|fakeUser");
+        groupService.removeUsersFromGroup("USER|member1", "GROUP|group3", users, auths);
+
+        // Check the membership table
+        final Scanner memberScanner = persistenceService.createScanner(MEMBERSHIP_TABLE, auths);
+        memberScanner.setRange(new Range());
+        int entries = 0;
+        for(Map.Entry<Key, Value> entry : memberScanner){
+            entries++;
+            if(users.contains(entry.getKey().getRow().toString())){
+                String group = entry.getKey().getColumnFamily().toString();
+                assertTrue(group.compareTo("GROUP|group3") != 0);
+            }
+        }
+        assertEquals(9, entries);
+
+        // Check the metadata table
+        final Scanner metadataScanner = persistenceService.createScanner(METADATA_TABLE, auths);
+        metadataScanner.setRange(new Range());
+        entries = 0;
+        for(Map.Entry<Key, Value> entry : metadataScanner){
+            entries++;
+            // Found a group that they shouldn't be in.  Make sure they aren't
+            if(entry.getKey().getRow().toString().equals("GROUP|group3")){
+                // Don't care if they are still listed as the creator of the group
+                if(entry.getKey().getColumnFamily().toString().compareTo("created_by") != 0){
+                    Assert.isTrue(!users.contains(entry.getKey().getColumnQualifier().toString()));
+                }
+            }
+        }
+        assertEquals(24, entries);
+    }
+
+    @Test
+    public void removeUsersFromGroup() throws Exception {
+        initalizeTables();
+        Set<String> users = Sets.newHashSet("USER|member2", "USER|member3");
+        groupService.removeUsersFromGroup("USER|member1", "GROUP|group3", users, auths);
+
+        // Check the membership table
+        final Scanner memberScanner = persistenceService.createScanner(MEMBERSHIP_TABLE, auths);
+        memberScanner.setRange(new Range());
+        int entries = 0;
+        for(Map.Entry<Key, Value> entry : memberScanner){
+            entries++;
+            if(users.contains(entry.getKey().getRow().toString())){
+                String group = entry.getKey().getColumnFamily().toString();
+                assertTrue(group.compareTo("GROUP|group3") != 0);
+            }
+        }
+        assertEquals(8, entries);
+
+        // Check the metadata table
+        final Scanner metadataScanner = persistenceService.createScanner(METADATA_TABLE, auths);
+        metadataScanner.setRange(new Range());
+        entries = 0;
+        for(Map.Entry<Key, Value> entry : metadataScanner){
+            entries++;
+            // Found a group that they shouldn't be in.  Make sure they aren't
+            if(entry.getKey().getRow().toString().equals("GROUP|group3")){
+                // Don't care if they are still listed as the creator of the group
+                if(entry.getKey().getColumnFamily().toString().compareTo("created_by") != 0){
+                    Assert.isTrue(!users.contains(entry.getKey().getColumnQualifier().toString()));
+                }
+            }
+        }
+        assertEquals(23, entries);
+    }
 }

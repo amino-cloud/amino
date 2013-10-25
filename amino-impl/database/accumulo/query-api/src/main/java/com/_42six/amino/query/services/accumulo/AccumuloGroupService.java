@@ -246,23 +246,66 @@ public class AccumuloGroupService implements AminoGroupService {
         return groups;
     }
 
-//    /**
-//     * Remove the members from the group
-//     *
-//     * @param group   The group to remove from
-//     * @param members The members to remove from the group
-//     */
-//    public void removeUsersFromGroup(final String group, List<String> members) throws Exception {
-//        MorePreconditions.checkNotNullOrEmpty(group);
-//        MorePreconditions.checkNotNullOrEmpty(members);
-//        final Collection<Mutation> entries = new ArrayList<Mutation>();
-//
-//        for(String it : members){
-//            entries.add(persistenceService.createDeleteMutation(it, group, "", ""));
-//        }
-//
-//        persistenceService.insertRows(entries, groupMembershipTable);
-//    }
+    /**
+     * Remove the members from the group
+     *
+     * @param requestor The person requesting the users to be removed.  Must be an admin for the group
+     * @param group   The group to remove from
+     * @param members The members to remove from the group
+     * @param auths   The database authorizations
+     */
+    public void removeUsersFromGroup(String requestor, String group, Set<String> members, Authorizations auths) throws Exception {
+        MorePreconditions.checkNotNullOrEmpty(requestor);
+        MorePreconditions.checkNotNullOrEmpty(group);
+        MorePreconditions.checkNotNullOrEmpty(members);
+
+        // Make sure prefixes are in place
+        if(!requestor.startsWith(TableConstants.USER_PREFIX)) { requestor = TableConstants.USER_PREFIX + requestor; }
+        if(!group.startsWith(TableConstants.GROUP_PREFIX)) { group = TableConstants.GROUP_PREFIX + group; }
+        final HashSet<String> internalMembers = new HashSet<String>(members.size());
+        for(String member : members){
+            internalMembers.add(member.startsWith(TableConstants.USER_PREFIX) ? member : TableConstants.USER_PREFIX + member);
+        }
+
+        // Fetch admins for the group
+        final Scanner adminScanner = persistenceService.createScanner(groupMetadataTable, auths);
+        adminScanner.setRange(new Range(group));
+        adminScanner.fetchColumnFamily(new Text("admin"));
+        HashSet<String> admins = new HashSet<String>();
+        for(Map.Entry<Key, Value> entry: adminScanner){
+            admins.add(entry.getKey().getColumnQualifier().toString());
+        }
+
+        // Make sure requestor is an admin for the group
+        if(!admins.contains(requestor)){
+            throw new IllegalArgumentException("requestor was not an admin for the group");
+        }
+
+        // Make sure that we aren't removing all of the admins
+        if(internalMembers.containsAll(admins)){
+            throw new IllegalArgumentException("Can not remove all of the admins for the group");
+        }
+
+        // Remove the entries from the membership table
+        final List<Mutation> membershipEntries = new ArrayList<Mutation>();
+        for(String member : internalMembers){
+            membershipEntries.add(persistenceService.createDeleteMutation(member, group, "", ""));
+        }
+        persistenceService.insertRows(membershipEntries, groupMembershipTable);
+
+        // Remove the entries from the metadata table
+        final List<Mutation> metaEntries = new ArrayList<Mutation>();
+        final Scanner metaScanner = persistenceService.createScanner(groupMetadataTable, auths);
+        metaScanner.setRange(new Range(group));
+        for(Map.Entry<Key, Value> entry : metaScanner){
+            if(internalMembers.contains(entry.getKey().getColumnQualifier().toString())){
+                Key k = entry.getKey();
+                metaEntries.add(persistenceService.createDeleteMutation(group, k.getColumnFamily().toString(),
+                        k.getColumnQualifier().toString(), k.getColumnVisibility().toString()));
+            }
+        }
+        persistenceService.insertRows(metaEntries, groupMetadataTable);
+    }
 
     /**
      * Removes the user from a group.  If no group is provided, they are removed from all of the groups
