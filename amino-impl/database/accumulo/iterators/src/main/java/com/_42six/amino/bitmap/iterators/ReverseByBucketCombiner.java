@@ -397,7 +397,7 @@ public class ReverseByBucketCombiner extends WrappingIterator implements OptionD
             }
             range = new Range(startKey.followingKey(PartialKey.ROW), true, range.getEndKey(), range.isEndKeyInclusive());
         }
-        getSource().seek(range, columnFamilies, inclusive);
+        super.seek(range, columnFamilies, inclusive);
         getNextKey();
     }
 }

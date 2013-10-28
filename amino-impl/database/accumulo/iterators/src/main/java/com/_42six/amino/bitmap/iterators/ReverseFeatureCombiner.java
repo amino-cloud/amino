@@ -210,7 +210,7 @@ public class ReverseFeatureCombiner extends WrappingIterator implements OptionDe
      */
     @Override
     public void seek(Range range, Collection<ByteSequence> columnFamilies, boolean inclusive) throws IOException {
-        getSource().seek(range, columnFamilies, inclusive);
+        super.seek(range, columnFamilies, inclusive);
         next();
     }
 }
