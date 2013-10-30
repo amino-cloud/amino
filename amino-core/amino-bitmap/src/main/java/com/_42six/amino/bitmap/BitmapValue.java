@@ -31,18 +31,18 @@ public final class BitmapValue implements Writable {
         }
     }
 
-    private SortedSet<Integer> indexes;
+    private Set<Integer> indexes;
 
     public BitmapValue() {
-    	indexes = new TreeSet<Integer>();
+    	indexes = new HashSet<Integer>();
     }
 
     public BitmapValue(Integer index){
-        indexes = new TreeSet<Integer>();
+        indexes = new HashSet<Integer>();
         indexes.add(index);
     }
 
-    public SortedSet<Integer> getIndexes() {
+    public Set<Integer> getIndexes() {
         return indexes;
     }
 
@@ -99,7 +99,7 @@ public final class BitmapValue implements Writable {
         indexes.clear();
         IntArrayWritable i = new IntArrayWritable();
         i.readFields(dataInput);
-        SortedSet<Integer> inds = new TreeSet<Integer>();
+        Set<Integer> inds = new HashSet<Integer>();
         for (Writable w : i.get()) {
             inds.add(((IntWritable) w).get());
         }
