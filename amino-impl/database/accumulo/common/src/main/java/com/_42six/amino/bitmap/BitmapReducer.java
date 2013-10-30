@@ -13,32 +13,38 @@ import java.io.IOException;
 
 public class BitmapReducer extends Reducer<BitmapKey, BitmapValue, Text, Mutation> 
 {
-	private boolean blastIndex = true;
+	private boolean blastIndex;
+    private String featureTable;
+    private String bucketTable;
 	
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
 		super.setup(context);
-		blastIndex = context.getConfiguration().getBoolean("amino.bitmap.first.run", true);
+        final Configuration conf = context.getConfiguration();
+		blastIndex = conf.getBoolean("amino.bitmap.first.run", true);
+        featureTable = conf.get(BitmapConfigHelper.AMINO_BITMAP_INDEX_TABLE);
+        bucketTable = conf.get(BitmapConfigHelper.AMINO_BITMAP_BUCKET_TABLE);
 	}
 
 	@Override
 	protected void reduce(BitmapKey key, Iterable<BitmapValue> values, Context context) throws IOException, InterruptedException 
 	{
-		BitmapValue combinedValue = new BitmapValue();
+		final BitmapValue combinedValue = new BitmapValue();
 		for (BitmapValue value : values) {
 			combinedValue.merge(value);
 		}
 
-		AminoBitmap bitmap = new AminoBitmap();
-		for (int index : combinedValue.getIndexes()) 
+		final AminoBitmap bitmap = new AminoBitmap();
+		for (int index : combinedValue.getIndexes())
 		{
 			bitmap.set(index);
 		}
-		Mutation mutation = new Mutation(key.getRow());
-		ColumnVisibility cv = new ColumnVisibility(key.getVis().getBytes());
+
+		final Mutation mutation = new Mutation(key.getRow());
+		final ColumnVisibility cv = new ColumnVisibility(key.getVis().getBytes());
 		mutation.put(key.getVal(), Integer.toString(key.salt), cv, BitmapUtils.toValue(bitmap));
 		
-		String table = getTable(context, key);
+		String table = getTable(key);
 		if (blastIndex)
 		{
 			context.write(new Text(table + IteratorUtils.TEMP_SUFFIX), mutation);
@@ -49,22 +55,16 @@ public class BitmapReducer extends Reducer<BitmapKey, BitmapValue, Text, Mutatio
 		}
 	}
 	
-	public String getTable(Context context, BitmapKey key) throws IOException
+	private String getTable(BitmapKey key) throws IOException
 	{
-		String table = "";
-		Configuration conf = context.getConfiguration();
         switch (key.getType()) {
             case FEATURE:
-                table = conf.get(BitmapConfigHelper.AMINO_BITMAP_INDEX_TABLE);
-                break;
+                return featureTable;
             case BUCKET:
-                table = conf.get(BitmapConfigHelper.AMINO_BITMAP_BUCKET_TABLE);
-                break;
+                return bucketTable;
             default:
                 throw new IOException("Invalid key type");
         }
-		
-		return table;
 	}
 
 }

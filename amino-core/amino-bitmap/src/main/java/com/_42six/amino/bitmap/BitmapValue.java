@@ -1,22 +1,16 @@
 package com._42six.amino.bitmap;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.util.*;
 
 
 public final class BitmapValue implements Writable {
@@ -43,6 +37,11 @@ public final class BitmapValue implements Writable {
     	indexes = new TreeSet<Integer>();
     }
 
+    public BitmapValue(Integer index){
+        indexes = new TreeSet<Integer>();
+        indexes.add(index);
+    }
+
     public SortedSet<Integer> getIndexes() {
         return indexes;
     }
@@ -53,6 +52,11 @@ public final class BitmapValue implements Writable {
 
     public void merge(BitmapValue other) {
     	mergeIndex(other.getIndexes());
+    }
+
+    public void setIndex(Integer index){
+        indexes.clear();
+        indexes.add(index);
     }
 
     private void mergeIndex(Set<Integer> others) {

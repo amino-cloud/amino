@@ -1,14 +1,14 @@
 package com._42six.amino.bitmap;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 import org.apache.commons.lang.builder.CompareToBuilder;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.hadoop.io.WritableComparable;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 public class BitmapKey implements WritableComparable {
 	
@@ -49,6 +49,10 @@ public class BitmapKey implements WritableComparable {
     
     public int getSalt() {
     	return salt;
+    }
+
+    public void setSalt(int salt){
+        this.salt = salt;
     }
     
     public String getVis() {

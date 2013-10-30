@@ -17,27 +17,31 @@ public class BitmapIndex {
     private static final int HASH_TYPE = Hash.MURMUR_HASH;
     private static final int EWAH_DIFFERENCE = 64; // TODO - look at getting this from EWAH wordinbits
     private static final int MAX_EWAH = Integer.MAX_VALUE - EWAH_DIFFERENCE;
+    private static final Hash hasher = Hash.getInstance(HASH_TYPE);
 
     /**
      * Hack for EWAH since it can't handle set'ing a position greater than MAX_EWAH.  This will lead to some extra potential
      * collisions, but hey, at least it works.
      */
     private static int getEwah(int position){
-        if(position == Integer.MIN_VALUE){
+        // The majority of time it should be the first case as it's already supposed to be Math.abs'd
+        if(position >= 0 && position <= MAX_EWAH){
+            return position;
+        } else if (position == Integer.MIN_VALUE){
             return 0;
-        }
-
-        int normalized = Math.abs(position);
-
-        if(normalized > MAX_EWAH){
-            return normalized - EWAH_DIFFERENCE;
+        } else if (position > MAX_EWAH){
+            return position - EWAH_DIFFERENCE;
         } else {
-            return normalized;
+            int normalize = Math.abs(position);
+            if(normalize <= MAX_EWAH){
+                return normalize;
+            } else {
+                return normalize - EWAH_DIFFERENCE;
+            }
         }
     }
 
     private static int getBucketNameIndex(String dataSource, String name, int seed) {
-        Hash hasher = Hash.getInstance(HASH_TYPE);
         int hashcode = hasher.hash(dataSource.getBytes(), seed);
         hashcode = hasher.hash(name.getBytes(), hashcode);
         return getEwah(hashcode);
@@ -60,18 +64,11 @@ public class BitmapIndex {
         return getEwah(hashcode);
     }
 
-    /*public static int getFeatureNameIndex(String name) {
-        Hash hasher = Hash.getInstance(HASH_TYPE);
-        return Math.abs(hasher.hash(name.getBytes()));
-    }*/
-
     private static int getFeatureFactIndex(Bucket bucket, Feature feature, FeatureFact fact) {
         return getFeatureFactIndex(bucket, feature, fact, -1);
     }
 
     public static int getFeatureFactIndex(Bucket bucket, Feature feature, FeatureFact fact, int seed) {
-        Hash hasher = Hash.getInstance(HASH_TYPE);
-
         int hashcode = BitmapIndex.getBucketNameIndex(bucket, seed);
         hashcode = hasher.hash(Integer.toString(getFeatureIndex(feature)).getBytes(), hashcode);
 
@@ -82,14 +79,12 @@ public class BitmapIndex {
     }
 
     public static int getBucketValueIndex(Bucket bucket) {
-        Hash hasher = Hash.getInstance(HASH_TYPE);
         int hashcode = getBucketNameIndex(bucket);
         hashcode = hasher.hash(bucket.getBucketValue().toString().getBytes(), hashcode);
         return getEwah(hashcode);
     }
     
     public static int getBucketValueIndex(BucketStripped bucketStripped) {
-    	Hash hasher = Hash.getInstance(HASH_TYPE);
     	return getEwah(hasher.hash(bucketStripped.getBucketValue().toString().getBytes(), bucketStripped.getCacheHash().get()));
     }
     
@@ -107,20 +102,18 @@ public class BitmapIndex {
     public static int getValueIndex(Bucket bucket, int seed)
     {
     	//This is just the bucketValue only, no need for datasource
-        Hash hasher = Hash.getInstance(HASH_TYPE);
         int hashcode = hasher.hash(bucket.getBucketName().toString().getBytes(), seed);
         hashcode = hasher.hash(bucket.getBucketValue().getBytes(), hashcode);
         return getEwah(hashcode);
     }
 
     private static byte[] getFeatureFactBytes(FeatureFact ff) {
-        Writable w = ff.getFact();
-        ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
-        DataOutput dataOut = new DataOutputStream(outBytes);
+        final Writable w = ff.getFact();
+        final ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
+        final DataOutput dataOut = new DataOutputStream(outBytes);
         try {
             w.write(dataOut);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return outBytes.toByteArray();
