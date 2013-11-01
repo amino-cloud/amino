@@ -1199,6 +1199,7 @@ public class AccumuloQueryService implements AminoQueryService {
 			}
 		} else {
 			auditRequest.setSelectors(bucketValues);
+			auditRequest.setSelectorType(bucketName);
 		}
 		
 		// Configure the auditRequest

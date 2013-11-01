@@ -22,6 +22,7 @@ public class AminoAuditRequest  {
 	private Collection<String> selectors;
 	private String dn;
 	private String systemTo;
+	private String selectorType;
 	/**
 	 * @return the visibility
 	 */
@@ -205,7 +206,21 @@ public class AminoAuditRequest  {
 	public void setSystemTo(String systemTo) {
 		this.systemTo = systemTo;
 	}
-	
+	/**
+	 * @return the selectorType
+	 */
+	public String getSelectorType() {
+		return selectorType;
+	}
+	/**
+	 * @param selectorType the selectorType to set
+	 */
+	public void setSelectorType(String selectorType) {
+		this.selectorType = selectorType;
+	}
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return "AminoAuditRequest [visibility=" + visibility
@@ -214,6 +229,7 @@ public class AminoAuditRequest  {
 				+ ", ipAddress=" + ipAddress + ", justification="
 				+ justification + ", logOnly=" + logOnly + ", numOfSelectors="
 				+ numOfSelectors + ", selectors=" + selectors + ", dn=" + dn
-				+ ", systemTo=" + systemTo + "]";
+				+ ", systemTo=" + systemTo + ", selectorType=" + selectorType
+				+ "]";
 	}
 }
