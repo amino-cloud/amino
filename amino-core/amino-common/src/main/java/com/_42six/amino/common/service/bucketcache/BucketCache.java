@@ -1,28 +1,18 @@
 package com._42six.amino.common.service.bucketcache;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
+import com._42six.amino.common.Bucket;
+import com._42six.amino.common.BucketStripped;
+import com._42six.amino.common.index.BitmapIndex;
+import com._42six.amino.common.util.PathUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IOUtils;
-import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.io.MapFile;
-import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.io.*;
 
-import com._42six.amino.common.Bucket;
-import com._42six.amino.common.BucketStripped;
-import com._42six.amino.common.index.BitmapIndex;
-import com._42six.amino.common.util.PathUtils;
+import java.io.IOException;
+import java.util.*;
 
 public class BucketCache {
 	
@@ -94,8 +84,8 @@ public class BucketCache {
 	}
 	
 	public Bucket getBucket(BucketStripped bucketStripped) throws IOException {
-		Bucket bucket = bucketCache.get(bucketStripped.getCacheHash());
-		bucket.setBucketValue(bucketStripped.getBucketValue());
+		Bucket bucket = new Bucket(bucketCache.get(bucketStripped.getCacheHash()));
+		bucket.setBucketValue(new Text(bucketStripped.getBucketValue()));
 		bucket.computeHash();
 		return bucket;
 	}
@@ -139,16 +129,5 @@ public class BucketCache {
 		}
 		return bucketList;
 	}
-	
-	
-	
-	/*
-	public Bucket getBucket(IntWritable cacheHash) {
-		Bucket bucket = bucketCache.get(cacheHash);
-		enrichBucket(bucket, bucketStripped);
-	}
-	
-	public Bucket getBucket(int cacheHash) {
-		Bucket bucket = bucketCache.get(new IntWritable(cacheHash));
-	}*/
+
 }

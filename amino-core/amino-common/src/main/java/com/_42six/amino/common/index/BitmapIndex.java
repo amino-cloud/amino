@@ -1,9 +1,6 @@
 package com._42six.amino.common.index;
 
-import com._42six.amino.common.Bucket;
-import com._42six.amino.common.BucketStripped;
-import com._42six.amino.common.Feature;
-import com._42six.amino.common.FeatureFact;
+import com._42six.amino.common.*;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.hash.Hash;
 
@@ -85,7 +82,7 @@ public class BitmapIndex {
     }
     
     public static int getBucketValueIndex(BucketStripped bucketStripped) {
-    	return getEwah(hasher.hash(bucketStripped.getBucketValue().toString().getBytes(), bucketStripped.getCacheHash().get()));
+    	return getEwah(hasher.hash(TextUtils.getBytes(bucketStripped.getBucketValue()), bucketStripped.getCacheHash().get()));
     }
     
     public static int getBucketCacheIndex(Bucket bucket) {
@@ -101,9 +98,9 @@ public class BitmapIndex {
      */
     public static int getValueIndex(Bucket bucket, int seed)
     {
-    	//This is just the bucketValue only, no need for datasource
+    	// This is just the bucketValue only, no need for datasource
         int hashcode = hasher.hash(bucket.getBucketName().toString().getBytes(), seed);
-        hashcode = hasher.hash(bucket.getBucketValue().getBytes(), hashcode);
+        hashcode = hasher.hash(TextUtils.getBytes(bucket.getBucketValue()), hashcode);
         return getEwah(hashcode);
     }
 

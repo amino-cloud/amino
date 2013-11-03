@@ -28,8 +28,8 @@ public class BucketStripped implements WritableComparable<BucketStripped> {
 
     public BucketStripped(BucketStripped that){
         this.hashcode = that.hashcode;
-        this.cacheHash = that.cacheHash;
-        this.bucketValue = that.bucketValue;
+        this.cacheHash = new IntWritable(that.cacheHash.get());
+        this.bucketValue = new Text(that.bucketValue);
     }
 
 	/**
