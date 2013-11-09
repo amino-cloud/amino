@@ -2,13 +2,13 @@ package com._42six.amino.bitmap;
 
 import com._42six.amino.common.*;
 import com._42six.amino.common.index.BitmapIndex;
-import com._42six.amino.common.service.bucketcache.BucketCache;
+import com._42six.amino.common.service.datacache.BucketCache;
 import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
 
-public class FeatureMapper extends Mapper<BucketStripped, AminoWritable, FeatureKey, BitmapValue> {
+public class BitLookupMapper extends Mapper<BucketStripped, AminoWritable, BitLookupKey, BitmapValue> {
 
     private BucketCache bucketCache;
     private int numberOfHashes = 1;
@@ -29,14 +29,14 @@ public class FeatureMapper extends Mapper<BucketStripped, AminoWritable, Feature
         final int featureIndex = BitmapIndex.getFeatureIndex(feature);
 
         final BitmapValue bitmapValue = new BitmapValue();
-        final FeatureKey featureKey = new FeatureKey(featureIndex, featureFact.toText(translator).toString(), bucket.getBucketVisibility().toString());
+        final BitLookupKey bitLookupKey = new BitLookupKey(featureIndex, featureFact.toText(translator).toString(), bucket.getBucketVisibility().toString());
 
         for (int i = 0; i < numberOfHashes; i++)
         {
             bitmapValue.setIndex(BitmapIndex.getFeatureFactIndex(bucket, feature, featureFact, i));
-            featureKey.setSalt(i);
+            bitLookupKey.setSalt(i);
 
-            context.write(featureKey, bitmapValue);
+            context.write(bitLookupKey, bitmapValue);
         }
     }
 }

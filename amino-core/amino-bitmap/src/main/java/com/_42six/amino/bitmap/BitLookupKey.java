@@ -10,7 +10,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class FeatureKey implements WritableComparable {
+public class BitLookupKey implements WritableComparable {
 
     private int featureIndex;
     private String featureFact;
@@ -49,17 +49,17 @@ public class FeatureKey implements WritableComparable {
         this.visibility = visibility;
     }
 
-    public FeatureKey() {
+    public BitLookupKey() {
         // EMPTY
     }
 
-    public FeatureKey(int featureIndex, String featureFact, String visibility) {
+    public BitLookupKey(int featureIndex, String featureFact, String visibility) {
         this.featureIndex = featureIndex;
         this.featureFact = featureFact;
         this.visibility = visibility;
     }
 
-    public FeatureKey(int featureIndex, String featureFact, String visibility, int salt) {
+    public BitLookupKey(int featureIndex, String featureFact, String visibility, int salt) {
         this(featureIndex, featureFact, visibility);
         this.salt = salt;
     }
@@ -70,7 +70,7 @@ public class FeatureKey implements WritableComparable {
         if (o == this) { return true; }
         if (o.getClass() != getClass()) { return false; }
 
-        FeatureKey other = (FeatureKey) o;
+        BitLookupKey other = (BitLookupKey) o;
         return new EqualsBuilder()
                 .append(featureFact, other.featureFact)
                 .append(featureIndex, other.featureIndex)
@@ -90,10 +90,10 @@ public class FeatureKey implements WritableComparable {
     }
 
     public int compareTo(Object o) {
-        FeatureKey other = (FeatureKey) o;
+        BitLookupKey other = (BitLookupKey) o;
         return new CompareToBuilder()
+                .append(Integer.toString(featureIndex), Integer.toString(other.featureIndex))
                 .append(featureFact, other.featureFact)
-                .append(featureIndex, other.featureIndex)
                 .append(salt, other.salt)
                 .append(visibility, other.visibility)
                 .toComparison();

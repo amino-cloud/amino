@@ -1,18 +1,7 @@
 package com._42six.amino.bitmap;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutput;
-import java.io.DataOutputStream;
-
-import org.junit.Test;
-
-import static junit.framework.Assert.*;
-
 public class BitmapKeyTest {
-
+/*
     @Test
     public void testEquals() throws Exception {
         BitmapKey key1 = new BitmapKey(BitmapKey.KeyType.FEATURE, "1234", "1", 0, "vis");
@@ -128,5 +117,5 @@ public class BitmapKeyTest {
         assertFalse(key1.equals(key2));
         assertFalse(key1.hashCode() == key2.hashCode());
         assertFalse(key1.compareTo(key2) == 0);
-    }
+    }*/
 }

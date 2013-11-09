@@ -1,18 +1,13 @@
 package com._42six.amino.bitmap;
 
-import java.io.IOException;
-
+import com._42six.amino.common.*;
+import com._42six.amino.common.index.BitmapIndex;
+import com._42six.amino.common.service.datacache.BucketCache;
+import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
-import com._42six.amino.common.AminoWritable;
-import com._42six.amino.common.Bucket;
-import com._42six.amino.common.BucketStripped;
-import com._42six.amino.common.Feature;
-import com._42six.amino.common.FeatureFact;
-import com._42six.amino.common.index.BitmapIndex;
-import com._42six.amino.common.service.bucketcache.BucketCache;
-import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
+import java.io.IOException;
 
 public class StatsMapper extends Mapper<BucketStripped, AminoWritable, StatsKey, Text> 
 {

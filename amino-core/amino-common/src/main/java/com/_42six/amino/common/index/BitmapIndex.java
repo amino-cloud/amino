@@ -1,6 +1,7 @@
 package com._42six.amino.common.index;
 
 import com._42six.amino.common.*;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.util.hash.Hash;
 
@@ -83,6 +84,10 @@ public class BitmapIndex {
     
     public static int getBucketValueIndex(BucketStripped bucketStripped) {
     	return getEwah(hasher.hash(TextUtils.getBytes(bucketStripped.getBucketValue()), bucketStripped.getCacheHash().get()));
+    }
+
+    public static int getBucketValueIndex(Text bucketValue, int cacheHash){
+        return getEwah(hasher.hash(TextUtils.getBytes(bucketValue), cacheHash));
     }
     
     public static int getBucketCacheIndex(Bucket bucket) {
