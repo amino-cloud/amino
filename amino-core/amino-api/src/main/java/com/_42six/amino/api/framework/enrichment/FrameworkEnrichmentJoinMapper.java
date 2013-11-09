@@ -1,20 +1,19 @@
 package com._42six.amino.api.framework.enrichment;
 
-import java.io.IOException;
-import java.util.Collection;
-
-import org.apache.hadoop.io.MapWritable;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapreduce.Mapper;
-
 import com._42six.amino.api.framework.AminoDriverUtils;
 import com._42six.amino.common.Bucket;
 import com._42six.amino.common.BucketStripped;
-import com._42six.amino.common.service.bucketcache.BucketCache;
+import com._42six.amino.common.service.datacache.BucketCache;
 import com._42six.amino.data.AminoDataUtils;
 import com._42six.amino.data.AminoRecordReader;
 import com._42six.amino.data.DataLoader;
 import com._42six.amino.data.EnrichWorker;
+import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+
+import java.io.IOException;
+import java.util.Collection;
 
 
 public class FrameworkEnrichmentJoinMapper extends Mapper<MapWritable, MapWritable, EnrichmentJoinKey, MapWritable> 

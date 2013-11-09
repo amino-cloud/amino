@@ -1,4 +1,4 @@
-package com._42six.amino.common.service.bucketcache;
+package com._42six.amino.common.service.datacache;
 
 import com._42six.amino.common.Bucket;
 import com._42six.amino.common.BucketStripped;
@@ -17,7 +17,7 @@ import java.util.*;
 public class BucketCache {
 	
 	private Map<IntWritable, Bucket> bucketCache;
-	private static final String BUCKET_CACHE_FOLDER = "/buckets";
+	public static final String BUCKET_CACHE_FOLDER = "/buckets";
 	private static final Text MAPWRITABLE_BUCKET_KEY = new Text("bk");
 	
 	public BucketCache() {

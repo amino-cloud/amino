@@ -2,7 +2,7 @@ package com._42six.amino.bitmap;
 
 import com._42six.amino.common.*;
 import com._42six.amino.common.index.BitmapIndex;
-import com._42six.amino.common.service.bucketcache.BucketCache;
+import com._42six.amino.common.service.datacache.BucketCache;
 import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
 import org.apache.accumulo.core.data.Key;
 import org.apache.hadoop.io.Text;

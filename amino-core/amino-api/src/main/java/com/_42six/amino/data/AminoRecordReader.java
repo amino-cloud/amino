@@ -1,7 +1,6 @@
 package com._42six.amino.data;
 
-import java.io.IOException;
-
+import com._42six.amino.common.service.datacache.BucketCache;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
@@ -9,7 +8,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import com._42six.amino.common.service.bucketcache.BucketCache;
+import java.io.IOException;
 
 public class AminoRecordReader extends RecordReader<MapWritable, MapWritable> {
 	
@@ -26,9 +25,9 @@ public class AminoRecordReader extends RecordReader<MapWritable, MapWritable> {
 	private MapWritable key;
 	
 	private Text dataSetName = null;
-	
 
-	public AminoRecordReader(InputSplit split, TaskAttemptContext context) throws InstantiationException {	
+
+	public AminoRecordReader(InputSplit split, TaskAttemptContext context) throws InstantiationException {
 		this.conf = context.getConfiguration();
 
 		try {
@@ -70,9 +69,9 @@ public class AminoRecordReader extends RecordReader<MapWritable, MapWritable> {
 		
 		if(this.dataLoader == null) 
 			throw new IOException("DataLoader must be initialized first!!!!");
-		
+
 		this.inputSplit = inputSplit;
-		
+
 		// initialize the underlying record reader
 		if(this.recordReader == null) {
 			//this.recordReader = this.inputFormat.createRecordReader(inputSplit, taskAttemptContext);

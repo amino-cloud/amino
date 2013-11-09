@@ -10,7 +10,7 @@ import com._42six.amino.common.service.DistributedCacheService;
 import com._42six.amino.common.util.PathUtils;
 import com._42six.amino.data.*;
 import com._42six.amino.data.impl.EnrichmentDataLoader;
-import com._42six.amino.data.utilities.BucketCacheBuilder;
+import com._42six.amino.data.utilities.CacheBuilder;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -236,7 +236,7 @@ public final class FrameworkDriver extends Configured implements Tool
 			int numReducers = conf.getInt(AMINO_NUM_REDUCERS_ENRICH_PHASE1, conf.getInt(AMINO_NUM_REDUCERS, DEFAULT_NUM_REDUCERS));
 			job.setNumReduceTasks(numReducers);
 
-			//Our Framework mapper and reducer
+			// Our Framework mapper and reducer
 			job.setMapperClass(FrameworkEnrichmentJoinMapper.class);
 			job.setCombinerClass(FrameworkEnrichmentJoinCombiner.class);
 			job.setReducerClass(FrameworkEnrichmentJoinReducer.class);
@@ -254,13 +254,13 @@ public final class FrameworkDriver extends Configured implements Tool
 			job.setInputFormatClass(AminoMultiInputFormat.class);
 
 			AminoEnrichmentJob aej = (AminoEnrichmentJob)aj;
-			//AminoMultiInputFormat.setJoinDataLoader(conf, aej.getEnrichmentDataLoader().newInstance());
+			// AminoMultiInputFormat.setJoinDataLoader(conf, aej.getEnrichmentDataLoader().newInstance());
 			AminoMultiInputFormat.setJoinDataLoaders(conf, aej.getEnrichmentDataLoaders());
 			AminoMultiInputFormat.setEnrichWorker(conf, aej.getEnrichWorker().newInstance());
 
 			job.setOutputFormatClass(SequenceFileOutputFormat.class);
 
-			//TODO If it already exists, and its age is less than job running frequency, just reuse it instead of doing the above job...
+			// TODO If it already exists, and its age is less than job running frequency, just reuse it instead of doing the above job...
 			if (output.length() == 0){
                 output = getEnrichmentOutputPath(aej, conf);
             }
@@ -268,8 +268,8 @@ public final class FrameworkDriver extends Configured implements Tool
 			
 			SequenceFileOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
 			JobUtilities.deleteDirectory(conf, output);
-			
-			BucketCacheBuilder.buildBucketCache(AminoDataUtils.getDataLoader(conf), aj, output, conf);
+
+			CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(conf), aj, output, conf);
 
 			return returnType;
 
@@ -278,7 +278,7 @@ public final class FrameworkDriver extends Configured implements Tool
 		{
 			System.out.println("\n==================== Running Amino Job =================\n");
 
-			//Our Framework mapper and reducer
+			// Our Framework mapper and reducer
 			job.setMapperClass(FrameworkMapper.class);
 			job.setReducerClass(FrameworkReducer.class);
 
@@ -300,7 +300,7 @@ public final class FrameworkDriver extends Configured implements Tool
 			AminoOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
 			JobUtilities.deleteDirectory(conf, output);
 
-			BucketCacheBuilder.buildBucketCache(AminoDataUtils.getDataLoader(conf), aj, output, conf);
+			CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(conf), aj, output, conf);
 			return JOB_TYPE_NORMAL;
 		}
 	}
@@ -388,8 +388,7 @@ public final class FrameworkDriver extends Configured implements Tool
 		System.out.println("Output will be written to: " + PathUtils.getJobDataPath(output));
 		AminoOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
 		JobUtilities.deleteDirectory(job.getConfiguration(), output);
-
-		BucketCacheBuilder.buildBucketCache(AminoDataUtils.getDataLoader(job.getConfiguration()), aej, output, job.getConfiguration());
+		CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(job.getConfiguration()), aej, output, job.getConfiguration());
 		
 		return job.waitForCompletion(true);
 	}

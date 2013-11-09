@@ -6,7 +6,7 @@ import com._42six.amino.api.model.DatasetCollection;
 import com._42six.amino.common.AminoWritable;
 import com._42six.amino.common.Bucket;
 import com._42six.amino.common.BucketStripped;
-import com._42six.amino.common.service.bucketcache.BucketCache;
+import com._42six.amino.common.service.datacache.BucketCache;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;

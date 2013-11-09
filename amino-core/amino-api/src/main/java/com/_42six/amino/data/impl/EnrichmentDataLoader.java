@@ -1,10 +1,9 @@
 package com._42six.amino.data.impl;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
-
+import com._42six.amino.api.framework.AminoDriverUtils;
+import com._42six.amino.common.BucketStripped;
+import com._42six.amino.common.service.datacache.BucketCache;
+import com._42six.amino.data.DataLoader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
@@ -15,10 +14,10 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 
-import com._42six.amino.api.framework.AminoDriverUtils;
-import com._42six.amino.common.BucketStripped;
-import com._42six.amino.common.service.bucketcache.BucketCache;
-import com._42six.amino.data.DataLoader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
 
 public class EnrichmentDataLoader implements DataLoader {
 	

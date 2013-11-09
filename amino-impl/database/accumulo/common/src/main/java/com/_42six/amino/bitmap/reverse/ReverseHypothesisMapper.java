@@ -5,12 +5,10 @@ import com._42six.amino.common.AminoWritable;
 import com._42six.amino.common.Bucket;
 import com._42six.amino.common.BucketStripped;
 import com._42six.amino.common.index.BitmapIndex;
-import com._42six.amino.common.service.bucketcache.BucketCache;
+import com._42six.amino.common.service.datacache.BucketCache;
 import org.apache.accumulo.core.data.Key;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 
 import java.io.IOException;
 

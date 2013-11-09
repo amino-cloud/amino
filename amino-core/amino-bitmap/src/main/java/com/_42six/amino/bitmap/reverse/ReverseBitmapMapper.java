@@ -3,7 +3,7 @@ package com._42six.amino.bitmap.reverse;
 import com._42six.amino.bitmap.BitmapConfigHelper;
 import com._42six.amino.common.*;
 import com._42six.amino.common.index.BitmapIndex;
-import com._42six.amino.common.service.bucketcache.BucketCache;
+import com._42six.amino.common.service.datacache.BucketCache;
 import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
 import com._42six.amino.common.translator.FeatureFactTranslatorInt;
 import org.apache.hadoop.io.IntWritable;

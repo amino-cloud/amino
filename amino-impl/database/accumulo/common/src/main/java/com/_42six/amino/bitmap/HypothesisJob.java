@@ -3,7 +3,7 @@ package com._42six.amino.bitmap;
 import com._42six.amino.common.*;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.index.BitmapIndex;
-import com._42six.amino.common.service.bucketcache.BucketCache;
+import com._42six.amino.common.service.datacache.BucketCache;
 import com._42six.amino.common.util.PathUtils;
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;

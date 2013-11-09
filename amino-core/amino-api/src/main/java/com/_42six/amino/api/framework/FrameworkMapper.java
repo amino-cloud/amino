@@ -1,15 +1,14 @@
 package com._42six.amino.api.framework;
 
-import java.io.IOException;
-
+import com._42six.amino.common.Bucket;
+import com._42six.amino.common.BucketStripped;
+import com._42six.amino.common.service.datacache.BucketCache;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Mapper;
 
-import com._42six.amino.common.Bucket;
-import com._42six.amino.common.BucketStripped;
-import com._42six.amino.common.service.bucketcache.BucketCache;
+import java.io.IOException;
 
 public final class FrameworkMapper extends Mapper<MapWritable, MapWritable, BucketStripped, MapWritable> {
 	
