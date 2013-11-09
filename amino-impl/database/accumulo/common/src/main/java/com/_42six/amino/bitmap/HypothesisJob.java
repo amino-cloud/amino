@@ -96,19 +96,7 @@ public class HypothesisJob extends Configured implements Tool
         		System.out.println("Number of hypothesis reducers/tablets not specified in config or " 
         				+ "last argument. Using the number of reducers instead [" + numReducers + "]");
         	}
-        	
-//        	THIS IS THE OLD WAY OF DETERMINING THE SPLITS............
-//        	SortedSet<Text> splits = new TreeSet<Text>();
-//
-//        	int min = 1;
-//        	int max = 2147483647;
-//        	int fullWidth = max - min;
-//        	int cutWidth = fullWidth / numReducers;
-//        	for (int i = 1; i < numReducers; i++)
-//        	{
-//        		splits.add(new Text(Integer.toString(i * cutWidth)));
-//        	}
-        	
+
         	final SortedSet<Text> splits = buildSplitsFromSample(conf, inputDir, numReducers);
         	job.setNumReduceTasks(splits.size() + 1);
         	

@@ -12,7 +12,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import java.io.IOException;
 import java.util.TreeSet;
 
-//public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, ReverseBitmapValue, Text, Mutation>
 public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable, Text, Mutation>
 {
     private Text RB_BUCKET_TABLE;
@@ -28,7 +27,6 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
     }
 
     @Override
-//	protected void reduce(ReverseBitmapKey rbk, Iterable<ReverseBitmapValue> rbvs, Context context) throws IOException, InterruptedException
     protected void reduce(ReverseBitmapKey rbk, Iterable<IntWritable> indexes, Context context) throws IOException, InterruptedException
     {
         final AminoBitmap bitmap = new AminoBitmap();
@@ -50,7 +48,7 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
             bitmap.set(index);
         }
 
-        // Write the row out to Cloudbase
+        // Write the row out to database
         mutation.put(colFamily, colQualifier, colVis, BitmapUtils.toValue(bitmap));
         context.write(RB_BUCKET_TABLE, mutation);
     }
