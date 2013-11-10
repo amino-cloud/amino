@@ -10,7 +10,6 @@ import com._42six.amino.common.util.PathUtils;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.impl.ConnectorImpl;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
-import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.client.mapreduce.lib.partition.RangePartitioner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
@@ -22,7 +21,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
@@ -73,8 +71,6 @@ public class ReverseHypothesisJob extends Configured implements Tool
         job.setMapperClass(ReverseHypothesisMapper.class);
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(ReverseHypothesisValue.class);
-        //job.setMapOutputKeyClass(Key.class);
-        //job.setMapOutputValueClass(NullWritable.class);
 
         job.setReducerClass(ReverseHypothesisReducer.class); 
         job.setOutputKeyClass(Key.class);

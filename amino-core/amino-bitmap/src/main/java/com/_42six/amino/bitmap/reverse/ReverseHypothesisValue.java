@@ -1,56 +1,64 @@
 package com._42six.amino.bitmap.reverse;
 
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Writable;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-
-import org.apache.hadoop.io.Writable;
 
 public class ReverseHypothesisValue implements Writable
 {
 
 	private int indexPos;
-	private String datasource;
-	private String bucketName;
+    private IntWritable datasourceIdx;
+    private IntWritable bucketNameIdx;
 	private int salt;
-	private String bucketValue;
-	private String visibility;
+    private String bucketValue;
+    private IntWritable visibilityIdx;
 	
 	public ReverseHypothesisValue()
 	{
 		
 	}
 	
-	public ReverseHypothesisValue(int indexPos, String datasource, String bucketName, int salt, String bucketValue, String visibility)
+	public ReverseHypothesisValue(int indexPos, IntWritable datasourceIdx, IntWritable bucketNameIdx, int salt, String bucketValue, IntWritable visibilityIdx)
 	{
 		this.indexPos = indexPos;
-		this.datasource = datasource;
-		this.bucketName = bucketName;
+		this.datasourceIdx = datasourceIdx;
+		this.bucketNameIdx = bucketNameIdx;
 		this.salt = salt;
 		this.bucketValue = bucketValue;
-		this.visibility = visibility;
+		this.visibilityIdx = visibilityIdx;
 	}
 
 	@Override
 	public void readFields(DataInput input) throws IOException 
 	{
+        if(datasourceIdx == null){
+            datasourceIdx = new IntWritable();}
+        if(bucketNameIdx == null){
+            bucketNameIdx = new IntWritable();}
+        if(visibilityIdx == null){
+            visibilityIdx = new IntWritable();}
+
 		indexPos = input.readInt();
-		datasource = input.readUTF();
-		bucketName = input.readUTF();
+		datasourceIdx.readFields(input);
+		bucketNameIdx.readFields(input);
 		salt = input.readInt();
 		bucketValue = input.readUTF();
-		visibility = input.readUTF();
+		visibilityIdx.readFields(input);
 	}
 
 	@Override
 	public void write(DataOutput output) throws IOException 
 	{
 		output.writeInt(indexPos);
-		output.writeUTF(datasource);
-		output.writeUTF(bucketName);
+		datasourceIdx.write(output);
+		bucketNameIdx.write(output);
 		output.writeInt(salt);
 		output.writeUTF(bucketValue);
-		output.writeUTF(visibility);
+		visibilityIdx.write(output);
 	}
 
 	public int getIndexPos() {
@@ -61,20 +69,20 @@ public class ReverseHypothesisValue implements Writable
 		this.indexPos = indexPos;
 	}
 
-	public String getDatasource() {
-		return datasource;
+	public IntWritable getDatasourceIdx() {
+		return datasourceIdx;
 	}
 
-	public void setDatasource(String datasource) {
-		this.datasource = datasource;
+	public void setDatasourceIdx(IntWritable datasourceIdx) {
+		this.datasourceIdx = datasourceIdx;
 	}
 
-	public String getBucketName() {
-		return bucketName;
+	public IntWritable getBucketNameIdx() {
+		return bucketNameIdx;
 	}
 
-	public void setBucketName(String bucketName) {
-		this.bucketName = bucketName;
+	public void setBucketNameIdx(IntWritable bucketNameIdx) {
+		this.bucketNameIdx = bucketNameIdx;
 	}
 
 	public int getSalt() {
@@ -93,12 +101,12 @@ public class ReverseHypothesisValue implements Writable
 		this.bucketValue = bucketValue;
 	}
 
-	public String getVisibility() {
-		return visibility;
+	public IntWritable getVisibilityIdx() {
+		return visibilityIdx;
 	}
 
-	public void setVisibility(String visibility) {
-		this.visibility = visibility;
+	public void setVisibilityIdx(IntWritable visibilityIdx) {
+		this.visibilityIdx = visibilityIdx;
 	}
 
 	@Override
@@ -106,15 +114,15 @@ public class ReverseHypothesisValue implements Writable
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
-				+ ((bucketName == null) ? 0 : bucketName.hashCode());
+				+ ((bucketNameIdx == null) ? 0 : bucketNameIdx.hashCode());
 		result = prime * result
 				+ ((bucketValue == null) ? 0 : bucketValue.hashCode());
 		result = prime * result
-				+ ((datasource == null) ? 0 : datasource.hashCode());
+				+ ((datasourceIdx == null) ? 0 : datasourceIdx.hashCode());
 		result = prime * result + indexPos;
 		result = prime * result + salt;
 		result = prime * result
-				+ ((visibility == null) ? 0 : visibility.hashCode());
+				+ ((visibilityIdx == null) ? 0 : visibilityIdx.hashCode());
 		return result;
 	}
 
@@ -127,38 +135,38 @@ public class ReverseHypothesisValue implements Writable
 		if (getClass() != obj.getClass())
 			return false;
 		ReverseHypothesisValue other = (ReverseHypothesisValue) obj;
-		if (bucketName == null) {
-			if (other.bucketName != null)
+		if (bucketNameIdx == null) {
+			if (other.bucketNameIdx != null)
 				return false;
-		} else if (!bucketName.equals(other.bucketName))
+		} else if (!bucketNameIdx.equals(other.bucketNameIdx))
 			return false;
 		if (bucketValue == null) {
 			if (other.bucketValue != null)
 				return false;
 		} else if (!bucketValue.equals(other.bucketValue))
 			return false;
-		if (datasource == null) {
-			if (other.datasource != null)
+		if (datasourceIdx == null) {
+			if (other.datasourceIdx != null)
 				return false;
-		} else if (!datasource.equals(other.datasource))
+		} else if (!datasourceIdx.equals(other.datasourceIdx))
 			return false;
 		if (indexPos != other.indexPos)
 			return false;
 		if (salt != other.salt)
 			return false;
-		if (visibility == null) {
-			if (other.visibility != null)
+		if (visibilityIdx == null) {
+			if (other.visibilityIdx != null)
 				return false;
-		} else if (!visibility.equals(other.visibility))
+		} else if (!visibilityIdx.equals(other.visibilityIdx))
 			return false;
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return "ReverseHypothesisValue [indexPos=" + indexPos + ", datasource="
-				+ datasource + ", bucketName=" + bucketName + ", salt=" + salt
-				+ ", bucketValue=" + bucketValue + ", visibility=" + visibility
+		return "ReverseHypothesisValue [indexPos=" + indexPos + ", datasourceIdx="
+				+ datasourceIdx + ", bucketNameIdx=" + bucketNameIdx + ", salt=" + salt
+				+ ", bucketValue=" + bucketValue + ", visibilityIdx=" + visibilityIdx
 				+ "]";
 	}
 

@@ -6,22 +6,39 @@ import com._42six.amino.common.Bucket;
 import com._42six.amino.common.BucketStripped;
 import com._42six.amino.common.index.BitmapIndex;
 import com._42six.amino.common.service.datacache.BucketCache;
+import com._42six.amino.common.service.datacache.BucketNameCache;
+import com._42six.amino.common.service.datacache.DataSourceCache;
+import com._42six.amino.common.service.datacache.VisibilityCache;
 import org.apache.accumulo.core.data.Key;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
 
-//public class ReverseHypothesisMapper extends Mapper<BucketStripped, AminoWritable, Text, ReverseHypothesisBitmapValue>
 public class ReverseHypothesisMapper extends Mapper<BucketStripped, AminoWritable, Text, ReverseHypothesisValue>
 {
 	private BucketCache bucketCache;
-    private static BucketStripped lastBS;
+    private BucketNameCache bucketNameCache;
+    private DataSourceCache dataSourceCache;
+    private VisibilityCache visibilityCache;
+    private BucketStripped lastBS;
+
+    private int numberOfShards;
+    private int numberOfHashes;
 
     @Override
 	protected void setup(Context context) throws IOException, InterruptedException {
     	super.setup(context);
-    	bucketCache = new BucketCache(context.getConfiguration());
+        final Configuration conf = context.getConfiguration();
+    	bucketCache = new BucketCache(conf);
+        bucketNameCache = new BucketNameCache(conf);
+        dataSourceCache = new DataSourceCache(conf);
+        visibilityCache = new VisibilityCache(conf);
+
+		numberOfShards = context.getConfiguration().getInt(BitmapConfigHelper.BITMAP_CONFIG_NUM_SHARDS, 10);
+	    numberOfHashes = context.getConfiguration().getInt("amino.bitmap.num-hashes", 1);
     }
 
 	@Override
@@ -45,33 +62,25 @@ public class ReverseHypothesisMapper extends Mapper<BucketStripped, AminoWritabl
         }
 
         final Bucket bucket = bucketCache.getBucket(bs);
-        final String BUCKETNAME = bucket.getBucketName().toString();
-        final String DATASOURCE = bucket.getBucketDataSource().toString();
-
-		final int numberOfShards = context.getConfiguration().getInt(BitmapConfigHelper.BITMAP_CONFIG_NUM_SHARDS, 10);
-	    final int numberOfHashes = context.getConfiguration().getInt("amino.bitmap.num-hashes", 1);
+        final IntWritable BUCKETNAME = bucketNameCache.getIndexForValue(bucket.getBucketName());
+        final IntWritable DATASOURCE = dataSourceCache.getIndexForValue(bucket.getBucketDataSource());
+        final IntWritable VISIBILITY = visibilityCache.getIndexForValue(bucket.getBucketVisibility());
+        final String BUCKET_VALUE = bucket.getBucketValue().toString();
 
         // Make sure that we have the same shard for all of the salts
         int index = BitmapIndex.getValueIndex(bucket, 0);
-        final int shard = index % numberOfShards;
-        final Text SHARD = new Text(Integer.toString(shard));
-        final Text VISIBILITY = bucket.getBucketVisibility();
+        final Text SHARD = new Text(Integer.toString(index % numberOfShards));
 
-        //final ReverseHypothesisBitmapValue rhbv = new ReverseHypothesisBitmapValue(index, BUCKETNAME, bucket.getBucketValue().toString(), VISIBILITY.toString());
-        final String BUCKET_VALUE = bucket.getBucketValue().toString();
-        ReverseHypothesisValue rhv = new ReverseHypothesisValue(index, DATASOURCE, BUCKETNAME, 0, BUCKET_VALUE, VISIBILITY.toString());
+        final ReverseHypothesisValue rhv = new ReverseHypothesisValue(index, DATASOURCE, BUCKETNAME, 0, BUCKET_VALUE, VISIBILITY);
 
-        Key cbKey = new Key(SHARD, new Text(Integer.toString(index) + "#" + DATASOURCE + "#" + BUCKETNAME + "#0"), new Text(BUCKET_VALUE), VISIBILITY);
-        //context.write(cbKey, NullWritable.get());
-        context.write(new Text(cbKey.toStringNoTime()), rhv);
-
-        // Do the rest of the salts
-        for (int salt = 1; salt < numberOfHashes; salt++)
+        // Write the Key/Value for each salt
+        for (int salt = 0; salt < numberOfHashes; salt++)
         {
         	index = BitmapIndex.getValueIndex(bucket, salt);
-            cbKey = new Key(SHARD, new Text(Integer.toString(index) + "#" + DATASOURCE + "#" + BUCKETNAME + "#" + salt), new Text(BUCKET_VALUE), VISIBILITY);
-        	rhv = new ReverseHypothesisValue(index, DATASOURCE, BUCKETNAME, salt, BUCKET_VALUE, VISIBILITY.toString());
-            //context.write(cbKey, NullWritable.get());
+            final Key cbKey = new Key(SHARD, new Text(Integer.toString(index) + "#" + bucket.getBucketDataSource() + "#" + bucket.getBucketName() + "#" + salt),
+                    bucket.getBucketValue(), bucket.getBucketVisibility());
+        	rhv.setSalt(salt);
+            rhv.setIndexPos(index);
             context.write(new Text(cbKey.toStringNoTime()), rhv);
         }
 	}
