@@ -1,6 +1,7 @@
 package com._42six.amino.bitmap.reverse;
 
 import org.apache.commons.lang.builder.CompareToBuilder;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.WritableComparable;
 
 import java.io.DataInput;
@@ -13,16 +14,16 @@ public class ReverseBitmapKey implements WritableComparable
 	private int salt;
 	private int featureId;
 	private String featureValue;
-	private String visibility;
-    private String datasource;
-    private String bucketName;
+	private IntWritable visibility;
+    private IntWritable datasource;
+    private IntWritable bucketName;
 
     public ReverseBitmapKey()
 	{
 		// Empty
 	}
 	
-	public ReverseBitmapKey(int shard, int salt, String datasource, String bucketName, int featureId, String featureValue, String visibility)
+	public ReverseBitmapKey(int shard, int salt, IntWritable datasource, IntWritable bucketName, int featureId, String featureValue, IntWritable visibility)
 	{
 		this.shard = shard;
 		this.salt = salt;
@@ -41,13 +42,17 @@ public class ReverseBitmapKey implements WritableComparable
 	@Override
 	public void readFields(DataInput input) throws IOException 
 	{
+        if(datasource == null){ datasource = new IntWritable();}
+        if(bucketName == null){ bucketName = new IntWritable();}
+        if(visibility == null){ visibility = new IntWritable();}
+
 		shard = input.readInt();
 		salt = input.readInt();
-        datasource = input.readUTF();
-        bucketName = input.readUTF();
+        datasource.readFields(input);
+        bucketName.readFields(input);
 		featureId = input.readInt();
 		featureValue = input.readUTF();
-		visibility = input.readUTF();
+        visibility.readFields(input);
 	}
 
 	@Override
@@ -55,11 +60,11 @@ public class ReverseBitmapKey implements WritableComparable
 	{
 		output.writeInt(shard);
 		output.writeInt(salt);
-        output.writeUTF(datasource);
-        output.writeUTF(bucketName);
+        datasource.write(output);
+        bucketName.write(output);
 		output.writeInt(featureId);
 		output.writeUTF(featureValue);
-		output.writeUTF(visibility);
+        visibility.write(output);
 	}
 
 	@Override
@@ -100,6 +105,9 @@ public class ReverseBitmapKey implements WritableComparable
         if(bucketName == null || other.bucketName == null || !bucketName.equals(other.bucketName)){
             return false;
         }
+        if(visibility == null || other.visibility == null || !visibility.equals(other.visibility)){
+            return false;
+        }
 
 		if (salt != other.salt)
 			return false;
@@ -109,8 +117,8 @@ public class ReverseBitmapKey implements WritableComparable
 	}
 	
 	public int compareTo(Object o) {
-        ReverseBitmapKey other = (ReverseBitmapKey) o;
-        int retVal = new CompareToBuilder()
+        final ReverseBitmapKey other = (ReverseBitmapKey) o;
+        return new CompareToBuilder()
                 .append(shard, other.shard)
                 .append(salt, other.salt)
                 .append(featureId, other.featureId)
@@ -118,7 +126,6 @@ public class ReverseBitmapKey implements WritableComparable
                 .append(datasource, other.datasource)
                 .append(bucketName, other.bucketName)
                 .toComparison();
-        return retVal;
     }
 
 	public int getShard() {
@@ -153,27 +160,27 @@ public class ReverseBitmapKey implements WritableComparable
 		this.featureValue = featureValue;
 	}
 
-	public String getVisibility() {
+	public IntWritable getVisibility() {
 		return visibility;
 	}
 
-	public void setVisibility(String visibility) {
+	public void setVisibility(IntWritable visibility) {
 		this.visibility = visibility;
 	}
 
-    public String getDatasource() {
+    public IntWritable getDatasource() {
         return datasource;
     }
 
-    public void setDatasource(String datasource) {
+    public void setDatasource(IntWritable datasource) {
         this.datasource = datasource;
     }
 
-    public String getBucketName() {
+    public IntWritable getBucketName() {
         return bucketName;
     }
 
-    public void setBucketName(String bucketName) {
+    public void setBucketName(IntWritable bucketName) {
         this.bucketName = bucketName;
     }
 
