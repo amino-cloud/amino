@@ -3,9 +3,8 @@ package com._42six.amino.bitmap;
 import com._42six.amino.common.ByBucketKey;
 import com._42six.amino.common.bitmap.AminoBitmap;
 import com._42six.amino.common.bitmap.BitmapUtils;
-import com._42six.amino.common.service.datacache.BucketNameCache;
-import com._42six.amino.common.service.datacache.DataSourceCache;
-import com._42six.amino.common.service.datacache.VisibilityCache;
+import com._42six.amino.common.service.datacache.SortedIndexCache;
+import com._42six.amino.common.service.datacache.SortedIndexCacheFactory;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.hadoop.conf.Configuration;
@@ -17,17 +16,17 @@ import java.util.TreeSet;
 
 public class ByBucketReducer extends Reducer<ByBucketKey, BitmapValue, Key, Value>
 {
-    private BucketNameCache bucketNameCache;
-    private DataSourceCache dataSourceCache;
-    private VisibilityCache visibilityCache;
+    private SortedIndexCache bucketNameCache;
+    private SortedIndexCache dataSourceCache;
+    private SortedIndexCache visibilityCache;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
         super.setup(context);
         final Configuration conf = context.getConfiguration();
-        bucketNameCache = new BucketNameCache(conf);
-        dataSourceCache = new DataSourceCache(conf);
-        visibilityCache = new VisibilityCache(conf);
+        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, conf);
+        dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, conf);
+        visibilityCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Visibility, conf);
     }
 
     @Override
@@ -47,10 +46,10 @@ public class ByBucketReducer extends Reducer<ByBucketKey, BitmapValue, Key, Valu
         }
 
         final int binNumber = key.getBinNumber();
-        final String dataSource = dataSourceCache.getItem(key.getDatasourceNameIndex()).toString();
-        final String bucketName = bucketNameCache.getItem(key.getBucketNameIndex()).toString();
+        final String dataSource = dataSourceCache.getItem(key.getDatasourceNameIndex());
+        final String bucketName = bucketNameCache.getItem(key.getBucketNameIndex());
         final String bucketValue = key.getBucketValue().toString();
-        final String vis = visibilityCache.getItem(key.getVisibilityIndex()).toString();
+        final String vis = visibilityCache.getItem(key.getVisibilityIndex());
 
         final Key outKey = new Key(String.format("%d:%s:%s", binNumber, dataSource, bucketName), bucketValue,
                 Integer.toString(key.getSalt()), vis);

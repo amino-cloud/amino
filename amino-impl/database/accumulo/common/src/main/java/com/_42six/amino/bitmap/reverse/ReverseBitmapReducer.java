@@ -3,10 +3,8 @@ package com._42six.amino.bitmap.reverse;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.bitmap.AminoBitmap;
 import com._42six.amino.common.bitmap.BitmapUtils;
-import com._42six.amino.common.service.datacache.BucketNameCache;
-import com._42six.amino.common.service.datacache.DataSourceCache;
-import com._42six.amino.common.service.datacache.VisibilityCache;
-import com.google.common.collect.Sets;
+import com._42six.amino.common.service.datacache.SortedIndexCache;
+import com._42six.amino.common.service.datacache.SortedIndexCacheFactory;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.conf.Configuration;
@@ -21,9 +19,9 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
 {
     private Text RB_BUCKET_TABLE;
 
-    private BucketNameCache bucketNameCache;
-    private DataSourceCache dataSourceCache;
-    private VisibilityCache visibilityCache;
+    private SortedIndexCache bucketNameCache;
+    private SortedIndexCache dataSourceCache;
+    private SortedIndexCache visibilityCache;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException
@@ -32,18 +30,18 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
         String tableName = configuration.get("amino.bitmap.bucketTable");
         tableName = tableName.replace("amino_", "amino_reverse_") + IteratorUtils.TEMP_SUFFIX;
         RB_BUCKET_TABLE = new Text(tableName);
-        bucketNameCache = new BucketNameCache(configuration);
-        dataSourceCache = new DataSourceCache(configuration);
-        visibilityCache = new VisibilityCache(configuration);
+        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, configuration);
+        dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, configuration);
+        visibilityCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Visibility, configuration);
         super.setup(context);
     }
 
     @Override
     protected void reduce(ReverseBitmapKey rbk, Iterable<IntWritable> indexes, Context context) throws IOException, InterruptedException
     {
-        final Text datasource = dataSourceCache.getItem(rbk.getDatasource());
-        final Text bucketName = bucketNameCache.getItem(rbk.getBucketName());
-        final Text visibility = visibilityCache.getItem(rbk.getVisibility());
+        final String datasource = dataSourceCache.getItem(rbk.getDatasource());
+        final String bucketName = bucketNameCache.getItem(rbk.getBucketName());
+        final String visibility = visibilityCache.getItem(rbk.getVisibility());
 
         final AminoBitmap bitmap = new AminoBitmap();
         final Mutation mutation = new Mutation(rbk.getShard() + ":" + rbk.getSalt());
@@ -53,11 +51,16 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
         final Text colQualifier = new Text(rbk.getFeatureValue());
 
         // Sort out all of the indexes since we can only add them to the bitmap in sorted order
-        final TreeSet<IntWritable> sortedIndexes = Sets.newTreeSet(indexes);
+        final TreeSet<Integer> sortedIndexes = new TreeSet<Integer>();
+
+        // Gotta pull out the indexes because MR reuses the indexes
+        for(IntWritable i : indexes){
+            sortedIndexes.add(i.get());
+        }
 
         // Add the bits to the bitmap
-        for(IntWritable index : sortedIndexes){
-            bitmap.set(index.get());
+        for(Integer index : sortedIndexes){
+            bitmap.set(index);
         }
 
         // Write the row out to the database
@@ -65,4 +68,3 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
         context.write(RB_BUCKET_TABLE, mutation);
     }
 }
-

@@ -3,12 +3,10 @@ package com._42six.amino.bitmap;
 import com._42six.amino.common.*;
 import com._42six.amino.common.index.BitmapIndex;
 import com._42six.amino.common.service.datacache.BucketCache;
-import com._42six.amino.common.service.datacache.BucketNameCache;
-import com._42six.amino.common.service.datacache.DataSourceCache;
-import com._42six.amino.common.service.datacache.VisibilityCache;
+import com._42six.amino.common.service.datacache.SortedIndexCache;
+import com._42six.amino.common.service.datacache.SortedIndexCacheFactory;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
@@ -17,9 +15,9 @@ import java.io.IOException;
 public class ByBucketMapper extends Mapper<BucketStripped, AminoWritable, ByBucketKey, BitmapValue> {
 
     private BucketCache bucketCache;
-    private BucketNameCache bucketNameCache;
-    private DataSourceCache dataSourceCache;
-    private VisibilityCache visibilityCache;
+    private SortedIndexCache bucketNameCache;
+    private SortedIndexCache dataSourceCache;
+    private SortedIndexCache visibilityCache;
     private int numberOfHashes;
     private int numberOfShards;
 
@@ -32,9 +30,9 @@ public class ByBucketMapper extends Mapper<BucketStripped, AminoWritable, ByBuck
         super.setup(context);
         final Configuration conf = context.getConfiguration();
         bucketCache = new BucketCache(conf);
-        bucketNameCache = new BucketNameCache(conf);
-        dataSourceCache = new DataSourceCache(conf);
-        visibilityCache = new VisibilityCache(conf);
+        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, conf);
+        dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, conf);
+        visibilityCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Visibility, conf);
         numberOfHashes = conf.getInt("amino.bitmap.num-hashes", 1);
         numberOfShards = conf.getInt(BitmapConfigHelper.BITMAP_CONFIG_NUM_SHARDS, 10);
     }
@@ -48,9 +46,9 @@ public class ByBucketMapper extends Mapper<BucketStripped, AminoWritable, ByBuck
 
             bucket = bucketCache.getBucket(bucketStripped);
             final int binNumber = BitmapIndex.getBucketValueIndex(bucketStripped) % numberOfShards;
-            final IntWritable bucketNameIndex = Preconditions.checkNotNull(bucketNameCache.getIndexForValue(bucket.getBucketName()));
-            final IntWritable datasourceNameIndex = Preconditions.checkNotNull(dataSourceCache.getIndexForValue(bucket.getBucketDataSource()));
-            final IntWritable visibilityIndex = Preconditions.checkNotNull(visibilityCache.getIndexForValue(bucket.getBucketVisibility()));
+            final int bucketNameIndex = Preconditions.checkNotNull(bucketNameCache.getIndexForValue(bucket.getBucketName()));
+            final int datasourceNameIndex = Preconditions.checkNotNull(dataSourceCache.getIndexForValue(bucket.getBucketDataSource()));
+            final int visibilityIndex = Preconditions.checkNotNull(visibilityCache.getIndexForValue(bucket.getBucketVisibility()));
             byBucketKey = new ByBucketKey(bucket.getBucketValue(), binNumber, bucketNameIndex, datasourceNameIndex, visibilityIndex);
         }
 

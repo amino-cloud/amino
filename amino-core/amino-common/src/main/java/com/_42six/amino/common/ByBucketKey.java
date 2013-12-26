@@ -78,6 +78,10 @@ public class ByBucketKey implements WritableComparable<ByBucketKey>{
         this.visibilityIndex = visibilityIndex;
     }
 
+    public ByBucketKey(Text bucketValue, int binNumber, int bucketNameIndex, int datasourceNameIndex, int visibilityIndex){
+        this(bucketValue, binNumber, new IntWritable(bucketNameIndex), new IntWritable(datasourceNameIndex), new IntWritable(visibilityIndex));
+    }
+
     public ByBucketKey(Text bucketValue, int binNumber, IntWritable bucketNameIndex, IntWritable datasourceNameIndex, IntWritable visibilityIndex, int salt){
         this(bucketValue,binNumber, bucketNameIndex, datasourceNameIndex, visibilityIndex);
         this.salt = salt;

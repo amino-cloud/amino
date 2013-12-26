@@ -1,6 +1,7 @@
 package com._42six.amino.common.service.datacache;
 
 import com._42six.amino.common.util.PathUtils;
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
@@ -9,31 +10,44 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapFile;
-import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.io.Text;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
 /**
+ * A lookup table for helping to compress data in the MapReduce jobs.  This takes a SortedSet of String values, creates
+ * an index number for each one, and persists the map to HDFS.  This allows the user to compress strings to integer values
+ * and at the same time allows the the sorters to work properly by sorting the indexes based on how the underlying value
+ * would have been lexigraphically sorted.
  *
- * @param <T>
+ * NOTE!
+ * Serializing the cache to HDFS is not thread safe.  You must do this as a singleton operation or you will get incorrect results
  */
-public abstract class SortedIndexCache<T extends WritableComparable> {
+public class SortedIndexCache  {
 
     /** The map indexed map of values */
-    protected Map<IntWritable, T> dataMap = new HashMap<IntWritable, T>();
+    protected Map<IntWritable, String> dataMap = new HashMap<IntWritable, String>();
     protected String subFolder;
 
     public SortedIndexCache(String subFolder) {
-        this.subFolder = subFolder;
+        String sub = Preconditions.checkNotNull(subFolder);
+        if(!sub.startsWith("/")){
+            sub = "/" + sub;
+        }
+        this.subFolder = sub;
     }
 
     public SortedIndexCache(String subFolder, Configuration conf) throws IOException {
+        this(subFolder);
         for (String cachePath : PathUtils.getCachePaths(conf)) {
             MapFile.Reader reader = null;
             try{
                 reader = new MapFile.Reader(FileSystem.get(conf), cachePath + subFolder, conf);
                 readFromDisk(reader);
+            } catch (FileNotFoundException e) {
+                System.out.println("WARNING: The cachePath '" + cachePath + "' does not exist");
             } finally {
                 if(reader != null){
                     IOUtils.closeStream(reader);
@@ -42,22 +56,48 @@ public abstract class SortedIndexCache<T extends WritableComparable> {
         }
     }
 
-    /** Method to read in the values from the HDFS mapfile.  Should be as simple as:
+    /**
+     * Method to read in the values from the HDFS mapfile.  Should be as simple as:
      * final IntWritable key = new IntWritable();
      * final T value = new T();
      * while(reader.next(key, value)){
-     *     dataMap.put(new IntWritable(key.get()), new T(value));
+     * dataMap.put(new IntWritable(key.get()), new T(value));
      * }
      *
      * @param reader The MapFile.Reader to read values from
      */
-    abstract protected void readFromDisk(final MapFile.Reader reader) throws IOException;
+    protected void readFromDisk(MapFile.Reader reader) throws IOException {
+        final IntWritable key = new IntWritable();
+        final Text value = new Text();
+        while(reader.next(key, value)){
+            dataMap.put(new IntWritable(key.get()), value.toString());
+        }
+    }
 
     /**
      * Persist the map to HDFS.
+     *
      * @param conf The Configuration
      */
-    abstract protected void writeToDisk(Configuration conf) throws IOException;
+    protected void writeToDisk(Configuration conf) throws IOException {
+        final FileSystem fs = FileSystem.get(conf);
+        MapFile.Writer writer = null;
+
+        try {
+            writer = new MapFile.Writer(conf, fs, PathUtils.getCachePath(conf) + subFolder, IntWritable.class, Text.class);
+
+            final Text value = new Text();
+            for(Map.Entry<IntWritable, String> entry : dataMap.entrySet()){
+                value.set(entry.getValue());
+                writer.append(entry.getKey(), value);
+            }
+        }
+        finally {
+            if (writer != null) {
+                IOUtils.closeStream(writer);
+            }
+        }
+    }
 
     /**
      * Serialize the values out to HDFS.  NOTE! There is currently no synchronization method so make sure that you only
@@ -89,8 +129,8 @@ public abstract class SortedIndexCache<T extends WritableComparable> {
      * each item in the collection
      * @param items The values to be placed in the map
      */
-    public void setValues(Set<T> items){
-        final TreeSet<T> sortedItems = new TreeSet<T>(items);
+    public void setValues(Set<String> items){
+        final TreeSet<String> sortedItems = new TreeSet<String>(items);
         setSortedValues(sortedItems);
     }
 
@@ -98,11 +138,11 @@ public abstract class SortedIndexCache<T extends WritableComparable> {
      * Adds the sorted values to the map.  An incremented index value will be created for each value
      * @param items
      */
-    public void setSortedValues(SortedSet<T> items){
-        dataMap = new HashMap<IntWritable, T>(items.size());
+    public void setSortedValues(SortedSet<String> items){
+        dataMap = new HashMap<IntWritable, String>(items.size());
 
         int i = 0;
-        for(T item : items){
+        for(String item : items){
             dataMap.put(new IntWritable(i), item);
             i++;
         }
@@ -111,15 +151,20 @@ public abstract class SortedIndexCache<T extends WritableComparable> {
     /**
      * Returns the index for the given value
      * @param value The value to look up
-     * @return The cache index for this value, null otherwise
+     * @return The cache index for this value, Integer.MIN_VALUE otherwise
      */
-    public IntWritable getIndexForValue(T value){
-        for(Map.Entry<IntWritable, T> entry : dataMap.entrySet()){
+    public int getIndexForValue(String value){
+        for(Map.Entry<IntWritable, String> entry : dataMap.entrySet()){
             if(entry.getValue().compareTo(value) == 0){
-                return new IntWritable(entry.getKey().get());
+                // Return the int instead of the key so that users don't accidentally modify the key
+                return entry.getKey().get();
             }
         }
-        return null;
+        return Integer.MIN_VALUE;
+    }
+
+    public int getIndexForValue(Text value){
+        return getIndexForValue(value.toString());
     }
 
     /**
@@ -127,14 +172,17 @@ public abstract class SortedIndexCache<T extends WritableComparable> {
      * @param key The lookup key for the cache
      * @return The value associated with the key, or null if the key is not in the map
      */
-    abstract public T getItem(IntWritable key);
+    public String getItem(IntWritable key){
+        // Strings are immutable so we can just return the
+        return dataMap.get(key);
+    }
 
     /**
      * Prints the contents of the cache to stdout
      */
     public void printCache(){
-        for(Map.Entry<IntWritable, T> entry : dataMap.entrySet()){
-            System.out.println(entry.getKey().toString() + " : " + entry.getValue().toString());
+        for(Map.Entry<IntWritable, String> entry : dataMap.entrySet()){
+            System.out.println(entry.getKey().toString() + " : " + entry.getValue());
         }
     }
 

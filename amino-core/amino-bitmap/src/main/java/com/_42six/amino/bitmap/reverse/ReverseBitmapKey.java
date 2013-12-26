@@ -1,6 +1,7 @@
 package com._42six.amino.bitmap.reverse;
 
 import org.apache.commons.lang.builder.CompareToBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.WritableComparable;
 
@@ -36,7 +37,15 @@ public class ReverseBitmapKey implements WritableComparable
 
     @Override
     public String toString(){
-        return String.format("%d:%d:%d:%s:%s:%s:%s", shard, salt, featureId, featureValue, visibility, datasource, bucketName);
+        return new ToStringBuilder(this)
+                .append("shard", shard)
+                .append("salt", salt)
+                .append("featureId", featureId)
+                .append("featureValue", featureValue)
+                .append("visibility", visibility)
+                .append("datasource", datasource)
+                .append("bucketName", bucketName)
+                .toString();
     }
 
 	@Override
