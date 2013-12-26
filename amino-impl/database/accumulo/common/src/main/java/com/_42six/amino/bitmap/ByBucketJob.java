@@ -179,11 +179,10 @@ public class ByBucketJob extends Configured implements Tool {
 
             final FileSystem fs = FileSystem.get(conf);
             final PrintStream out = new PrintStream(new BufferedOutputStream(fs.create(new Path(splitFile))));
-            for (int i = 1; i <= numReducers + 1; i++)
+            for (int i = 0; i < numReducers; i++)
             {
                 Text split = new Text(Integer.toString(i));
                 out.println(new String(Base64.encodeBase64(TextUtil.getBytes(split))));
-                System.out.println("Split: " + i);
             }
             out.flush();
             out.close();
