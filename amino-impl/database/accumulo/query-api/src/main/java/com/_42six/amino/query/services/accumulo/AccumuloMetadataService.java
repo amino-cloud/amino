@@ -646,9 +646,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 			} else {
 				log.warn("Don't know how to add a '" + cq + "' Hypothesis component");
 			}
-
 		}
-
 	}
 
 	/**

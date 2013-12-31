@@ -7,7 +7,6 @@ import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.entity.Hypothesis;
 import com._42six.amino.common.query.requests.AddUsersRequest;
 import com._42six.amino.common.query.requests.CreateGroupRequest;
-import com._42six.amino.query.services.AminoGroupService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -24,7 +23,7 @@ import java.util.*;
 /**
  * Service for handling everything having to do with groups
  */
-public class AccumuloGroupService implements AminoGroupService {
+public class AccumuloGroupService {
 
 	public static final Logger log = Logger.getLogger(AccumuloGroupService.class);
 
@@ -125,26 +124,25 @@ public class AccumuloGroupService implements AminoGroupService {
 	public void addToGroup(AddUsersRequest request) throws Exception {
 		Preconditions.checkNotNull(request, "Request object was null");
         final String[] tokens = Preconditions.checkNotNull(request.getSecurityTokens(), "Security tokens were null");
-        final Authorizations auths = Preconditions.checkNotNull(new Authorizations(tokens), "Could not create Authorizations");
-        final Group group = Preconditions.checkNotNull(request.getGroup(), "Group was missing");
-        final Set<GroupMember> members = Preconditions.checkNotNull(group.getMembers(), "Missing members");
-        String groupName = MorePreconditions.checkNotNullOrEmpty(group.getGroupName(), "Missing group name");
-        String requestor = MorePreconditions.checkNotNullOrEmpty(request.getRequestor(), "Missing requestor");
+        final Authorizations auths = Preconditions.checkNotNull(new Authorizations(tokens), "Could not create Authorizations");       
+        final Set<GroupMember> members = Preconditions.checkNotNull(request.getUsers(), "Missing members");
+        String groupName = MorePreconditions.checkNotNullOrEmpty(request.getGroupName(), "Missing group name");
+        String requester = MorePreconditions.checkNotNullOrEmpty(request.getRequestor(), "Missing requester");
 
         // Make sure prefixed properly
         groupName = groupName.startsWith(TableConstants.GROUP_PREFIX) ? groupName : TableConstants.GROUP_PREFIX + groupName;
-        requestor = requestor.startsWith(TableConstants.USER_PREFIX) ? requestor : TableConstants.USER_PREFIX + requestor;
+        requester = requester.startsWith(TableConstants.USER_PREFIX) ? requester : TableConstants.USER_PREFIX + requester;
 
 		final ArrayList<Mutation> memberEntries = new ArrayList<Mutation>(members.size());
         final ArrayList<Mutation> metaEntries = new ArrayList<Mutation>();
 
-        // Make sure that the requestor is an admin for the group and can perform these admin tasks
+        // Make sure that the requester is an admin for the group and can perform these admin tasks
         final Scanner scanner = persistenceService.createScanner(groupMetadataTable, auths);
         scanner.setRange(new Range(groupName));
-        scanner.fetchColumn(new Text("admin"), new Text(requestor));
+        scanner.fetchColumn(new Text("admin"), new Text(requester));
 
         if(!scanner.iterator().hasNext()){
-            throw new Exception("User " + requestor + " does not have admin rights to the group " + groupName);
+            throw new Exception("User " + requester + " does not have admin rights to the group " + groupName);
         }
 
         // Create the mutations for the group_metadata and group_membership tables and insert them
@@ -249,18 +247,18 @@ public class AccumuloGroupService implements AminoGroupService {
     /**
      * Remove the members from the group
      *
-     * @param requestor The person requesting the users to be removed.  Must be an admin for the group
+     * @param requester The person requesting the users to be removed.  Must be an admin for the group
      * @param group   The group to remove from
      * @param members The members to remove from the group
      * @param auths   The database authorizations
      */
-    public void removeUsersFromGroup(String requestor, String group, Set<String> members, Authorizations auths) throws Exception {
-        MorePreconditions.checkNotNullOrEmpty(requestor);
+    public void removeUsersFromGroup(String requester, String group, Set<String> members, Authorizations auths) throws Exception {
+        MorePreconditions.checkNotNullOrEmpty(requester);
         MorePreconditions.checkNotNullOrEmpty(group);
         MorePreconditions.checkNotNullOrEmpty(members);
 
         // Make sure prefixes are in place
-        if(!requestor.startsWith(TableConstants.USER_PREFIX)) { requestor = TableConstants.USER_PREFIX + requestor; }
+        if(!requester.startsWith(TableConstants.USER_PREFIX)) { requester = TableConstants.USER_PREFIX + requester; }
         if(!group.startsWith(TableConstants.GROUP_PREFIX)) { group = TableConstants.GROUP_PREFIX + group; }
         final HashSet<String> internalMembers = new HashSet<String>(members.size());
         for(String member : members){
@@ -276,9 +274,9 @@ public class AccumuloGroupService implements AminoGroupService {
             admins.add(entry.getKey().getColumnQualifier().toString());
         }
 
-        // Make sure requestor is an admin for the group
-        if(!admins.contains(requestor)){
-            throw new IllegalArgumentException("requestor was not an admin for the group");
+        // Make sure requester is an admin for the group
+        if(!admins.contains(requester)){
+            throw new IllegalArgumentException("requester was not an admin for the group");
         }
 
         // Make sure that we aren't removing all of the admins
@@ -328,7 +326,7 @@ public class AccumuloGroupService implements AminoGroupService {
      * @param groups    The group to remove from
      * @param auths     The authorization strings
      */
-    public void removeUserFromGroups(String requester, final String userId, Set<String> groups, Authorizations auths) throws Exception {
+    public void removeUserFromGroups(String requester, String userId, Set<String> groups, Authorizations auths) throws Exception {
         MorePreconditions.checkNotNullOrEmpty(userId);
         MorePreconditions.checkNotNullOrEmpty(requester);
         Preconditions.checkNotNull(auths);
@@ -337,12 +335,20 @@ public class AccumuloGroupService implements AminoGroupService {
         final Collection<Mutation> groupMetadataMutations = new ArrayList<Mutation>();
         final Collection<Range> metaGroupsToPurgeFrom = new HashSet<Range>();
 
-        // If no groups provided, remove from any group they might be a part of
-        if(groups == null || groups.size() == 0){
-            groups = getGroupsForUser(userId, auths);
+        // Make sure prefixes in place
+        if(!requester.startsWith(TableConstants.USER_PREFIX)) { requester = TableConstants.USER_PREFIX + requester; }
+        if(!userId.startsWith(TableConstants.USER_PREFIX)) { userId = TableConstants.USER_PREFIX + userId; }
+        Set<String> internalGroups = new HashSet<String>(groups.size());
+        for(String group : groups){
+            internalGroups.add(group.startsWith(TableConstants.GROUP_PREFIX) ? group : TableConstants.GROUP_PREFIX + group);
         }
 
-        for(String group : groups){
+        // If no groups provided, remove from any group they might be a part of
+        if(internalGroups == null || internalGroups.size() == 0){
+            internalGroups = getGroupsForUser(userId, auths);
+        }
+
+        for(String group : internalGroups){
             if(checkCanRemove(requester, userId, group, auths)){
                 metaGroupsToPurgeFrom.add(new Range(group));
                 groupMembershipMutations.add(persistenceService.createDeleteMutation(userId, group, "", ""));
@@ -379,6 +385,10 @@ public class AccumuloGroupService implements AminoGroupService {
      * @throws TableNotFoundException
      */
     private boolean checkCanRemove(String requester, String userId, String group, Authorizations auths) throws TableNotFoundException {
+        if(!requester.startsWith(TableConstants.USER_PREFIX)){requester = TableConstants.USER_PREFIX + requester;}
+        if(!userId.startsWith(TableConstants.USER_PREFIX)){userId = TableConstants.USER_PREFIX + userId;}
+        if(!group.startsWith(TableConstants.GROUP_PREFIX)){group = TableConstants.GROUP_PREFIX + group;}
+
         // See if the requester is an admin for the group and has permissions to remove the user
         final Scanner groupMetaScanner = persistenceService.createScanner(groupMetadataTable, auths);
         groupMetaScanner.setRange(new Range(group));
@@ -388,7 +398,7 @@ public class AccumuloGroupService implements AminoGroupService {
         int adminsFound = 0;
         for(Map.Entry<Key, Value> entry : groupMetaScanner){
             adminsFound++;
-            if(entry.getKey().getColumnQualifier().toString().compareTo(requester) == 0){
+            if(entry.getKey().getColumnQualifier().toString().equals(requester)){
                 requesterIsAdmin = true;
             }
         }
@@ -403,38 +413,43 @@ public class AccumuloGroupService implements AminoGroupService {
     }
 
     /**
-     * Returns the Group object that corresponds with the underlying group in the tables.  The requestor must be a member
+     * Returns the Group object that corresponds with the underlying group in the tables.  The requester must be a member
      * in order to get the Group.
-     * @param requestor   The person trying to fetch the Group
+     * @param requester   The person trying to fetch the Group
      * @param group       The Group to lookup in the tables
      * @param visibility  The BigTable visibility strings
      * @return Group representing all of of the members of the group
      * @throws IOException
      */
-    public Group getGroup(String requestor, String group, String[] visibility) throws IOException {
-        return getGroup(requestor, group, new Authorizations( Preconditions.checkNotNull(visibility)));
+    public Group getGroup(String requester, String group, String[] visibility) throws IOException {
+        return getGroup(requester, group, new Authorizations( Preconditions.checkNotNull(visibility)));
     }
 
     /**
-     * Returns the Group object that corresponds with the underlying group in the tables.  The requestor must be a member
+     * Returns the Group object that corresponds with the underlying group in the tables.  The requester must be a member
      * in order to get the Group.  If the group doesn't exist, null is returned
-     * @param requestor   The person trying to fetch the Group
+     * @param requester   The person trying to fetch the Group
      * @param group       The Group to lookup in the tables
      * @param auths       The BigTable authorizations
      * @return Group representing all of of the members of the group
      * @throws IOException
      */
-    public Group getGroup(String requestor, String group, Authorizations auths) throws IOException {
-        MorePreconditions.checkNotNullOrEmpty(requestor);
+    public Group getGroup(String requester, String group, Authorizations auths) throws IOException {
+        MorePreconditions.checkNotNullOrEmpty(requester);
         MorePreconditions.checkNotNullOrEmpty(group);
         Preconditions.checkNotNull(auths);
 
-        final Group returnGroup = new Group(group);
-        boolean requestorPartOfGroup = false;
+        Group returnGroup;
+        boolean requesterPartOfGroup = false;
 
         // Make sure prefixes are present
-        if(!requestor.startsWith(TableConstants.USER_PREFIX)){ requestor = TableConstants.USER_PREFIX + requestor; }
-        if(!group.startsWith(TableConstants.GROUP_PREFIX)){ group = TableConstants.GROUP_PREFIX + group; }
+        if(!requester.startsWith(TableConstants.USER_PREFIX)){ requester = TableConstants.USER_PREFIX + requester; }
+        if(!group.startsWith(TableConstants.GROUP_PREFIX)){
+            returnGroup = new Group(group);
+            group = TableConstants.GROUP_PREFIX + group;
+        } else {
+            returnGroup = new Group(group.substring(TableConstants.GROUP_PREFIX.length()));
+        }
 
         try{
             final Scanner metadataScanner = persistenceService.createScanner(groupMetadataTable, auths);
@@ -456,9 +471,11 @@ public class AccumuloGroupService implements AminoGroupService {
                 String role = roleText.toString();
                 String member = memberText.toString();
 
-                if(member.equals(requestor)){
-                    requestorPartOfGroup = true;
+                if(member.equals(requester)){
+                    requesterPartOfGroup = true;
                 }
+
+                member = member.startsWith(TableConstants.USER_PREFIX) ? member.substring(TableConstants.USER_PREFIX.length()) : member;
 
                 if(role.equals("created_by")){
                     returnGroup.setCreatedBy(member);
@@ -485,8 +502,8 @@ public class AccumuloGroupService implements AminoGroupService {
             throw new IOException(ex);
         }
 
-        if(!requestorPartOfGroup){
-            throw new IOException(String.format("User <%s> is not part of group <%s> and does not have permission to list members", requestor, group));
+        if(!requesterPartOfGroup){
+            throw new IOException(String.format("User <%s> is not part of group <%s> and does not have permission to list members", requester, group));
         }
 
         return returnGroup;

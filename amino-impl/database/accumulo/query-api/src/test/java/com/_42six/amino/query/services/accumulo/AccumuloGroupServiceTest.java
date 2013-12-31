@@ -36,7 +36,7 @@ public class AccumuloGroupServiceTest {
      **********************/
     static TableOperations tableOps;
     static Connector connector;
-    static String[] perms = { "U" };
+    static Set<String> perms = Sets.newHashSet("U");
     static Authorizations auths = new Authorizations("U");
 
     private static final String METADATA_TABLE = "amino_group_metadata";
@@ -89,7 +89,7 @@ public class AccumuloGroupServiceTest {
         final CreateGroupRequest request = new CreateGroupRequest();
         request.setGroup(g);
         request.setRequestor("USER|requestor");
-        request.setSecurityTokens(perms);
+        request.setSecurityTokens(perms.toArray(new String[0]));
 
         groupService.createGroup(request);
 
@@ -294,16 +294,16 @@ public class AccumuloGroupServiceTest {
     public void verifyUserExists() throws Exception {
         initalizeTables();
 
-        Assert.isTrue(groupService.verifyUserExists("USER|member1", perms));
-        Assert.isTrue(!groupService.verifyUserExists("USER|BogusUser", perms));
+        Assert.isTrue(groupService.verifyUserExists("USER|member1", perms.toArray(new String[0])));
+        Assert.isTrue(!groupService.verifyUserExists("USER|BogusUser", perms.toArray(new String[0])));
     }
 
     @Test
     public void verifyGroupExists() throws Exception {
         initalizeTables();
 
-        Assert.isTrue(groupService.verifyGroupExists("GROUP|group1", perms));
-        Assert.isTrue(!groupService.verifyGroupExists("GROUP|BogusGroup", perms));
+        Assert.isTrue(groupService.verifyGroupExists("GROUP|group1", perms.toArray(new String[0])));
+        Assert.isTrue(!groupService.verifyGroupExists("GROUP|BogusGroup", perms.toArray(new String[0])));
     }
 
     @Test
@@ -313,16 +313,14 @@ public class AccumuloGroupServiceTest {
     public void addToGroup() throws Exception {
         initalizeTables();
 
-        final Group g = new Group();
         final Set<GroupMember> members = new HashSet<GroupMember>();
         members.add(new GroupMember("newMemberAll", Sets.newHashSet(Group.GroupRole.VIEWER, Group.GroupRole.ADMIN, Group.GroupRole.CONTRIBUTOR)));
 
-        g.setGroupName("group1");
-        g.setMembers(members);
-
-        AddUsersRequest request = new AddUsersRequest(g);
-        request.setSecurityTokens(perms);
+        final AddUsersRequest request = new AddUsersRequest();
+        request.setGroupName("group1");
+        request.setSecurityTokens(perms.toArray(new String[0]));
         request.setRequestor("member1");
+        request.setUsers(members);
 
         groupService.addToGroup(request);
 
@@ -382,19 +380,19 @@ public class AccumuloGroupServiceTest {
     public void getGroup() throws Exception {
         initalizeTables();
 
-        final Group actual = groupService.getGroup("USER|member1", "GROUP|group1", auths);
+        final Group actual = groupService.getGroup("member1", "group1", auths);
         assertNotNull("Fetched null group", actual);
 
         final Set<GroupMember> members = new HashSet<GroupMember>();
-        members.add(new GroupMember("USER|member1", Sets.newHashSet(Group.GroupRole.ADMIN, Group.GroupRole.CONTRIBUTOR, Group.GroupRole.VIEWER)));
-        members.add(new GroupMember("USER|member2", Sets.newHashSet(Group.GroupRole.CONTRIBUTOR, Group.GroupRole.VIEWER)));
-        members.add(new GroupMember("USER|member3", Sets.newHashSet(Group.GroupRole.VIEWER)));
+        members.add(new GroupMember("member1", Sets.newHashSet(Group.GroupRole.ADMIN, Group.GroupRole.CONTRIBUTOR, Group.GroupRole.VIEWER)));
+        members.add(new GroupMember("member2", Sets.newHashSet(Group.GroupRole.CONTRIBUTOR, Group.GroupRole.VIEWER)));
+        members.add(new GroupMember("member3", Sets.newHashSet(Group.GroupRole.VIEWER)));
 
         final Group expected = new Group();
         expected.setDateCreated(12345);
-        expected.setCreatedBy("USER|creator");
+        expected.setCreatedBy("creator");
         expected.setMembers(members);
-        expected.setGroupName("GROUP|group1");
+        expected.setGroupName("group1");
 
         assertEquals(expected, actual);
     }
@@ -430,6 +428,7 @@ public class AccumuloGroupServiceTest {
         groupService.removeUserFromGroups("USER|member2", "USER|member2", Sets.newHashSet("GROUP|group3"), auths);
 
         assertEquals(expected, groupService.listGroups("member2", auths));
+
     }
 
     @Test @Ignore
@@ -445,7 +444,7 @@ public class AccumuloGroupServiceTest {
     public void removeUsersFromGroup_notAdmin() throws Exception {
         initalizeTables();
         exception.expect(IllegalArgumentException.class);
-        exception.expectMessage("requestor was not an admin for the group");
+        exception.expectMessage("requester was not an admin for the group");
         groupService.removeUsersFromGroup("USER|NotAdmin", "GROUP|group1", Sets.newHashSet("USER|member1"), auths);
     }
 
