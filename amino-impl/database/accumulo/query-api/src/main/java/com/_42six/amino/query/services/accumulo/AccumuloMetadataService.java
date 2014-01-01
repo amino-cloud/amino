@@ -7,6 +7,7 @@ import com._42six.amino.common.MorePreconditions;
 import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.entity.Hypothesis;
 import com._42six.amino.common.entity.HypothesisFeature;
+import com._42six.amino.query.exception.BigTableException;
 import com._42six.amino.query.exception.EntityNotFoundException;
 import com._42six.amino.query.services.AminoMetadataService;
 import com.google.common.base.Preconditions;
@@ -27,8 +28,6 @@ import java.util.*;
 
 /**
  * CRUD service for metadata entities.
- * <p/>
- * See {@link AminoMetadataService} for method detail.
  *
  * @author Amino Team
  */
@@ -44,9 +43,6 @@ public class AccumuloMetadataService implements AminoMetadataService {
 
 	public String hypothesisTable = "amino_hypothesis";
 	public String metadataTable = "amino_metadata";
-
-	// TODO Add this back in if we find the need for the byField table
-	// public String hypothesisByFieldTable = "amino_hypothesis_byField"
 
 	public AccumuloMetadataService() {
 		// EMPTY
@@ -67,10 +63,6 @@ public class AccumuloMetadataService implements AminoMetadataService {
 	public void setHypothesisTable(String hypothesisTable) {
 		this.hypothesisTable = hypothesisTable;
 	}
-
-//	public void setHypothesisByFieldTable(String hypothesisByFieldTable) {
-//		this.hypothesisByFieldTable = hypothesisByFieldTable;
-//	}
 
 	public void setMetadataTable(String metadataTable) {
 		this.metadataTable = metadataTable;
@@ -215,20 +207,6 @@ public class AccumuloMetadataService implements AminoMetadataService {
 	}
 
 	public DatasourceMetadata getDataSource(String dataSourceId, String[] visibility) throws IOException {
-//		scanner.setRange(new Range(dataSourceId))
-//
-//		scanner.each{
-//			String key = it.getKey().getRow().toString()
-//			if (!isKeyword(key)){
-//				dataSource = new DatasourceMetadata([id: key, name:key])
-//			}
-//		}
-//
-//		if (!dataSource) {
-//			throw new EntityNotFoundException("Data Source" + dataSourceId +" not found in the Amino metadata table")
-//		}
-//
-//		return dataSource
         return (DatasourceMetadata) getEntity(dataSourceId, TableConstants.DATASOURCE_PREFIX, DatasourceMetadata.class, visibility);
 	}
 
@@ -409,7 +387,6 @@ public class AccumuloMetadataService implements AminoMetadataService {
 
 			// Parse the list and see if any of the groups the requester is in intersects with whom can edit it
 			List<String> editList = new Gson().fromJson(itr.next().getValue().toString(), List.class);
-//			List<String> editList = (List<String>) new JsonSlurper().parseText(itr.next().getValue().toString());
 			if (Collections.disjoint(editList, groups)) {
 				// TODO Throw more appropriate exception
 				throw new EntityNotFoundException("User " + requester + " can not edit this hypothesis");
@@ -492,10 +469,16 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		}
 	}
 
-	public Integer getShardCount(boolean useCachedValue) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+	public Integer getShardCount(boolean useCachedValue) throws BigTableException {
 		if (!useCachedValue || this.shardCount == null) {
-			final Scanner scan = persistenceService.createScanner(metadataTable, persistenceService.getLoggedInUserAuthorizations());
-			scan.setRange(new Range(TableConstants.SHARDCOUNT_FIELD));
+            final Scanner scan;
+            try {
+                final Set<String> auths = persistenceService.getLoggedInUserAuthorizations();
+                scan = persistenceService.createScanner(metadataTable, new Authorizations(auths.toArray(new String[auths.size()])));
+            } catch (TableNotFoundException e) {
+                throw new BigTableException(e);
+            }
+            scan.setRange(new Range(TableConstants.SHARDCOUNT_FIELD));
 
 			Iterator<Map.Entry<Key, Value>> itr = scan.iterator();
 			if (itr.hasNext()) {
@@ -508,14 +491,20 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		return this.shardCount;
 	}
 
-	public Integer getShardCount() throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+	public Integer getShardCount() throws BigTableException {
 		return getShardCount(true);
 	}
 
-	public Integer getHashCount(boolean useCachedValue) throws AccumuloException, AccumuloSecurityException, TableNotFoundException {
+	public Integer getHashCount(boolean useCachedValue) throws BigTableException {
 		if (!useCachedValue || this.hashCount == null) {
-			final Scanner scan = persistenceService.createScanner(metadataTable, persistenceService.getLoggedInUserAuthorizations());
-			scan.setRange(new Range(TableConstants.HASHCOUNT_FIELD));
+            final Scanner scan;
+            try {
+                final Set<String> auths = persistenceService.getLoggedInUserAuthorizations();
+                scan = persistenceService.createScanner(metadataTable, new Authorizations(auths.toArray(new String[auths.size()])));
+            } catch (TableNotFoundException e) {
+                throw new BigTableException(e);
+            }
+            scan.setRange(new Range(TableConstants.HASHCOUNT_FIELD));
 
 			Iterator<Map.Entry<Key, Value>> itr = scan.iterator();
 			if (itr.hasNext()) {
@@ -528,7 +517,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		return this.hashCount;
 	}
 
-	public Integer getHashCount() throws AccumuloSecurityException, AccumuloException, TableNotFoundException {
+	public Integer getHashCount() throws BigTableException {
 		return getHashCount(true);
 	}
 
@@ -691,19 +680,5 @@ public class AccumuloMetadataService implements AminoMetadataService {
         String json = getEntityString(id, entityPrefix, auths);
         return gson.fromJson(json, conversionClass);
     }
-
-//	private Object convertEntryToEntity(Map.Entry<Key, Value> entry, Class conversionClass) {
-//		String jsonToConvert = entry.getValue().toString();
-//		def entity = conversionClass.fromJson(jsonToConvert);
-//
-//		// We might not always be using BT/Accumulo, so check to see that there is a visibility property before assigning
-//		// TODO Remove this check if we're feeling lucky
-//		if( entity.hasProperty("btVisibility")) {
-//		 	entity.btVisibility = entry.getKey().getColumnVisibility().toString()
-//		}
-//
-//		entity["id"] = entry.getKey().getColumnQualifier().toString()
-//		return entity;
-//	}
 
 }

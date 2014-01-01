@@ -294,16 +294,16 @@ public class AccumuloGroupServiceTest {
     public void verifyUserExists() throws Exception {
         initalizeTables();
 
-        Assert.isTrue(groupService.verifyUserExists("USER|member1", perms.toArray(new String[0])));
-        Assert.isTrue(!groupService.verifyUserExists("USER|BogusUser", perms.toArray(new String[0])));
+        Assert.isTrue(groupService.verifyUserExists("USER|member1", perms));
+        Assert.isTrue(!groupService.verifyUserExists("USER|BogusUser", perms));
     }
 
     @Test
     public void verifyGroupExists() throws Exception {
         initalizeTables();
 
-        Assert.isTrue(groupService.verifyGroupExists("GROUP|group1", perms.toArray(new String[0])));
-        Assert.isTrue(!groupService.verifyGroupExists("GROUP|BogusGroup", perms.toArray(new String[0])));
+        Assert.isTrue(groupService.verifyGroupExists("GROUP|group1", perms));
+        Assert.isTrue(!groupService.verifyGroupExists("GROUP|BogusGroup", perms));
     }
 
     @Test

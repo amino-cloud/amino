@@ -3,6 +3,7 @@ package com._42six.amino.query.services.accumulo.thrift;
 import com._42six.amino.common.thrift.*;
 import com._42six.amino.query.services.accumulo.AccumuloGroupService;
 import com._42six.amino.query.services.accumulo.AccumuloPersistenceService;
+import com._42six.amino.query.thrift.services.ThriftGroupServiceHandler;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.client.Connector;
@@ -37,7 +38,7 @@ public class AccumuloGroupServiceHandlerTest {
 
     static AccumuloGroupService groupService;
     static AccumuloPersistenceService persistenceService;
-    static AccumuloGroupServiceHandler serviceHandler;
+    static ThriftGroupServiceHandler serviceHandler;
 
     @BeforeClass
     public static void setupMock(){
@@ -54,7 +55,7 @@ public class AccumuloGroupServiceHandlerTest {
         groupService.setGroupHypothesisLUT(HYPOTHESIS_LOOKUP);
         groupService.setGroupMembershipTable(MEMBERSHIP_TABLE);
         groupService.setGroupMetadataTable(METADATA_TABLE);
-        serviceHandler = new AccumuloGroupServiceHandler(groupService);
+        serviceHandler = new ThriftGroupServiceHandler(groupService);
     }
 
     @Before

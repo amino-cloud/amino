@@ -4,6 +4,7 @@ import com._42six.amino.common.BucketMetadata;
 import com._42six.amino.common.DatasourceMetadata;
 import com._42six.amino.common.FeatureMetadata;
 import com._42six.amino.common.entity.Hypothesis;
+import com._42six.amino.query.services.AminoGroupService;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -17,7 +18,7 @@ import static org.junit.Assert.assertTrue;
 public class AccumuloMetadataServiceTest extends AccumuloTest {
 	
 	static AccumuloMetadataService metadataService;
-	static AccumuloGroupService groupService;
+	static AminoGroupService groupService;
 	
 	@BeforeClass
 	public static void setupClass(){

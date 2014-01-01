@@ -4,6 +4,7 @@ import com._42six.amino.common.BucketMetadata;
 import com._42six.amino.common.DatasourceMetadata;
 import com._42six.amino.common.FeatureMetadata;
 import com._42six.amino.common.entity.Hypothesis;
+import com._42six.amino.query.exception.BigTableException;
 
 import java.io.IOException;
 import java.util.List;
@@ -12,10 +13,20 @@ import java.util.List;
  * CRUD operations for {@link com._42six.amino.common.entity entities}
  */
 public interface AminoMetadataService {
+
+    /**
+     * Returns the DatasourceMetadata corresponding to the id
+     * @param dataSourceId The ID of the DatasourceMetadata to fetch
+     * @param visibility   A list of strings corresponding to allowed visibilities for the user.
+     * @return The appropriate DatasourceMetadata
+     * @throws IOException
+     */
+    public DatasourceMetadata getDataSource(String dataSourceId, String[] visibility) throws IOException;
+
 	/**
 	 * List all DataSources in the system.
 	 *
-	 * @param visibility A list of string corresponding to allowed visibilities for the user.
+	 * @param visibility A list of strings corresponding to allowed visibilities for the user.
 	 * @return The DataSources
 	 */
 	public List<DatasourceMetadata> listDataSources(String[] visibility) throws IOException;
@@ -24,7 +35,7 @@ public interface AminoMetadataService {
 	 * For a given source, find all available FeatureMetadata
 	 *
 	 * @param dataSourceId The id of the DatasourceMetadata to search against.
-	 * @param visibility   A list of string corresponding to allowed visibilities for the user.
+	 * @param visibility   A list of strings corresponding to allowed visibilities for the user.
 	 * @return The FeatureMetadatas
 	 */
 	public List<FeatureMetadata> listFeatures(String dataSourceId, String[] visibility) throws IOException;
@@ -103,4 +114,18 @@ public interface AminoMetadataService {
 	 * @param visibility A list of strings corresponding to the allowed visibilities for the user.
 	 */
 	public void deleteHypothesis(String owner, String id, String[] visibility);
+
+    /**
+     * Returns the number of Amino shards that are being used for the bitmaps
+     * @return the number of Amino shards that are being used for the bitmaps
+     * @throws BigTableException
+     */
+    public Integer getShardCount() throws BigTableException;
+
+    /**
+     * Returns the number of salts that are being used
+     * @return the number of salts that are being used
+     * @throws BigTableException
+     */
+    public Integer getHashCount() throws BigTableException;
 }

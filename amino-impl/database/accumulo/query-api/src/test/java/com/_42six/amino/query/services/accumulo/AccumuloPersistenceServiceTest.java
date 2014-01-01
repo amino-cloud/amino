@@ -1,5 +1,6 @@
 package com._42six.amino.query.services.accumulo;
 
+import com._42six.amino.query.exception.BigTableException;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
@@ -24,7 +25,7 @@ public class AccumuloPersistenceServiceTest extends AccumuloTest {
 	}
 	
 	@Test
-    public void testCreateTable() throws AccumuloException, AccumuloSecurityException, TableNotFoundException, TableExistsException {
+    public void testCreateTable() throws BigTableException, AccumuloSecurityException, AccumuloException, TableNotFoundException {
 		persistenceService.createTable("TestTable");
 		Connector con = persistenceService.getConnector();
 		assertTrue(con.tableOperations().exists("TestTable"));

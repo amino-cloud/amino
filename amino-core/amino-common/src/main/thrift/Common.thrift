@@ -142,3 +142,93 @@ struct THypothesis {
 	 */
 	16: set<string> queries;
 }
+
+struct TDatasourceMetadata {
+    1: string id;
+    2: string description;
+	3: string name;
+	4: set<string> featureIds;
+	5: set<string> bucketIds;
+}
+
+struct TFeatureMetadata {
+    1: string id;
+
+    /** Name of feature */
+    2: string name;
+
+    /** Visibility of feature */
+    3: string visibility;
+
+    /** The Accumulo columnVisibility string */
+    4: string btVisibility;
+
+    /** API version */
+    5: string api_version;
+
+    /** Job version */
+    6: string job_version = "0.2";
+
+    /** Description of feature */
+    7: string description;
+
+    /** Namespace */
+    8: string fmNamespace;
+
+    /** Feature type */
+    9: string type;
+
+    /** The Datasources that the feature is associated with */
+    10: set<string> datasources;
+
+    /** Minimum value (for interval features) */
+    11: map<string,double> min;
+
+    /** Maximum value (for interval features) */
+    12: map<string,double> max;
+
+    /** Sorted set of allowed values (for nominal features) */
+    13: set<string> allowedValues;
+
+    /** Total number of feature facts that were found in this feature */
+    14: map<string,i64> featureFactCount;
+
+    /** Total number of bucket values that were found in this feature */
+    15: map<string,i64> bucketValueCount;
+
+    /** Average ratio value for each bucket for this feature */
+    16: map<string,double> averages;
+
+    /** Standard deviation of the ratio values for each bucket for this feature */
+    17: map<string,double> standardDeviations;
+
+    18: map<string,list<map<string,double>>> ratioBins;
+
+    /** The top N nominal features for each bucket for this feature, stored in the json array like "featureFact:count" */
+    19: map<string,list<string>> topN;
+}
+
+struct TBucketMetadata {
+    1: string id;
+
+    /** Name of bucket */
+    2: string name;
+
+    /** Display name of bucket */
+    3: string displayName;
+
+    /** Visibility of bucket */
+    4: string visibility;
+
+    /** Accumulo columnVisibility string */
+    5: string btVisibility;
+
+    /** Name of the domain id */
+    6: string domainIdName;
+
+    /** Description of the domain id */
+    7: string domainIdDescription;
+
+    /** Timestamp in milliseconds of when the job ran */
+    8: i64 timestamp;
+}

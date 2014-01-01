@@ -7,6 +7,7 @@ import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.entity.Hypothesis;
 import com._42six.amino.common.query.requests.AddUsersRequest;
 import com._42six.amino.common.query.requests.CreateGroupRequest;
+import com._42six.amino.query.services.AminoGroupService;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.BatchScanner;
@@ -23,7 +24,7 @@ import java.util.*;
 /**
  * Service for handling everything having to do with groups
  */
-public class AccumuloGroupService {
+public class AccumuloGroupService implements AminoGroupService {
 
 	public static final Logger log = Logger.getLogger(AccumuloGroupService.class);
 
@@ -50,40 +51,47 @@ public class AccumuloGroupService {
 		this.persistenceService = service;
 	}
 
-	public AccumuloPersistenceService setPersistenceService(AccumuloPersistenceService service) {
+    public AccumuloPersistenceService setPersistenceService(AccumuloPersistenceService service) {
 		return this.persistenceService = service;
 	}
 
-	public String setGroupMetadataTable(String table) {
+    @Override
+    public String setGroupMetadataTable(String table) {
 		return this.groupMetadataTable = table;
 	}
 
-	public String getGroupHypothesisLUT() {
+	@Override
+    public String getGroupHypothesisLUT() {
 		return this.groupHypothesisLUT;
 	}
 
-	public String setGroupHypothesisLUT(String lut) {
+	@Override
+    public String setGroupHypothesisLUT(String lut) {
 		return this.groupHypothesisLUT = lut;
 	}
 
-	public String setGroupMembershipTable(String memberTable) {
+	@Override
+    public String setGroupMembershipTable(String memberTable) {
 		return this.groupMembershipTable = memberTable;
 	}
 
-	public String setHypothesisTable(String hypothesisTable) {
+	@Override
+    public String setHypothesisTable(String hypothesisTable) {
 		return this.hypothesisTable = hypothesisTable;
 	}
 
     /**
      * Verify that the group exists in the group_metadata table
      * @param group The group name to search for
-     * @param vis The Accumulo visibilities
+     * @param visibilities The Accumulo visibilities
      * @return true if the group exists, false otherwise
      * @throws IOException if the group_metadata table does not exist
      */
-    public boolean verifyGroupExists(String group, String[] vis) throws IOException {
+    @Override
+    public boolean verifyGroupExists(String group, Set<String> visibilities) throws IOException {
         MorePreconditions.checkNotNullOrEmpty(group);
-        final Authorizations auths = new Authorizations(Preconditions.checkNotNull(vis));
+        Preconditions.checkNotNull(visibilities);
+        final Authorizations auths = new Authorizations(visibilities.toArray(new String[visibilities.size()]));
         final String groupName = (group.startsWith(TableConstants.GROUP_PREFIX)) ? group : TableConstants.GROUP_PREFIX + group;
         final Scanner groupMetaScanner;
         try {
@@ -98,13 +106,15 @@ public class AccumuloGroupService {
     /**
      * Verify that the user belongs to any groups
      * @param user The user name to search for
-     * @param vis The Accumulo visibilities
+     * @param visibilities The Accumulo visibilities
      * @return true if the user belongs to any groups, false otherwise
      * @throws IOException if the group_membership table does not exist
      */
-    public boolean verifyUserExists(String user, String[] vis) throws IOException {
+    @Override
+    public boolean verifyUserExists(String user, Set<String> visibilities) throws IOException {
         MorePreconditions.checkNotNullOrEmpty(user);
-        final Authorizations auths = new Authorizations(Preconditions.checkNotNull(vis));
+        Preconditions.checkNotNull(visibilities);
+        final Authorizations auths = new Authorizations(visibilities.toArray(new String[visibilities.size()]));
         final String userName = (user.startsWith(TableConstants.USER_PREFIX)) ? user : TableConstants.USER_PREFIX + user;
         final Scanner groupMembershipScanner;
         try {
@@ -121,7 +131,8 @@ public class AccumuloGroupService {
      *
      * @param request The request object representing all of the values needed for adding users
 	 */
-	public void addToGroup(AddUsersRequest request) throws Exception {
+	@Override
+    public void addToGroup(AddUsersRequest request) throws Exception {
 		Preconditions.checkNotNull(request, "Request object was null");
         final String[] tokens = Preconditions.checkNotNull(request.getSecurityTokens(), "Security tokens were null");
         final Authorizations auths = Preconditions.checkNotNull(new Authorizations(tokens), "Could not create Authorizations");       
@@ -168,7 +179,8 @@ public class AccumuloGroupService {
 	 *
 	 * @param request The incoming request containing the Group to add to the database
 	 */
-	public void createGroup(CreateGroupRequest request) throws Exception {
+	@Override
+    public void createGroup(CreateGroupRequest request) throws Exception {
         Preconditions.checkNotNull(request);
         final Group group = Preconditions.checkNotNull(request.getGroup());
         String groupName = MorePreconditions.checkNotNullOrEmpty(group.getGroupName(), "Group Name not set");
@@ -222,10 +234,12 @@ public class AccumuloGroupService {
      * List all of the groups that a particular user can see
      *
      * @param userId     The person for which groups can be seen
-     * @param visibility the db visibility strings
+     * @param visibilities the db visibility strings
      */
-    public Set<String> listGroups(String userId, String[] visibility) throws IOException {
-        return listGroups(userId, new Authorizations(visibility));
+    @Override
+    public Set<String> listGroups(String userId, Set<String> visibilities) throws IOException {
+        Preconditions.checkNotNull(visibilities);
+        return listGroups(userId, new Authorizations(visibilities.toArray(new String[visibilities.size()])));
     }
 
     /**
@@ -242,6 +256,20 @@ public class AccumuloGroupService {
         groups.addAll(getGroupsForUser("public",auths));
 
         return groups;
+    }
+
+    /**
+     * Remove the members from the group
+     *
+     * @param requester    The person requesting the users to be removed.  Must be an admin for the group
+     * @param group        The group to remove from
+     * @param members      The members to remove from the group
+     * @param visibilities The database authorizations
+     */
+    @Override
+    public void removeUsersFromGroup(String requester, String group, Set<String> members, Set<String> visibilities) throws Exception {
+        Preconditions.checkNotNull(visibilities);
+        removeUsersFromGroup(requester, group, members, new Authorizations(visibilities.toArray(new String[visibilities.size()])));
     }
 
     /**
@@ -311,11 +339,12 @@ public class AccumuloGroupService {
      * @param requester  The ID of the person requesting that the user be removed
      * @param userId     The ID of the user to remove
      * @param groups     The group to remove from
-     * @param visibility The db visibility strings
+     * @param visibilities The db visibility strings
      */
-    public void removeUserFromGroups(String requester, String userId, Set<String> groups, String[] visibility) throws Exception {
-        Preconditions.checkNotNull(visibility);
-        removeUserFromGroups(requester, userId, groups, new Authorizations(visibility));
+    @Override
+    public void removeUserFromGroups(String requester, String userId, Set<String> groups, Set<String> visibilities) throws Exception {
+        Preconditions.checkNotNull(visibilities);
+        removeUserFromGroups(requester, userId, groups, new Authorizations(visibilities.toArray(new String[visibilities.size()])));
     }
 
     /**
@@ -417,12 +446,14 @@ public class AccumuloGroupService {
      * in order to get the Group.
      * @param requester   The person trying to fetch the Group
      * @param group       The Group to lookup in the tables
-     * @param visibility  The BigTable visibility strings
+     * @param visibilities  The BigTable visibility strings
      * @return Group representing all of of the members of the group
      * @throws IOException
      */
-    public Group getGroup(String requester, String group, String[] visibility) throws IOException {
-        return getGroup(requester, group, new Authorizations( Preconditions.checkNotNull(visibility)));
+    @Override
+    public Group getGroup(String requester, String group, Set<String> visibilities) throws IOException {
+        Preconditions.checkNotNull(visibilities);
+        return getGroup(requester, group, new Authorizations(visibilities.toArray(new String[visibilities.size()])));
     }
 
     /**
@@ -513,12 +544,13 @@ public class AccumuloGroupService {
 	 * Fetches the groups that a particular id belongs to
 	 *
 	 * @param userId     The userId to fetch the groups for or empty to fetch them all
-	 * @param visibility The Accumulo authorizations
+	 * @param visibilities The Accumulo authorizations
 	 * @return Set<String> of groups for the particular userId
 	 */
-	public Set<String> getGroupsForUser(String userId, String[] visibility) throws IOException {
-		Preconditions.checkNotNull(visibility);
-		return getGroupsForUser(userId, new Authorizations(visibility));
+	@Override
+    public Set<String> getGroupsForUser(String userId, Set<String> visibilities) throws IOException {
+		Preconditions.checkNotNull(visibilities);
+		return getGroupsForUser(userId, new Authorizations(visibilities.toArray(new String[visibilities.size()])));
 	}
 
     /**
@@ -561,15 +593,16 @@ public class AccumuloGroupService {
 	 * Returns the Hypotheses for the groups that the userId belongs to
 	 *
 	 * @param userId     The userId to fetch the group Hypotheses for
-	 * @param visibility Accumulo authorizations
+	 * @param visibilities Accumulo authorizations
 	 * @param userOwned  Set to true to return the Hypotheses owned by the user in addition to the group Hypotheses
 	 * @return All the Hypothesis for each of the given groups
 	 */
-	public List<Hypothesis> getGroupHypothesesForUser(String userId, String[] visibility, boolean userOwned) throws IOException {
+	@Override
+    public List<Hypothesis> getGroupHypothesesForUser(String userId, Set<String> visibilities, boolean userOwned) throws IOException {
 		Preconditions.checkNotNull(userId);
-		Preconditions.checkNotNull(visibility);
+		Preconditions.checkNotNull(visibilities);
 
-		final Authorizations auths = new Authorizations(visibility);
+		final Authorizations auths = new Authorizations(visibilities.toArray(new String[visibilities.size()]));
 		List<Range> hypothesesToFind = new ArrayList<Range>();
 
 		// Fetch which groups the userId belongs to
@@ -648,11 +681,12 @@ public class AccumuloGroupService {
 	 * Returns the Hypotheses for the groups that the userId belongs to
 	 *
 	 * @param userId     The userId to fetch the group Hypotheses for
-	 * @param visibility Accumulo authorizations
+	 * @param visibilities Accumulo authorizations
 	 * @return All the Hypothesis for each of the given groups
 	 */
-	public List<Hypothesis> getGroupHypothesesForUser(String userId, String[] visibility) throws IOException {
-		return getGroupHypothesesForUser(userId, visibility, false);
+	@Override
+    public List<Hypothesis> getGroupHypothesesForUser(String userId, Set<String> visibilities) throws IOException {
+		return getGroupHypothesesForUser(userId, visibilities, false);
 	}
 
 }

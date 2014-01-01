@@ -1,9 +1,12 @@
 package com._42six.amino.query.services.accumulo;
 
 import com._42six.amino.common.MorePreconditions;
+import com._42six.amino.query.exception.BigTableException;
+import com._42six.amino.query.services.AminoPersistenceService;
 import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.Constants;
 import org.apache.accumulo.core.client.*;
+import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.admin.SecurityOperations;
 import org.apache.accumulo.core.client.mock.MockInstance;
 import org.apache.accumulo.core.data.*;
@@ -13,16 +16,13 @@ import org.apache.hadoop.io.Text;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Abstraction of common operations involving interaction with Accumulo such as
  * Scanning and Writing
  */
-public class AccumuloPersistenceService {
+public class AccumuloPersistenceService implements AminoPersistenceService {
 
     /**
      * Creates the service for interacting with the Cloudbase instance
@@ -81,9 +81,18 @@ public class AccumuloPersistenceService {
 	 *
 	 * @param tableName The name of the table to create
 	 */
-	public void createTable(String tableName) throws AccumuloSecurityException, AccumuloException, TableExistsException {
-		this.connector.tableOperations().create(tableName);
-	}
+	@Override
+    public void createTable(String tableName) throws BigTableException {
+        try {
+            this.connector.tableOperations().create(tableName);
+        } catch (AccumuloException e) {
+            throw new BigTableException(e);
+        } catch (AccumuloSecurityException e) {
+            throw new BigTableException(e);
+        } catch (TableExistsException e) {
+            throw new BigTableException(e);
+        }
+    }
 
 	/**
 	 * Returns true if a table exists with the name passed, or
@@ -92,7 +101,8 @@ public class AccumuloPersistenceService {
 	 * @param tableName The name of the table to check
 	 * @return true if table exists false otherwise
 	 */
-	public Boolean tableExists(String tableName) {
+	@Override
+    public Boolean tableExists(String tableName) {
 		return this.connector.tableOperations().exists(tableName);
 	}
 
@@ -106,10 +116,15 @@ public class AccumuloPersistenceService {
 	 * @param value The value of the row to insert
 	 * @param tableName The table to insert the row into
 	 */
-	public void insertRow(String rowId, String columnFamily, String columnQualifier, String visibility, String value, String tableName) throws Exception {
+	@Override
+    public void insertRow(String rowId, String columnFamily, String columnQualifier, String visibility, String value, String tableName) throws BigTableException {
 		final Mutation row = createInsertMutation(rowId, columnFamily, columnQualifier, visibility, value);
-		writeCellMutations(new ArrayList<Mutation>(Arrays.asList(row)), tableName);
-	}
+        try {
+            writeCellMutations(new ArrayList<Mutation>(Arrays.asList(row)), tableName);
+        } catch (Exception e) {
+            throw new BigTableException(e);
+        }
+    }
 
 	/**
 	 * Inserts the rows passed. Rows are in the form of a list of maps
@@ -220,9 +235,21 @@ public class AccumuloPersistenceService {
 		return this.connector.createBatchDeleter(tableName, auths != null ? auths : Constants.NO_AUTHS, BATCHSCANNER_NUMQUERYTHREADS, BATCHWRITER_MAXMEMORY, BATCHWRITER_MAXLATENCY, BATCHWRITER_MAXWRITETHREADS);
 	}
 
-	public Authorizations getLoggedInUserAuthorizations() throws AccumuloException, AccumuloSecurityException {
-		return getSecurityOperations().getUserAuthorizations(this.connector.whoami());
-	}
+    @Override
+    public Set<String> getLoggedInUserAuthorizations() throws BigTableException {
+        try {
+            final List<byte[]> auths = getSecurityOperations().getUserAuthorizations(this.connector.whoami()).getAuthorizations();
+            final Set<String> retVal = new HashSet<String>(auths.size());
+            for(byte[] auth : auths){
+                retVal.add(new String(auth));
+            }
+            return retVal;
+        } catch (AccumuloException e) {
+            throw new BigTableException(e);
+        } catch (AccumuloSecurityException e) {
+            throw new BigTableException(e);
+        }
+    }
 
 	private SecurityOperations getSecurityOperations() {
 		return this.connector.securityOperations();
