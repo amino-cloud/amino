@@ -1,5 +1,5 @@
 /*
- * This generates the Thrift service for the Amino GroupService.  You must have Thrift 0.6.1 installed.
+ * This generates the Thrift service for the Amino MetadataService.  You must have Thrift 0.6.1 installed.
  *
  * Run the generate.sh script to generate all of the Thrift classes and place them in the appropriate spot in the src tree
  */
