@@ -18,18 +18,21 @@ struct TGroup {
     4: set<TGroupMember> members;
 }
 
-struct TCreateGroupRequest {
-    1: TGroup group,
-    2: string requester,
-    3: set<string> visibilities
-}
-
 struct TAddUsersRequest {
     1: string groupName,
     2: set<TGroupMember> usersToAdd,
     3: string requester,
     4: set<string> visibilities
 }
+
+
+
+struct TCreateGroupRequest {
+    1: TGroup group,
+    2: string requester,
+    3: set<string> visibilities
+}
+
 
 struct THypothesisFeature {
 	1: string id;
@@ -141,6 +144,44 @@ struct THypothesis {
 	 * A sorted set of QueryResult ID's, sorted by time
 	 */
 	16: set<string> queries;
+}
+
+struct TByValuesRequest {
+    1: string requester; // The persona that is making the request
+
+    2: set<string> visibilities;
+
+    /** The datasource the bucket values are associated with  */
+    3: string datasourceId;
+
+    /** The bucket the bucket values are associated with */
+    4: string bucketId;
+
+    /** The values to intersect the Hypotheses with */
+    5: set<string> bucketValues;
+
+    /** OPTIONAL - If provided then only searches these hypotheses */
+    6: optional list<THypothesis> hypotheses;
+
+	7: optional i64 timeout = -1; // in seconds
+
+}
+
+struct TQueryEntry {
+    1: string bucketName
+}
+
+struct TQueryResult {
+	1: string owner;
+	2: string id;
+	3: i64 timestamp;
+	4: i64 result_count;
+	5: string hypothesisid;
+	6: string hypothesisname;
+	7: string bucketid;
+	8: THypothesis hypothesis_at_runtime;
+	9: string error;
+	10: list<TQueryEntry> result_set;
 }
 
 struct TDatasourceMetadata {

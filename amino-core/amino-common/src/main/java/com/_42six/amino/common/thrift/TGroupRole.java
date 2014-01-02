@@ -6,6 +6,10 @@
 package com._42six.amino.common.thrift;
 
 
+import java.util.Map;
+import java.util.HashMap;
+import org.apache.thrift.TEnum;
+
 public enum TGroupRole implements org.apache.thrift.TEnum {
   ADMIN(0),
   CONTRIBUTOR(1),

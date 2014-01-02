@@ -5,7 +5,20 @@
  */
 package com._42six.amino.common.thrift;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TCreateGroupRequest implements org.apache.thrift.TBase<TCreateGroupRequest, TCreateGroupRequest._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TCreateGroupRequest");
@@ -411,13 +424,13 @@ public class TCreateGroupRequest implements org.apache.thrift.TBase<TCreateGroup
         case 3: // VISIBILITIES
           if (field.type == org.apache.thrift.protocol.TType.SET) {
             {
-              org.apache.thrift.protocol.TSet _set8 = iprot.readSetBegin();
-              this.visibilities = new HashSet<String>(2*_set8.size);
-              for (int _i9 = 0; _i9 < _set8.size; ++_i9)
+              org.apache.thrift.protocol.TSet _set16 = iprot.readSetBegin();
+              this.visibilities = new HashSet<String>(2*_set16.size);
+              for (int _i17 = 0; _i17 < _set16.size; ++_i17)
               {
-                String _elem10;
-                _elem10 = iprot.readString();
-                this.visibilities.add(_elem10);
+                String _elem18;
+                _elem18 = iprot.readString();
+                this.visibilities.add(_elem18);
               }
               iprot.readSetEnd();
             }
@@ -454,9 +467,9 @@ public class TCreateGroupRequest implements org.apache.thrift.TBase<TCreateGroup
       oprot.writeFieldBegin(VISIBILITIES_FIELD_DESC);
       {
         oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.STRING, this.visibilities.size()));
-        for (String _iter11 : this.visibilities)
+        for (String _iter19 : this.visibilities)
         {
-          oprot.writeString(_iter11);
+          oprot.writeString(_iter19);
         }
         oprot.writeSetEnd();
       }

@@ -138,7 +138,7 @@ public class AccumuloGroupService implements AminoGroupService {
         final Authorizations auths = Preconditions.checkNotNull(new Authorizations(tokens), "Could not create Authorizations");       
         final Set<GroupMember> members = Preconditions.checkNotNull(request.getUsers(), "Missing members");
         String groupName = MorePreconditions.checkNotNullOrEmpty(request.getGroupName(), "Missing group name");
-        String requester = MorePreconditions.checkNotNullOrEmpty(request.getRequestor(), "Missing requester");
+        String requester = MorePreconditions.checkNotNullOrEmpty(request.getRequester(), "Missing requester");
 
         // Make sure prefixed properly
         groupName = groupName.startsWith(TableConstants.GROUP_PREFIX) ? groupName : TableConstants.GROUP_PREFIX + groupName;

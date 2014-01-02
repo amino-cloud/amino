@@ -3,11 +3,16 @@ package com._42six.amino.common.translator;
 import com._42six.amino.common.*;
 import com._42six.amino.common.entity.Hypothesis;
 import com._42six.amino.common.entity.HypothesisFeature;
+import com._42six.amino.common.entity.QueryEntry;
+import com._42six.amino.common.entity.QueryResult;
 import com._42six.amino.common.query.requests.AddUsersRequest;
 import com._42six.amino.common.query.requests.CreateGroupRequest;
+import com._42six.amino.common.query.requests.auditing.AminoAuditRequest;
+import com._42six.amino.common.query.requests.bta.BtaByValuesRequest;
 import com._42six.amino.common.thrift.*;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Class for translating internal objects to/from thrift
@@ -168,7 +173,7 @@ public class ThriftTranslator {
 
     public static AddUsersRequest fromTAddUsersRequest(TAddUsersRequest request){
         final AddUsersRequest retVal = new AddUsersRequest();
-        retVal.setRequestor(request.getRequester());
+        retVal.setRequester(request.getRequester());
         retVal.setSecurityTokens(request.getVisibilities().toArray(new String[request.getVisibilitiesSize()]));
         retVal.setUsers(fromTGroupMembers(request.getUsersToAdd()));
         retVal.setGroupName(request.getGroupName());
@@ -178,7 +183,7 @@ public class ThriftTranslator {
     public static CreateGroupRequest fromTCreateGroupRequest(TCreateGroupRequest request){
         final CreateGroupRequest retVal =  new CreateGroupRequest();
         retVal.setGroup(fromTGroup(request.getGroup()));
-        retVal.setRequestor(request.getRequester());
+        retVal.setRequester(request.getRequester());
         retVal.setSecurityTokens(request.getVisibilities().toArray(new String[request.getVisibilitiesSize()]));
         return retVal;
     }
@@ -231,4 +236,54 @@ public class ThriftTranslator {
         return retVal;
     }
 
+    public static TQueryEntry toTQueryEntry(QueryEntry entry){
+        return new TQueryEntry(entry.bucketName);
+    }
+
+    public static QueryEntry fromTQueryEntry(TQueryEntry entry){
+        return new QueryEntry(entry.bucketName);
+    }
+
+    public static TQueryResult toTQueryResult(QueryResult result){
+        final List<TQueryEntry> entries = new ArrayList<TQueryEntry>(result.result_set.size());
+        for(QueryEntry entry : result.result_set){
+            entries.add(toTQueryEntry(entry));
+        }
+
+        return new TQueryResult(result.owner,
+                result.id,
+                result.timestamp,
+                result.result_count,
+                result.hypothesisid,
+                result.hypothesisname,
+                result.bucketid,
+                toTHypothesis(result.hypothesis_at_runtime),
+                result.error,
+                entries);
+    }
+
+    public static BtaByValuesRequest fromTByValuesRequest(TByValuesRequest bvRequest) {
+        final BtaByValuesRequest request = new BtaByValuesRequest();
+
+        // TODO Figure out where this information is to come from ?
+        final AminoAuditRequest auditInfo = new AminoAuditRequest();
+
+        request.setAuditInfo(auditInfo);
+        request.setTimeout(bvRequest.timeout);
+        request.setTimeoutUnits(TimeUnit.SECONDS);
+        request.setDatasourceId(bvRequest.getDatasourceId());
+        request.setBucketId(bvRequest.getBucketId());
+        request.setBucketValues(bvRequest.bucketValues);
+        if(bvRequest.isSetHypotheses()){
+            final List<Hypothesis> hypotheses = new ArrayList<Hypothesis>(bvRequest.getHypothesesSize());
+            for(THypothesis hypothesis : bvRequest.getHypotheses()){
+                hypotheses.add(fromTHypothesis(hypothesis));
+            }
+            request.setHypotheses(hypotheses);
+        }
+        request.setRequester(bvRequest.requester);
+        request.setSecurityTokens(bvRequest.getVisibilities().toArray(new String[bvRequest.getVisibilitiesSize()]));
+
+        return request;
+    }
 }

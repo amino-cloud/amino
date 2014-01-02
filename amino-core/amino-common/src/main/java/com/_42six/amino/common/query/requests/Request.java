@@ -9,18 +9,18 @@ import com._42six.amino.common.bigtable.TableConstants;
 public class Request {
 
     public String[] securityTokens; // Any information related to security
-    public String requestor; // The persona that is making the request
+    public String requester; // The persona that is making the request
 
 	public Request() {
 		// empty
 	}
 
-    public String getRequestor(){
-        return this.requestor;
+    public String getRequester(){
+        return this.requester;
     }
 
-    public void setRequestor(String requestor){
-        this.requestor = (requestor.startsWith(TableConstants.USER_PREFIX)) ? requestor : TableConstants.USER_PREFIX + requestor;
+    public void setRequester(String requester){
+        this.requester = (requester.startsWith(TableConstants.USER_PREFIX)) ? requester : TableConstants.USER_PREFIX + requester;
     }
 
     public String[] getSecurityTokens(){

@@ -5,7 +5,20 @@
  */
 package com._42six.amino.common.thrift;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TDatasourceMetadata implements org.apache.thrift.TBase<TDatasourceMetadata, TDatasourceMetadata._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TDatasourceMetadata");
@@ -575,13 +588,13 @@ public class TDatasourceMetadata implements org.apache.thrift.TBase<TDatasourceM
         case 4: // FEATURE_IDS
           if (field.type == org.apache.thrift.protocol.TType.SET) {
             {
-              org.apache.thrift.protocol.TSet _set36 = iprot.readSetBegin();
-              this.featureIds = new HashSet<String>(2*_set36.size);
-              for (int _i37 = 0; _i37 < _set36.size; ++_i37)
+              org.apache.thrift.protocol.TSet _set52 = iprot.readSetBegin();
+              this.featureIds = new HashSet<String>(2*_set52.size);
+              for (int _i53 = 0; _i53 < _set52.size; ++_i53)
               {
-                String _elem38;
-                _elem38 = iprot.readString();
-                this.featureIds.add(_elem38);
+                String _elem54;
+                _elem54 = iprot.readString();
+                this.featureIds.add(_elem54);
               }
               iprot.readSetEnd();
             }
@@ -592,13 +605,13 @@ public class TDatasourceMetadata implements org.apache.thrift.TBase<TDatasourceM
         case 5: // BUCKET_IDS
           if (field.type == org.apache.thrift.protocol.TType.SET) {
             {
-              org.apache.thrift.protocol.TSet _set39 = iprot.readSetBegin();
-              this.bucketIds = new HashSet<String>(2*_set39.size);
-              for (int _i40 = 0; _i40 < _set39.size; ++_i40)
+              org.apache.thrift.protocol.TSet _set55 = iprot.readSetBegin();
+              this.bucketIds = new HashSet<String>(2*_set55.size);
+              for (int _i56 = 0; _i56 < _set55.size; ++_i56)
               {
-                String _elem41;
-                _elem41 = iprot.readString();
-                this.bucketIds.add(_elem41);
+                String _elem57;
+                _elem57 = iprot.readString();
+                this.bucketIds.add(_elem57);
               }
               iprot.readSetEnd();
             }
@@ -640,9 +653,9 @@ public class TDatasourceMetadata implements org.apache.thrift.TBase<TDatasourceM
       oprot.writeFieldBegin(FEATURE_IDS_FIELD_DESC);
       {
         oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.STRING, this.featureIds.size()));
-        for (String _iter42 : this.featureIds)
+        for (String _iter58 : this.featureIds)
         {
-          oprot.writeString(_iter42);
+          oprot.writeString(_iter58);
         }
         oprot.writeSetEnd();
       }
@@ -652,9 +665,9 @@ public class TDatasourceMetadata implements org.apache.thrift.TBase<TDatasourceM
       oprot.writeFieldBegin(BUCKET_IDS_FIELD_DESC);
       {
         oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.STRING, this.bucketIds.size()));
-        for (String _iter43 : this.bucketIds)
+        for (String _iter59 : this.bucketIds)
         {
-          oprot.writeString(_iter43);
+          oprot.writeString(_iter59);
         }
         oprot.writeSetEnd();
       }

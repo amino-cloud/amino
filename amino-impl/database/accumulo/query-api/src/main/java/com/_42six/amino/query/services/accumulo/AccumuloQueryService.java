@@ -18,6 +18,7 @@ import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
 import com._42six.amino.common.translator.FeatureFactTranslatorInt;
 import com._42six.amino.common.util.concurrent.FlaggableCallable;
 import com._42six.amino.common.util.concurrent.TimedUserExecutionService;
+import com._42six.amino.query.exception.BigTableException;
 import com._42six.amino.query.exception.EntityNotFoundException;
 import com._42six.amino.query.services.AminoQueryService;
 import com._42six.amino.query.services.audit.AuditorServiceInt;
@@ -1005,9 +1006,9 @@ public class AccumuloQueryService implements AminoQueryService {
      * @param count The number of times that the feature exists for that bucket
      * @param visibility The Accumulo visibility strings
      * @return The uniqueness score
-     * @throws TableNotFoundException
+     * @throws BigTableException
      */
-	public double getUniqueness(String featureId, String bucketName, Integer count, String[] visibility) throws IOException {
+	public double getUniqueness(String featureId, String bucketName, Integer count, String[] visibility) throws BigTableException {
 		if (count <= 0) {
 			return 0;
 		}
@@ -1016,10 +1017,15 @@ public class AccumuloQueryService implements AminoQueryService {
 		MorePreconditions.checkNotNullOrEmpty(featureId);
 		MorePreconditions.checkNotNullOrEmpty(bucketName);
 		Preconditions.checkNotNull(visibility);
-		
-		final FeatureMetadata metadata = metadataService.getFeature(featureId, visibility);
-		
-		Long total = metadata.bucketValueCount.get(bucketName);
+
+        final FeatureMetadata metadata;
+        try {
+            metadata = metadataService.getFeature(featureId, visibility);
+        } catch (IOException e) {
+            throw new BigTableException(e);
+        }
+
+        Long total = metadata.bucketValueCount.get(bucketName);
 		if (total == 0) {
 			return 0;
 		}

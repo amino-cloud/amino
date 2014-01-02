@@ -5,7 +5,20 @@
  */
 package com._42six.amino.common.thrift;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadata, TFeatureMetadata._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TFeatureMetadata");
@@ -2012,13 +2025,13 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
         case 10: // DATASOURCES
           if (field.type == org.apache.thrift.protocol.TType.SET) {
             {
-              org.apache.thrift.protocol.TSet _set44 = iprot.readSetBegin();
-              this.datasources = new HashSet<String>(2*_set44.size);
-              for (int _i45 = 0; _i45 < _set44.size; ++_i45)
+              org.apache.thrift.protocol.TSet _set60 = iprot.readSetBegin();
+              this.datasources = new HashSet<String>(2*_set60.size);
+              for (int _i61 = 0; _i61 < _set60.size; ++_i61)
               {
-                String _elem46;
-                _elem46 = iprot.readString();
-                this.datasources.add(_elem46);
+                String _elem62;
+                _elem62 = iprot.readString();
+                this.datasources.add(_elem62);
               }
               iprot.readSetEnd();
             }
@@ -2029,15 +2042,15 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
         case 11: // MIN
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map47 = iprot.readMapBegin();
-              this.min = new HashMap<String,Double>(2*_map47.size);
-              for (int _i48 = 0; _i48 < _map47.size; ++_i48)
+              org.apache.thrift.protocol.TMap _map63 = iprot.readMapBegin();
+              this.min = new HashMap<String,Double>(2*_map63.size);
+              for (int _i64 = 0; _i64 < _map63.size; ++_i64)
               {
-                String _key49;
-                double _val50;
-                _key49 = iprot.readString();
-                _val50 = iprot.readDouble();
-                this.min.put(_key49, _val50);
+                String _key65;
+                double _val66;
+                _key65 = iprot.readString();
+                _val66 = iprot.readDouble();
+                this.min.put(_key65, _val66);
               }
               iprot.readMapEnd();
             }
@@ -2048,15 +2061,15 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
         case 12: // MAX
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map51 = iprot.readMapBegin();
-              this.max = new HashMap<String,Double>(2*_map51.size);
-              for (int _i52 = 0; _i52 < _map51.size; ++_i52)
+              org.apache.thrift.protocol.TMap _map67 = iprot.readMapBegin();
+              this.max = new HashMap<String,Double>(2*_map67.size);
+              for (int _i68 = 0; _i68 < _map67.size; ++_i68)
               {
-                String _key53;
-                double _val54;
-                _key53 = iprot.readString();
-                _val54 = iprot.readDouble();
-                this.max.put(_key53, _val54);
+                String _key69;
+                double _val70;
+                _key69 = iprot.readString();
+                _val70 = iprot.readDouble();
+                this.max.put(_key69, _val70);
               }
               iprot.readMapEnd();
             }
@@ -2067,13 +2080,13 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
         case 13: // ALLOWED_VALUES
           if (field.type == org.apache.thrift.protocol.TType.SET) {
             {
-              org.apache.thrift.protocol.TSet _set55 = iprot.readSetBegin();
-              this.allowedValues = new HashSet<String>(2*_set55.size);
-              for (int _i56 = 0; _i56 < _set55.size; ++_i56)
+              org.apache.thrift.protocol.TSet _set71 = iprot.readSetBegin();
+              this.allowedValues = new HashSet<String>(2*_set71.size);
+              for (int _i72 = 0; _i72 < _set71.size; ++_i72)
               {
-                String _elem57;
-                _elem57 = iprot.readString();
-                this.allowedValues.add(_elem57);
+                String _elem73;
+                _elem73 = iprot.readString();
+                this.allowedValues.add(_elem73);
               }
               iprot.readSetEnd();
             }
@@ -2084,15 +2097,15 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
         case 14: // FEATURE_FACT_COUNT
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map58 = iprot.readMapBegin();
-              this.featureFactCount = new HashMap<String,Long>(2*_map58.size);
-              for (int _i59 = 0; _i59 < _map58.size; ++_i59)
+              org.apache.thrift.protocol.TMap _map74 = iprot.readMapBegin();
+              this.featureFactCount = new HashMap<String,Long>(2*_map74.size);
+              for (int _i75 = 0; _i75 < _map74.size; ++_i75)
               {
-                String _key60;
-                long _val61;
-                _key60 = iprot.readString();
-                _val61 = iprot.readI64();
-                this.featureFactCount.put(_key60, _val61);
+                String _key76;
+                long _val77;
+                _key76 = iprot.readString();
+                _val77 = iprot.readI64();
+                this.featureFactCount.put(_key76, _val77);
               }
               iprot.readMapEnd();
             }
@@ -2103,15 +2116,15 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
         case 15: // BUCKET_VALUE_COUNT
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map62 = iprot.readMapBegin();
-              this.bucketValueCount = new HashMap<String,Long>(2*_map62.size);
-              for (int _i63 = 0; _i63 < _map62.size; ++_i63)
+              org.apache.thrift.protocol.TMap _map78 = iprot.readMapBegin();
+              this.bucketValueCount = new HashMap<String,Long>(2*_map78.size);
+              for (int _i79 = 0; _i79 < _map78.size; ++_i79)
               {
-                String _key64;
-                long _val65;
-                _key64 = iprot.readString();
-                _val65 = iprot.readI64();
-                this.bucketValueCount.put(_key64, _val65);
+                String _key80;
+                long _val81;
+                _key80 = iprot.readString();
+                _val81 = iprot.readI64();
+                this.bucketValueCount.put(_key80, _val81);
               }
               iprot.readMapEnd();
             }
@@ -2122,15 +2135,15 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
         case 16: // AVERAGES
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map66 = iprot.readMapBegin();
-              this.averages = new HashMap<String,Double>(2*_map66.size);
-              for (int _i67 = 0; _i67 < _map66.size; ++_i67)
+              org.apache.thrift.protocol.TMap _map82 = iprot.readMapBegin();
+              this.averages = new HashMap<String,Double>(2*_map82.size);
+              for (int _i83 = 0; _i83 < _map82.size; ++_i83)
               {
-                String _key68;
-                double _val69;
-                _key68 = iprot.readString();
-                _val69 = iprot.readDouble();
-                this.averages.put(_key68, _val69);
+                String _key84;
+                double _val85;
+                _key84 = iprot.readString();
+                _val85 = iprot.readDouble();
+                this.averages.put(_key84, _val85);
               }
               iprot.readMapEnd();
             }
@@ -2141,15 +2154,15 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
         case 17: // STANDARD_DEVIATIONS
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map70 = iprot.readMapBegin();
-              this.standardDeviations = new HashMap<String,Double>(2*_map70.size);
-              for (int _i71 = 0; _i71 < _map70.size; ++_i71)
+              org.apache.thrift.protocol.TMap _map86 = iprot.readMapBegin();
+              this.standardDeviations = new HashMap<String,Double>(2*_map86.size);
+              for (int _i87 = 0; _i87 < _map86.size; ++_i87)
               {
-                String _key72;
-                double _val73;
-                _key72 = iprot.readString();
-                _val73 = iprot.readDouble();
-                this.standardDeviations.put(_key72, _val73);
+                String _key88;
+                double _val89;
+                _key88 = iprot.readString();
+                _val89 = iprot.readDouble();
+                this.standardDeviations.put(_key88, _val89);
               }
               iprot.readMapEnd();
             }
@@ -2160,37 +2173,37 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
         case 18: // RATIO_BINS
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map74 = iprot.readMapBegin();
-              this.ratioBins = new HashMap<String,List<Map<String,Double>>>(2*_map74.size);
-              for (int _i75 = 0; _i75 < _map74.size; ++_i75)
+              org.apache.thrift.protocol.TMap _map90 = iprot.readMapBegin();
+              this.ratioBins = new HashMap<String,List<Map<String,Double>>>(2*_map90.size);
+              for (int _i91 = 0; _i91 < _map90.size; ++_i91)
               {
-                String _key76;
-                List<Map<String,Double>> _val77;
-                _key76 = iprot.readString();
+                String _key92;
+                List<Map<String,Double>> _val93;
+                _key92 = iprot.readString();
                 {
-                  org.apache.thrift.protocol.TList _list78 = iprot.readListBegin();
-                  _val77 = new ArrayList<Map<String,Double>>(_list78.size);
-                  for (int _i79 = 0; _i79 < _list78.size; ++_i79)
+                  org.apache.thrift.protocol.TList _list94 = iprot.readListBegin();
+                  _val93 = new ArrayList<Map<String,Double>>(_list94.size);
+                  for (int _i95 = 0; _i95 < _list94.size; ++_i95)
                   {
-                    Map<String,Double> _elem80;
+                    Map<String,Double> _elem96;
                     {
-                      org.apache.thrift.protocol.TMap _map81 = iprot.readMapBegin();
-                      _elem80 = new HashMap<String,Double>(2*_map81.size);
-                      for (int _i82 = 0; _i82 < _map81.size; ++_i82)
+                      org.apache.thrift.protocol.TMap _map97 = iprot.readMapBegin();
+                      _elem96 = new HashMap<String,Double>(2*_map97.size);
+                      for (int _i98 = 0; _i98 < _map97.size; ++_i98)
                       {
-                        String _key83;
-                        double _val84;
-                        _key83 = iprot.readString();
-                        _val84 = iprot.readDouble();
-                        _elem80.put(_key83, _val84);
+                        String _key99;
+                        double _val100;
+                        _key99 = iprot.readString();
+                        _val100 = iprot.readDouble();
+                        _elem96.put(_key99, _val100);
                       }
                       iprot.readMapEnd();
                     }
-                    _val77.add(_elem80);
+                    _val93.add(_elem96);
                   }
                   iprot.readListEnd();
                 }
-                this.ratioBins.put(_key76, _val77);
+                this.ratioBins.put(_key92, _val93);
               }
               iprot.readMapEnd();
             }
@@ -2201,25 +2214,25 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
         case 19: // TOP_N
           if (field.type == org.apache.thrift.protocol.TType.MAP) {
             {
-              org.apache.thrift.protocol.TMap _map85 = iprot.readMapBegin();
-              this.topN = new HashMap<String,List<String>>(2*_map85.size);
-              for (int _i86 = 0; _i86 < _map85.size; ++_i86)
+              org.apache.thrift.protocol.TMap _map101 = iprot.readMapBegin();
+              this.topN = new HashMap<String,List<String>>(2*_map101.size);
+              for (int _i102 = 0; _i102 < _map101.size; ++_i102)
               {
-                String _key87;
-                List<String> _val88;
-                _key87 = iprot.readString();
+                String _key103;
+                List<String> _val104;
+                _key103 = iprot.readString();
                 {
-                  org.apache.thrift.protocol.TList _list89 = iprot.readListBegin();
-                  _val88 = new ArrayList<String>(_list89.size);
-                  for (int _i90 = 0; _i90 < _list89.size; ++_i90)
+                  org.apache.thrift.protocol.TList _list105 = iprot.readListBegin();
+                  _val104 = new ArrayList<String>(_list105.size);
+                  for (int _i106 = 0; _i106 < _list105.size; ++_i106)
                   {
-                    String _elem91;
-                    _elem91 = iprot.readString();
-                    _val88.add(_elem91);
+                    String _elem107;
+                    _elem107 = iprot.readString();
+                    _val104.add(_elem107);
                   }
                   iprot.readListEnd();
                 }
-                this.topN.put(_key87, _val88);
+                this.topN.put(_key103, _val104);
               }
               iprot.readMapEnd();
             }
@@ -2291,9 +2304,9 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
       oprot.writeFieldBegin(DATASOURCES_FIELD_DESC);
       {
         oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.STRING, this.datasources.size()));
-        for (String _iter92 : this.datasources)
+        for (String _iter108 : this.datasources)
         {
-          oprot.writeString(_iter92);
+          oprot.writeString(_iter108);
         }
         oprot.writeSetEnd();
       }
@@ -2303,10 +2316,10 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
       oprot.writeFieldBegin(MIN_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, this.min.size()));
-        for (Map.Entry<String, Double> _iter93 : this.min.entrySet())
+        for (Map.Entry<String, Double> _iter109 : this.min.entrySet())
         {
-          oprot.writeString(_iter93.getKey());
-          oprot.writeDouble(_iter93.getValue());
+          oprot.writeString(_iter109.getKey());
+          oprot.writeDouble(_iter109.getValue());
         }
         oprot.writeMapEnd();
       }
@@ -2316,10 +2329,10 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
       oprot.writeFieldBegin(MAX_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, this.max.size()));
-        for (Map.Entry<String, Double> _iter94 : this.max.entrySet())
+        for (Map.Entry<String, Double> _iter110 : this.max.entrySet())
         {
-          oprot.writeString(_iter94.getKey());
-          oprot.writeDouble(_iter94.getValue());
+          oprot.writeString(_iter110.getKey());
+          oprot.writeDouble(_iter110.getValue());
         }
         oprot.writeMapEnd();
       }
@@ -2329,9 +2342,9 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
       oprot.writeFieldBegin(ALLOWED_VALUES_FIELD_DESC);
       {
         oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.STRING, this.allowedValues.size()));
-        for (String _iter95 : this.allowedValues)
+        for (String _iter111 : this.allowedValues)
         {
-          oprot.writeString(_iter95);
+          oprot.writeString(_iter111);
         }
         oprot.writeSetEnd();
       }
@@ -2341,10 +2354,10 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
       oprot.writeFieldBegin(FEATURE_FACT_COUNT_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.I64, this.featureFactCount.size()));
-        for (Map.Entry<String, Long> _iter96 : this.featureFactCount.entrySet())
+        for (Map.Entry<String, Long> _iter112 : this.featureFactCount.entrySet())
         {
-          oprot.writeString(_iter96.getKey());
-          oprot.writeI64(_iter96.getValue());
+          oprot.writeString(_iter112.getKey());
+          oprot.writeI64(_iter112.getValue());
         }
         oprot.writeMapEnd();
       }
@@ -2354,10 +2367,10 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
       oprot.writeFieldBegin(BUCKET_VALUE_COUNT_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.I64, this.bucketValueCount.size()));
-        for (Map.Entry<String, Long> _iter97 : this.bucketValueCount.entrySet())
+        for (Map.Entry<String, Long> _iter113 : this.bucketValueCount.entrySet())
         {
-          oprot.writeString(_iter97.getKey());
-          oprot.writeI64(_iter97.getValue());
+          oprot.writeString(_iter113.getKey());
+          oprot.writeI64(_iter113.getValue());
         }
         oprot.writeMapEnd();
       }
@@ -2367,10 +2380,10 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
       oprot.writeFieldBegin(AVERAGES_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, this.averages.size()));
-        for (Map.Entry<String, Double> _iter98 : this.averages.entrySet())
+        for (Map.Entry<String, Double> _iter114 : this.averages.entrySet())
         {
-          oprot.writeString(_iter98.getKey());
-          oprot.writeDouble(_iter98.getValue());
+          oprot.writeString(_iter114.getKey());
+          oprot.writeDouble(_iter114.getValue());
         }
         oprot.writeMapEnd();
       }
@@ -2380,10 +2393,10 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
       oprot.writeFieldBegin(STANDARD_DEVIATIONS_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, this.standardDeviations.size()));
-        for (Map.Entry<String, Double> _iter99 : this.standardDeviations.entrySet())
+        for (Map.Entry<String, Double> _iter115 : this.standardDeviations.entrySet())
         {
-          oprot.writeString(_iter99.getKey());
-          oprot.writeDouble(_iter99.getValue());
+          oprot.writeString(_iter115.getKey());
+          oprot.writeDouble(_iter115.getValue());
         }
         oprot.writeMapEnd();
       }
@@ -2393,19 +2406,19 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
       oprot.writeFieldBegin(RATIO_BINS_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.LIST, this.ratioBins.size()));
-        for (Map.Entry<String, List<Map<String,Double>>> _iter100 : this.ratioBins.entrySet())
+        for (Map.Entry<String, List<Map<String,Double>>> _iter116 : this.ratioBins.entrySet())
         {
-          oprot.writeString(_iter100.getKey());
+          oprot.writeString(_iter116.getKey());
           {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.MAP, _iter100.getValue().size()));
-            for (Map<String,Double> _iter101 : _iter100.getValue())
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.MAP, _iter116.getValue().size()));
+            for (Map<String,Double> _iter117 : _iter116.getValue())
             {
               {
-                oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, _iter101.size()));
-                for (Map.Entry<String, Double> _iter102 : _iter101.entrySet())
+                oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.DOUBLE, _iter117.size()));
+                for (Map.Entry<String, Double> _iter118 : _iter117.entrySet())
                 {
-                  oprot.writeString(_iter102.getKey());
-                  oprot.writeDouble(_iter102.getValue());
+                  oprot.writeString(_iter118.getKey());
+                  oprot.writeDouble(_iter118.getValue());
                 }
                 oprot.writeMapEnd();
               }
@@ -2421,14 +2434,14 @@ public class TFeatureMetadata implements org.apache.thrift.TBase<TFeatureMetadat
       oprot.writeFieldBegin(TOP_N_FIELD_DESC);
       {
         oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.LIST, this.topN.size()));
-        for (Map.Entry<String, List<String>> _iter103 : this.topN.entrySet())
+        for (Map.Entry<String, List<String>> _iter119 : this.topN.entrySet())
         {
-          oprot.writeString(_iter103.getKey());
+          oprot.writeString(_iter119.getKey());
           {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter103.getValue().size()));
-            for (String _iter104 : _iter103.getValue())
+            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter119.getValue().size()));
+            for (String _iter120 : _iter119.getValue())
             {
-              oprot.writeString(_iter104);
+              oprot.writeString(_iter120);
             }
             oprot.writeListEnd();
           }

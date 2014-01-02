@@ -88,7 +88,7 @@ public class AccumuloGroupServiceTest {
 
         final CreateGroupRequest request = new CreateGroupRequest();
         request.setGroup(g);
-        request.setRequestor("USER|requestor");
+        request.setRequester("USER|requester");
         request.setSecurityTokens(perms.toArray(new String[0]));
 
         groupService.createGroup(request);
@@ -319,7 +319,7 @@ public class AccumuloGroupServiceTest {
         final AddUsersRequest request = new AddUsersRequest();
         request.setGroupName("group1");
         request.setSecurityTokens(perms.toArray(new String[0]));
-        request.setRequestor("member1");
+        request.setRequester("member1");
         request.setUsers(members);
 
         groupService.addToGroup(request);
@@ -368,7 +368,7 @@ public class AccumuloGroupServiceTest {
         //
         exception.expect(Exception.class);
         exception.expectMessage(String.format("USER|member2 does not have admin rights to the group GROUP|group1"));
-        request.setRequestor("member2");
+        request.setRequester("member2");
         groupService.addToGroup(request);
     }
 

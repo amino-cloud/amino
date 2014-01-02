@@ -5,7 +5,20 @@
  */
 package com._42six.amino.common.thrift;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.EnumMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.EnumSet;
+import java.util.Collections;
+import java.util.BitSet;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TAddUsersRequest implements org.apache.thrift.TBase<TAddUsersRequest, TAddUsersRequest._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("TAddUsersRequest");
@@ -492,14 +505,14 @@ public class TAddUsersRequest implements org.apache.thrift.TBase<TAddUsersReques
         case 2: // USERS_TO_ADD
           if (field.type == org.apache.thrift.protocol.TType.SET) {
             {
-              org.apache.thrift.protocol.TSet _set12 = iprot.readSetBegin();
-              this.usersToAdd = new HashSet<TGroupMember>(2*_set12.size);
-              for (int _i13 = 0; _i13 < _set12.size; ++_i13)
+              org.apache.thrift.protocol.TSet _set8 = iprot.readSetBegin();
+              this.usersToAdd = new HashSet<TGroupMember>(2*_set8.size);
+              for (int _i9 = 0; _i9 < _set8.size; ++_i9)
               {
-                TGroupMember _elem14;
-                _elem14 = new TGroupMember();
-                _elem14.read(iprot);
-                this.usersToAdd.add(_elem14);
+                TGroupMember _elem10;
+                _elem10 = new TGroupMember();
+                _elem10.read(iprot);
+                this.usersToAdd.add(_elem10);
               }
               iprot.readSetEnd();
             }
@@ -517,13 +530,13 @@ public class TAddUsersRequest implements org.apache.thrift.TBase<TAddUsersReques
         case 4: // VISIBILITIES
           if (field.type == org.apache.thrift.protocol.TType.SET) {
             {
-              org.apache.thrift.protocol.TSet _set15 = iprot.readSetBegin();
-              this.visibilities = new HashSet<String>(2*_set15.size);
-              for (int _i16 = 0; _i16 < _set15.size; ++_i16)
+              org.apache.thrift.protocol.TSet _set11 = iprot.readSetBegin();
+              this.visibilities = new HashSet<String>(2*_set11.size);
+              for (int _i12 = 0; _i12 < _set11.size; ++_i12)
               {
-                String _elem17;
-                _elem17 = iprot.readString();
-                this.visibilities.add(_elem17);
+                String _elem13;
+                _elem13 = iprot.readString();
+                this.visibilities.add(_elem13);
               }
               iprot.readSetEnd();
             }
@@ -555,9 +568,9 @@ public class TAddUsersRequest implements org.apache.thrift.TBase<TAddUsersReques
       oprot.writeFieldBegin(USERS_TO_ADD_FIELD_DESC);
       {
         oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.STRUCT, this.usersToAdd.size()));
-        for (TGroupMember _iter18 : this.usersToAdd)
+        for (TGroupMember _iter14 : this.usersToAdd)
         {
-          _iter18.write(oprot);
+          _iter14.write(oprot);
         }
         oprot.writeSetEnd();
       }
@@ -572,9 +585,9 @@ public class TAddUsersRequest implements org.apache.thrift.TBase<TAddUsersReques
       oprot.writeFieldBegin(VISIBILITIES_FIELD_DESC);
       {
         oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.STRING, this.visibilities.size()));
-        for (String _iter19 : this.visibilities)
+        for (String _iter15 : this.visibilities)
         {
-          oprot.writeString(_iter19);
+          oprot.writeString(_iter15);
         }
         oprot.writeSetEnd();
       }
