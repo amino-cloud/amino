@@ -4,11 +4,13 @@ Here are some instructions for getting Amino up and running with the Numbers exa
 
 Step 0
 ------
-Make sure that you have the pre-requisite technologies installed. This includes HDFS, Hadoop, ZooKeeper, and Accumulo.  Also, this assumes that you have at least Java 1.6 installed and Maven
+Make sure that you have the pre-requisite technologies installed. This includes HDFS, Hadoop, ZooKeeper, and Accumulo.
+Also, this assumes that you have at least Java 1.6 installed and Maven
 
 Step 1
 ------
-Clone the git repository.  For the rest of the instructions, assume that `$AMINO` points to the direcoty to which you have cloned the repositories.
+Clone the git repository.  For the rest of the instructions, assume that `$AMINO` points to the direcoty to which you
+have cloned the repositories.
 
     git clone https://github.com/amino-cloud/amino.git $AMINO
 
@@ -26,7 +28,10 @@ This will build 3 jars that are of interest:
 
 Step 3
 -------
-Deploy the Accumulo iterator to your Accumulo instances.   You will need to copy `amino-accumulo-iterators-2.1.0-SNAPSHOT-jar-with-dependencies.jar` to `/opt/accumulo/lib/ext` on **each** of your Accumulo nodes.  Accumulo **should** pick this up automatically, but occasionally the database needs to be bounced to load in the iterators.
+Deploy the Accumulo iterator to your Accumulo instances.   You will need to copy
+`amino-accumulo-iterators-2.1.0-SNAPSHOT-jar-with-dependencies.jar` to `/opt/accumulo/lib/ext` on **each** of your
+Accumulo nodes.  Accumulo **should** pick this up automatically, but occasionally the database needs to be bounced to
+load in the iterators.
 
 Step 4
 ------
@@ -42,16 +47,20 @@ Set up HDFS for the numbers data.  The directory structure and files should look
     /amino/numbers/out/
     /amino/numbers/working
 
-Example versions of `AminoDefaults.xml` and `NumberLoader.xml` can be found in `amino-impl/amino-configs`. Make sure that you change the values in `AminoDefaults.xml` to point to your ZooKeeper and confgure your Accumulo instancename, username, and password.
+Example versions of `AminoDefaults.xml` and `NumberLoader.xml` can be found in `amino-impl/amino-configs`. Make sure that
+you change the values in `AminoDefaults.xml` to point to your ZooKeeper and confgure your Accumulo instancename,
+username, and password.
 Nothing should need to be changed in `NumberLoader.xml`, but make sure that it does point to the `numbers-1k.txt` file.
 
-The `numbers-1k.txt` file is simply a file containing the numbers 1-1000 each on their own line.  You can generate this file in bash with the following:
+The `numbers-1k.txt` file is simply a file containing the numbers 1-1000 each on their own line.  You can generate this
+file in bash with the following:
 
     for (( i=1; i < 1000; i++ )) do echo $i >> numbers-1k.txt; done
 
 Step 6
 ------
-Now that all of the files are in place we can now run the Amino framework to extract the Numbers features from the data.  To do so, run the following commands:
+Now that all of the files are in place we can now run the Amino framework to extract the Numbers features from the data.
+To do so, run the following commands:
 
     hadoop jar number-2.1.0-SNAPSHOT-job.jar com._42six.amino.api.framework.FrameworkDriver --amino_default_config_path /amino/numbers/config &&
     hadoop jar amino-accumulo-common-2.1.0-SNAPSHOT-job.jar com._42six.amino.bitmap.DatabasePrepJob /amino/numbers/out /amino/numbers/config &&
@@ -63,7 +72,8 @@ Now that all of the files are in place we can now run the Amino framework to ext
     hadoop jar amino-accumulo-common-2.1.0-SNAPSHOT-job.jar com._42six.amino.bitmap.reverse.ReverseFeatureLookupJob /amino/numbers/out /amino/numbers/config /amino/numbers/working &&
     hadoop jar amino-accumulo-common-2.1.0-SNAPSHOT-job.jar com._42six.amino.bitmap.FeatureMetadataJob /amino/numbers/config
 
-This should run all of the jobs.  Hopefully all of them will work and everything will be set up in Accumulo.  To verify, check to see that the tables were created and that there are data in them
+This should run all of the jobs.  Hopefully all of them will work and everything will be set up in Accumulo.  To verify,
+check to see that the tables were created and that there are data in them
 
     # accumulo shell -u username -p password
     amino@Accumulo-instance> table amino<tab>
@@ -71,21 +81,70 @@ This should run all of the jobs.  Hopefully all of them will work and everything
     amino@Accumulo-instance> scan
 
 
+How to run Amino against your own data
+======================================
 
-How it works
-============
+The DataLoader
+--------------
 
-TODO
+First, things first, you need data.   The data that Amino runs against currently must reside in HDFS.  In the example above
+this meant that we placed the data in `/amino/numbers/in` on HDFS
+
+Next, you need to write a `DataLoader`.  An example of a `DataLoader` can be found in
+`amino-impl/dataloader/number/src/main/java/com/_42six/amino/impl/dataloader/number/NumberLoader.java`.  This class
+implements the `DataLoader` interface which has the following methods that must be implemented:
+
+Creating your Jobs
+------------------
+
+
+Querying the data
+-----------------
+Once you've run your jobs and the data is in Accumulo, you'll probably want to start querying it.  The data is accessible
+from the Accumulo shell, unfortunately this is quite cumbersome even for some simple queries.  Because Amino uses
+compressed bitmaps to store the features, viewing many of the tables in the shell will be of little utility.
+
+To interact with the data, you will more than likely want to leverage the Thrift services for querying Amino.  These can
+be found in <INSERT HERE>.  Here is an example of setting up a synchronous Thrift client and server for querying Amino.
+
+    TODO Insert example here
+
+The methods that you are probably most interested in are:
+
+    TODO Insert methods here.
+
+
+Appendix
+========
 
 Terminology
 -----------
 
-TODO
+* DataLoader -
+* Enrichment Job -
+* Hypothesis -
+* QueryResult -
+* Feature -
+* FeatureFact -
+
+Core Feature Fact Types
+-------------
+* NOMINAL - TODO add descriptions
+* ORDINAL
+* INTERVAL
+* RATIO
+* DATE
+* DATEHOUR
+* POLYGON
+* POINT
+
 
 Code Layout
-===========
+-----------
 
-The Amino project consists of two main projects, `amino-core` and `amino-impl`.  `amino-core` is just that, it is all of the core functionality of the Amino project. Most users of the Amino project will not have to deal with anything in here.  For the curious, it is structured into the following sub-directories:
+The Amino project consists of two main projects, `amino-core` and `amino-impl`.  `amino-core` is just that, it is all of
+the core functionality of the Amino project. Most users of the Amino project will not have to deal with anything in here.
+For the curious, it is structured into the following sub-directories:
 
 * **amino-api** - The main API components for implementing Amino.
 * **amino-archtype** - Maven archetype for creating a new dataloader and job
@@ -93,9 +152,13 @@ The Amino project consists of two main projects, `amino-core` and `amino-impl`. 
 * **amino-common** - All of the classes for representing data, services, Thrift interfaces, etc
 * **amino-query-api** - All of the services for interacting between the user and the Amino data (think CRUD)
 
-Then there is `amino-impl`. This is where all of the user specific implementations go. This is where you'll find the datasource loaders, jobs for processing data, and implementations for storing the data.
+Then there is `amino-impl`. This is where all of the user specific implementations go. This is where you'll find the
+datasource loaders, jobs for processing data, and implementations for storing the data.
 
-Currently, there is an implementation for setting up Amino in Accumulo.  There are also example jobs and dataloaders for the numbers dataset.  The numbers dataset is a simply a dataset of numbers of the users choosing (say 1-1000).  This simple dataset is useful for showing how to create dataloaders to read the data into Amino, how to create jobs to get the data into Amino and how to create features such as "Is Even" or "Starts With".
+Currently, there is an implementation for setting up Amino in Accumulo.  There are also example jobs and dataloaders for
+the numbers dataset.  The numbers dataset is a simply a dataset of numbers of the users choosing (say 1-1000).  This
+simple dataset is useful for showing how to create dataloaders to read the data into Amino, how to create jobs to get
+the data into Amino and how to create features such as "Is Even" or "Starts With".
 
 The project is laid out as such:
 
