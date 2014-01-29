@@ -31,8 +31,8 @@ public class QueryServer  {
         final ThriftGroupService.Processor processor = new ThriftGroupService.Processor(new ThriftGroupServiceHandler(groupService));
 
         final TServerTransport serverTransport = new TServerSocket(9090, 9999999);
-        //final TServer server = new TSimpleServer(new TServer.Args(serverTransport).processor(processor));
 
+        //final TServer server = new TSimpleServer(new TServer.Args(serverTransport).processor(processor));
         // Use this for multi-threaded server
         TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
 

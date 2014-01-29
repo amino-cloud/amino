@@ -107,7 +107,65 @@ compressed bitmaps to store the features, viewing many of the tables in the shel
 To interact with the data, you will more than likely want to leverage the Thrift services for querying Amino.  These can
 be found in <INSERT HERE>.  Here is an example of setting up a synchronous Thrift client and server for querying Amino.
 
-    TODO Insert example here
+__Server__
+
+    /**
+     * Simple Thrift Server for accessing the Group information
+     */
+    public class QueryServer  {
+        public static void main(String[] args) throws TTransportException, IOException {
+            final String instanceName = "accumulo"; // TODO Change all of the hard coded values
+            final String zooKeepers = "accumulo:2181";
+            final String user = "amino";
+            final String password = "pass";
+
+            final AccumuloPersistenceService persistenceService = new AccumuloPersistenceService(instanceName, zooKeepers, user, password);
+            final AccumuloGroupService groupService = new AccumuloGroupService(persistenceService);
+            groupService.setGroupMembershipTable("amino_group_membership");
+            groupService.setGroupMetadataTable("amino_group_metadata");
+
+            final ThriftGroupService.Processor processor = new ThriftGroupService.Processor(new ThriftGroupServiceHandler(groupService));
+
+            final TServerTransport serverTransport = new TServerSocket(9090, 9999999);
+
+            //final TServer server = new TSimpleServer(new TServer.Args(serverTransport).processor(processor));
+            // Use this for multi-threaded server
+            TServer server = new TThreadPoolServer(new TThreadPoolServer.Args(serverTransport).processor(processor));
+
+            System.out.println("Starting Amino Accumulo query server...");
+            server.serve();
+            System.out.println("Shutting down");
+        }
+    }
+
+__Client__
+
+    /**
+     * This is a simple example of a Thrift client for getting the groups that the testUser is in
+     */
+    public class QueryClient {
+
+        static ThriftGroupService.Client groupServiceClient;
+
+        static final Set<String> VISIBILITIES = Sets.newHashSet("U");
+
+        public static void main(String[] args){
+            final TTransport transport = new TSocket("localhost", 9090);
+
+            try {
+                transport.open();
+                final TProtocol protocol = new TBinaryProtocol(transport);
+                groupServiceClient = new ThriftGroupService.Client(protocol);
+                System.out.println(groupServiceClient.listGroups("testUser", VISIBILITIES));
+            } catch (TTransportException e) {
+                e.printStackTrace();
+            } catch (TException e) {
+                e.printStackTrace();
+            } finally {
+                transport.close();
+            }
+        }
+    }
 
 The methods that you are probably most interested in are:
 
@@ -120,23 +178,28 @@ Appendix
 Terminology
 -----------
 
-* DataLoader -
+* DataLoader - The mechanism for parsing the raw data and translating the data into a format that the Amino framework
+can process.
 * Enrichment Job -
-* Hypothesis -
-* QueryResult -
-* Feature -
-* FeatureFact -
+* Hypothesis - A `Hypothesis` is a collection of features.  For example, you might have a Hypothesis that consists of
+the features "Is Even" and "Starts with '1'"
+* QueryResult - The results of 'running' a Hypothesis against the data that has been processed by Amino
+* Feature - Something that describes the data to parse.  Think of it as an attribute.
+* FeatureFact - The value of the feature.  So if your feature was "From City" the fact might be Chicago, or if the
+feature was "Touchdowns thrown in one game" the feature fact could be the ratio "3 to 5"
 
 Core Feature Fact Types
 -------------
-* NOMINAL - TODO add descriptions
-* ORDINAL
-* INTERVAL
-* RATIO
-* DATE
-* DATEHOUR
-* POLYGON
-* POINT
+* NOMINAL - This is the basic feature type.  It describes some sort of discrete attribute, like "From City" (with a valid
+value being Chicago)
+* ORDINAL - A type of fact that has order.  For example "second", "third", "fourth", which would help to preserve ordering
+instead of being lexicographically sorted.
+* INTERVAL - A range of values - say 2.0 to 4.0
+* RATIO - A range of values
+* DATE - Represents a date
+* DATEHOUR - Represents both date and time
+* POLYGON - A list of coordinate points
+* POINT - A lat/long coordinate
 
 
 Code Layout

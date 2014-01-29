@@ -21,11 +21,11 @@ public class IntervalFeatureFact extends FeatureFact
 
 	}
 
-        // Pass writable to super thus allowing subclasses to use something other than double
-        protected IntervalFeatureFact(Writable fact)
-        {
-            super(fact);
-        }
+    // Pass writable to super thus allowing subclasses to use something other than double
+    protected IntervalFeatureFact(Writable fact)
+    {
+        super(fact);
+    }
 
 	@Override
 	public FeatureFactType getType() {
@@ -35,7 +35,11 @@ public class IntervalFeatureFact extends FeatureFact
 	@Override
 	public int compareTo(FeatureFact ff) 
 	{
-		return ((DoubleWritable)this.fact).compareTo(((DoubleWritable)ff.fact));
+        if(ff == null){
+            return 1;
+        } else {
+		    return ((DoubleWritable)this.fact).compareTo(((DoubleWritable)ff.fact));
+        }
 	}
 
 	@Override
