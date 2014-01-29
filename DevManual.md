@@ -104,8 +104,10 @@ Once you've run your jobs and the data is in Accumulo, you'll probably want to s
 from the Accumulo shell, unfortunately this is quite cumbersome even for some simple queries.  Because Amino uses
 compressed bitmaps to store the features, viewing many of the tables in the shell will be of little utility.
 
-To interact with the data, you will more than likely want to leverage the Thrift services for querying Amino.  These can
-be found in <INSERT HERE>.  Here is an example of setting up a synchronous Java Thrift client and server for querying Amino.
+To interact with the data, you will more than likely want to leverage the Thrift services for querying Amino.  The Thrift
+files for these services can be found in `amino-core/amino-query-api/src/main/thrift`. The Thrift definitions for many
+ of the common objects can be found in `amino-core/amino-common/src/thrift/` Here is an example of setting up a
+ synchronous Java Thrift client and server for querying Amino.
 
 __Server__
 ```java
@@ -171,10 +173,6 @@ __Client__
     }
 ```
 
-The methods that you are probably most interested in are:
-
-    TODO Insert methods here.
-
 
 Appendix
 ========
@@ -236,5 +234,3 @@ The project is laid out as such:
 * **job** - All of the `AminoJob`s for processing datasets
 * **reducer** - The `AminoReducer`s for pulling out specific features from a dataset
 * **security** - Implementations for providing security information about users
-
-
