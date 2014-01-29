@@ -105,9 +105,10 @@ from the Accumulo shell, unfortunately this is quite cumbersome even for some si
 compressed bitmaps to store the features, viewing many of the tables in the shell will be of little utility.
 
 To interact with the data, you will more than likely want to leverage the Thrift services for querying Amino.  These can
-be found in <INSERT HERE>.  Here is an example of setting up a synchronous Thrift client and server for querying Amino.
+be found in <INSERT HERE>.  Here is an example of setting up a synchronous Java Thrift client and server for querying Amino.
 
 __Server__
+```java
 
     /**
      * Simple Thrift Server for accessing the Group information
@@ -137,8 +138,10 @@ __Server__
             System.out.println("Shutting down");
         }
     }
+```
 
 __Client__
+```java
 
     /**
      * This is a simple example of a Thrift client for getting the groups that the testUser is in
@@ -166,6 +169,7 @@ __Client__
             }
         }
     }
+```
 
 The methods that you are probably most interested in are:
 
