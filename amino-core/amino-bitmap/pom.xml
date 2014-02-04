@@ -40,11 +40,6 @@
 			<artifactId>log4j</artifactId>
 			<version>1.2.14</version>
 		</dependency>
-		<dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>2.4</version>
-		</dependency>
 		<!-- Need to add this lib. It's used by hadoop 0.20.203.0 which is 'provided', which means this lib
 		can't be found when deploying to a platform with the cdh distro (which doesn't include this lib) -->
 		<dependency>
