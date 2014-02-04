@@ -16,7 +16,6 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.hadoop.io.Text;
-import org.eclipse.jdt.internal.core.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -108,7 +107,7 @@ public class AccumuloGroupServiceTest {
         for(Map.Entry<Key, Value> entry: metaScanner){
             i++;
         }
-        Assert.isTrue(i == 8);
+        assertTrue(i == 8);
 
         final BatchScanner memberScanner = connector.createBatchScanner(MEMBERSHIP_TABLE, auths, 8);
         memberScanner.setRanges(Sets.newHashSet(new Range("USER|member1"), new Range("USER|member2"), new Range("USER|member3")));
@@ -116,7 +115,7 @@ public class AccumuloGroupServiceTest {
         for(Map.Entry<Key, Value> e : memberScanner){
             i++;
         }
-        Assert.isTrue(i == 3);
+        assertTrue(i==3);
     }
 
     private void initalizeTables() throws Exception {
@@ -194,7 +193,7 @@ public class AccumuloGroupServiceTest {
             entries++;
             if(entry.getKey().getRow().toString().compareTo("USER|member2") == 0){
                 String group = entry.getKey().getColumnFamily().toString();
-                Assert.isTrue(!groups.contains(group));
+                assertTrue(!groups.contains(group));
             }
         }
         assertEquals(8, entries);
@@ -209,7 +208,7 @@ public class AccumuloGroupServiceTest {
             if(groups.contains(entry.getKey().getRow().toString())){
                 // Don't care if they are still listed as the creator of the group
                 if(entry.getKey().getColumnFamily().toString().compareTo("created_by") != 0){
-                    Assert.isTrue(entry.getKey().getColumnQualifier().toString().compareTo("USER|member2") != 0);
+                    assertTrue(entry.getKey().getColumnQualifier().toString().compareTo("USER|member2") != 0);
                 }
             }
         }
@@ -254,7 +253,7 @@ public class AccumuloGroupServiceTest {
             entries++;
             if(entry.getKey().getRow().toString().compareTo("USER|member2") == 0){
                 String group = entry.getKey().getColumnFamily().toString();
-                Assert.isTrue(!groups.contains(group));
+                assertTrue(!groups.contains(group));
             }
         }
         assertEquals(8, entries);
@@ -269,7 +268,7 @@ public class AccumuloGroupServiceTest {
             if(groups.contains(entry.getKey().getRow().toString())){
                 // Don't care if they are still listed as the creator of the group
                 if(entry.getKey().getColumnFamily().toString().compareTo("created_by") != 0){
-                    Assert.isTrue(entry.getKey().getColumnQualifier().toString().compareTo("USER|member2") != 0);
+                    assertTrue(entry.getKey().getColumnQualifier().toString().compareTo("USER|member2") != 0);
                 }
             }
         }
@@ -294,16 +293,16 @@ public class AccumuloGroupServiceTest {
     public void verifyUserExists() throws Exception {
         initalizeTables();
 
-        Assert.isTrue(groupService.verifyUserExists("USER|member1", perms));
-        Assert.isTrue(!groupService.verifyUserExists("USER|BogusUser", perms));
+        assertTrue(groupService.verifyUserExists("USER|member1", perms));
+        assertTrue(!groupService.verifyUserExists("USER|BogusUser", perms));
     }
 
     @Test
     public void verifyGroupExists() throws Exception {
         initalizeTables();
 
-        Assert.isTrue(groupService.verifyGroupExists("GROUP|group1", perms));
-        Assert.isTrue(!groupService.verifyGroupExists("GROUP|BogusGroup", perms));
+        assertTrue(groupService.verifyGroupExists("GROUP|group1", perms));
+        assertTrue(!groupService.verifyGroupExists("GROUP|BogusGroup", perms));
     }
 
     @Test
@@ -332,7 +331,7 @@ public class AccumuloGroupServiceTest {
             entries++;
             if(entry.getKey().getRow().toString().compareTo("USER|newMemberAll") == 0){
                 String group = entry.getKey().getColumnFamily().toString();
-                Assert.isTrue(group.compareTo("GROUP|group1") == 0);
+                assertTrue(group.compareTo("GROUP|group1") == 0);
             }
         }
         // Make sure that only the one record was added
@@ -486,7 +485,7 @@ public class AccumuloGroupServiceTest {
             if(entry.getKey().getRow().toString().equals("GROUP|group3")){
                 // Don't care if they are still listed as the creator of the group
                 if(entry.getKey().getColumnFamily().toString().compareTo("created_by") != 0){
-                    Assert.isTrue(!users.contains(entry.getKey().getColumnQualifier().toString()));
+                    assertTrue(!users.contains(entry.getKey().getColumnQualifier().toString()));
                 }
             }
         }
@@ -522,7 +521,7 @@ public class AccumuloGroupServiceTest {
             if(entry.getKey().getRow().toString().equals("GROUP|group3")){
                 // Don't care if they are still listed as the creator of the group
                 if(entry.getKey().getColumnFamily().toString().compareTo("created_by") != 0){
-                    Assert.isTrue(!users.contains(entry.getKey().getColumnQualifier().toString()));
+                    assertTrue(!users.contains(entry.getKey().getColumnQualifier().toString()));
                 }
             }
         }
