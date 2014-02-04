@@ -95,8 +95,17 @@ First, things first, you need data.   The data that Amino runs against currently
 this meant that we placed the data in `/amino/numbers/in` on HDFS
 
 Next, you need to write a `DataLoader`.  An example of a `DataLoader` can be found in
-`amino-impl/dataloader/number/src/main/java/com/_42six/amino/impl/dataloader/number/NumberLoader.java`.  This class
-implements the `DataLoader` interface which has the following methods that must be implemented:
+`amino-impl/dataloader/number/src/main/java/com/_42six/amino/impl/dataloader/number/NumberLoader.java`.  The `DataLoader`
+is responsible for reading from its `RecordReader` and creating `MapWritable`s consisting of the buckets as keys and the
+processed data as values.  These `MapWritable`s will
+
+The Reducers
+-------------
+Once you've created your `DataLoader` for extracting your data from the datasets, you'll want to make sure that you have
+some `AminoReducer`s that are relevant for your data.  `AminoReducer`s are used to extrac the features from the data and
+  can be used across datasources.  Some examples of a `AminoReducer` can be found in
+`amino-impl/reducer/src/main/java/com/_42six/amino/impl/reducer/number/`
+
 
 Creating your Jobs
 ------------------
@@ -204,8 +213,6 @@ instead of being lexicographically sorted.
 * RATIO - A range of values
 * DATE - Represents a date
 * DATEHOUR - Represents both date and time
-* POLYGON - A list of coordinate points
-* POINT - A lat/long coordinate
 
 
 Code Layout
