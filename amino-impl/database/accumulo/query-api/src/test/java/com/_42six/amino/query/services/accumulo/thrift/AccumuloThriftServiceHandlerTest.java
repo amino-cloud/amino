@@ -2,8 +2,10 @@ package com._42six.amino.query.services.accumulo.thrift;
 
 import com._42six.amino.common.thrift.*;
 import com._42six.amino.query.services.accumulo.AccumuloGroupService;
+import com._42six.amino.query.services.accumulo.AccumuloMetadataService;
 import com._42six.amino.query.services.accumulo.AccumuloPersistenceService;
-import com._42six.amino.query.thrift.services.ThriftGroupServiceHandler;
+import com._42six.amino.query.services.accumulo.AccumuloQueryService;
+import com._42six.amino.query.thrift.services.AminoThriftServiceHandler;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.BatchScanner;
 import org.apache.accumulo.core.client.Connector;
@@ -23,7 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class AccumuloGroupServiceHandlerTest {
+public class AccumuloThriftServiceHandlerTest {
     /***********************
      * Setup Methods
      **********************/
@@ -37,8 +39,10 @@ public class AccumuloGroupServiceHandlerTest {
     private static final String HYPOTHESIS_LOOKUP = "amino_group_hypothesis_lookup";
 
     static AccumuloGroupService groupService;
+    static AccumuloQueryService queryService;
+    static AccumuloMetadataService metadataService;
     static AccumuloPersistenceService persistenceService;
-    static ThriftGroupServiceHandler serviceHandler;
+    static AminoThriftServiceHandler serviceHandler;
 
     @BeforeClass
     public static void setupMock(){
@@ -51,11 +55,10 @@ public class AccumuloGroupServiceHandlerTest {
         }
 
         persistenceService = new AccumuloPersistenceService(connector);
+        metadataService = new AccumuloMetadataService(persistenceService);
+        queryService = new AccumuloQueryService(persistenceService, metadataService);
         groupService = new AccumuloGroupService(persistenceService);
-        groupService.setGroupHypothesisLUT(HYPOTHESIS_LOOKUP);
-        groupService.setGroupMembershipTable(MEMBERSHIP_TABLE);
-        groupService.setGroupMetadataTable(METADATA_TABLE);
-        serviceHandler = new ThriftGroupServiceHandler(groupService);
+        serviceHandler = new AminoThriftServiceHandler(groupService, metadataService, queryService);
     }
 
     @Before
