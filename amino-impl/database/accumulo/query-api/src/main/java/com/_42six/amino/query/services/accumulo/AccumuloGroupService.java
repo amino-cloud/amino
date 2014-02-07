@@ -29,13 +29,13 @@ public class AccumuloGroupService implements AminoGroupService {
 	public static final Logger log = Logger.getLogger(AccumuloGroupService.class);
 
     /** The groups to Hypothesis Look Up Table */
-	private String groupHypothesisLUT;
+	private String groupHypothesisLUT = "amino_group_hypothesis_lookup";
 
     /** The table containing whom belongs to which groups */
-	private String groupMembershipTable;
+	private String groupMembershipTable = "amino_group_membership";
 
     /** The table that contains the metadata about the groups */
-    private String groupMetadataTable;
+    private String groupMetadataTable = "amino_group_metadata";
 
     /** The table all of the Hypotheses are stored in */
 	private String hypothesisTable;
@@ -54,6 +54,18 @@ public class AccumuloGroupService implements AminoGroupService {
     public AccumuloPersistenceService setPersistenceService(AccumuloPersistenceService service) {
 		return this.persistenceService = service;
 	}
+
+    /**
+     * Adds the suffix to all of the tables
+     * @param suffix The suffix to append to the tables
+     */
+    @Override
+    public void addTableSuffix(String suffix){
+        groupHypothesisLUT = groupHypothesisLUT + suffix;
+        groupMembershipTable = groupMetadataTable + suffix;
+        groupMetadataTable = groupMetadataTable + suffix;
+        hypothesisTable = hypothesisTable + suffix;
+    }
 
     @Override
     public String setGroupMetadataTable(String table) {

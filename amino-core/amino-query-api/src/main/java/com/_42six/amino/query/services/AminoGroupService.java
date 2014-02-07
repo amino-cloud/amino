@@ -12,6 +12,12 @@ import java.util.Set;
 
 public interface AminoGroupService {
 
+    /**
+     * Adds the suffix to all of the tables
+     * @param suffix The suffix to append to the tables
+     */
+    void addTableSuffix(String suffix);
+
     String setGroupMetadataTable(String table);
 
     String getGroupHypothesisLUT();

@@ -5,7 +5,9 @@ import com._42six.amino.common.bigtable.BigTableDataWriter;
 import com._42six.amino.common.bigtable.Mutation;
 import com._42six.amino.common.bigtable.MutationProto.ColumnValue;
 import com.google.protobuf.ByteString;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.conf.Configuration;
@@ -29,14 +31,23 @@ public class AccumuloDataWriter implements BigTableDataWriter
 	@Override
 	public void initializeFormat(Job job) throws IOException
 	{
-		Configuration conf = job.getConfiguration();		
+		final Configuration conf = job.getConfiguration();
 		String instanceName = conf.get(ACCUMULO_INSTANCE);		
 		String password = conf.get(ACCUMULO_PASSWORD);
 		String username = conf.get(ACCUMULO_USERNAME);
 		String zookeepers = conf.get(ACCUMULO_ZOOKEEPERS);
-		
-		AccumuloOutputFormat.setOutputInfo(conf, username, password.getBytes(), true, null);
-		AccumuloOutputFormat.setZooKeeperInstance(conf, instanceName, zookeepers);
+
+        try {
+            AccumuloOutputFormat.setConnectorInfo(job, username, new PasswordToken(password));
+        } catch (AccumuloSecurityException e) {
+            e.printStackTrace();
+            throw new IOException(e);
+        }
+        AccumuloOutputFormat.setCreateTables(job, true);
+        AccumuloOutputFormat.setDefaultTableName(job, null);
+        AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zookeepers);
+//		AccumuloOutputFormat.setOutputInfo(conf, username, password.getBytes(), true, null);
+//		AccumuloOutputFormat.setZooKeeperInstance(conf, instanceName, zookeepers);
 	}	
 	
 	@Override
@@ -59,7 +70,7 @@ public class AccumuloDataWriter implements BigTableDataWriter
 			org.apache.accumulo.core.data.Mutation btMutation = new org.apache.accumulo.core.data.Mutation(new Text(m.getRow()));
 			for(ColumnValue cv : m.getColumnValues()) 
 			{
-				if(cv.getIsDelete() == true)
+				if(cv.getIsDelete())
 				{
 					btMutation.putDelete(fromByteString(cv.getColumnFamily()), fromByteString(cv.getColumnQualifier()), new ColumnVisibility(fromByteString(cv.getColumnVisibility())), cv.getTimestamp());
 				}

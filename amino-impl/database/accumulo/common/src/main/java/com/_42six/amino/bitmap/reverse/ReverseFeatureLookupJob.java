@@ -5,14 +5,12 @@ import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.JobUtilities;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.util.PathUtils;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.impl.ConnectorImpl;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.client.mapreduce.lib.partition.KeyRangePartitioner;
 import org.apache.accumulo.core.client.mapreduce.lib.partition.RangePartitioner;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.TextUtil;
@@ -93,7 +91,7 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
 
         boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); // should always assume it's the first run unless specified
 
-        ConnectorImpl connector = null;
+        Connector connector = null;
         PrintStream splitsPrinter = null;
 
         boolean success = false;
@@ -109,7 +107,7 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
         try
         {
             final Instance instance = new ZooKeeperInstance(instanceName, zooKeepers);
-            connector = new ConnectorImpl(instance, user, password.getBytes());
+            connector = instance.getConnector(user, new PasswordToken(password));
 
             splitsPrinter = new PrintStream(new BufferedOutputStream(fs.create(new Path(workingDirectory + "/splits.txt"))));
             for (Text split : splits)
@@ -153,7 +151,7 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
             try
             {
                 final String importTable = (!blastIndex) ? tableName : tableName + IteratorUtils.TEMP_SUFFIX;
-                connector.tableOperations().importDirectory(importTable, workingDirectory + "/files", workingDirectory + "/failures", 20, 4, false);
+                connector.tableOperations().importDirectory(importTable, workingDirectory + "/files", workingDirectory + "/failures", false);
                 result = JobUtilities.failureDirHasFiles(conf, workingDirectory + "/failures");
             }
             catch (Exception e)

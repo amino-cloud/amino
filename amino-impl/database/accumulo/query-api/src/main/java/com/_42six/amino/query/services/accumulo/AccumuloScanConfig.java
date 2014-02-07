@@ -1,6 +1,7 @@
 package com._42six.amino.query.services.accumulo;
 
 import com.google.common.collect.Lists;
+import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.data.Range;
 
 import java.util.List;
@@ -50,7 +51,7 @@ public class AccumuloScanConfig {
 	public String columnQualifierRegex;
 
     /** The configuration for any custom iterators for the scanner */
-	public ScanIteratorConfig customIterator;
+	public IteratorSetting iteratorSetting;
 
     /** The number of shards in the database */
 	public Integer shardcount;
@@ -81,8 +82,8 @@ public class AccumuloScanConfig {
 		this.setEndColumnFamily(that.getEndColumnFamily());
 		this.setEndColumnQualifier(that.getEndColumnQualifier());
 		this.setColumnQualifierRegex(that.getColumnQualifierRegex());
-		this.setCustomIterator((that.getCustomIterator() != null) ? new ScanIteratorConfig(that.getCustomIterator()) : null);
-		this.setShardcount(that.getShardcount());
+        this.setIteratorSetting(that.iteratorSetting);
+        this.setShardcount(that.getShardcount());
 	}
 
     public String getRow() {
@@ -202,12 +203,12 @@ public class AccumuloScanConfig {
         return this;
     }
 
-    public ScanIteratorConfig getCustomIterator() {
-        return customIterator;
+    public IteratorSetting getIteratorSetting() {
+        return iteratorSetting;
     }
 
-    public AccumuloScanConfig setCustomIterator(ScanIteratorConfig customIterator) {
-        this.customIterator = customIterator;
+    public AccumuloScanConfig setIteratorSetting(IteratorSetting customIterator) {
+        this.iteratorSetting = customIterator;
         return this;
     }
 

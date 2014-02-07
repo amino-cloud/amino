@@ -15,6 +15,12 @@ import java.util.List;
 public interface AminoMetadataService {
 
     /**
+     * Adds the suffix to all of the tables
+     * @param suffix The suffix to append to the tables
+     */
+    public void addTableSuffix(String suffix);
+
+    /**
      * Returns the DatasourceMetadata corresponding to the id
      * @param dataSourceId The ID of the DatasourceMetadata to fetch
      * @param visibility   A list of strings corresponding to allowed visibilities for the user.

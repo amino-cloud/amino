@@ -5,7 +5,7 @@ import org.apache.accumulo.core.client.mapreduce.lib.partition.RangePartitioner;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.mapreduce.JobContext;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Partitioner;
 
 public class ByBucketPartitioner extends Partitioner<ByBucketKey, Writable> {
@@ -27,11 +27,11 @@ public class ByBucketPartitioner extends Partitioner<ByBucketKey, Writable> {
         rp.setConf(conf);
     }
 
-    public static void setSplitFile(JobContext job, String file){
+    public static void setSplitFile(Job job, String file){
         RangePartitioner.setSplitFile(job, file);
     }
 
-    public static void setNumSubBins(JobContext job, int num){
+    public static void setNumSubBins(Job job, int num){
         RangePartitioner.setNumSubBins(job, num);
     }
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -163,7 +164,10 @@ public class DatabasePrepJob extends Configured implements Tool {
         // Outputs
         job.setOutputFormatClass(AccumuloOutputFormat.class);
         AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-        AccumuloOutputFormat.setOutputInfo(job, user, password, true, metadataTable);
+//        AccumuloOutputFormat.setOutputInfo(job, user, password, true, metadataTable);
+        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
+        AccumuloOutputFormat.setCreateTables(job, true);
+        AccumuloOutputFormat.setDefaultTableName(job, metadataTable);
 
         // Create the tables if they don't exist
         boolean complete = createTables(conf);

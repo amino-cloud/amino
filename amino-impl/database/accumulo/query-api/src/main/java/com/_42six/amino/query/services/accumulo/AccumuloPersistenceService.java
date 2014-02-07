@@ -9,7 +9,9 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.admin.SecurityOperations;
 import org.apache.accumulo.core.client.mock.MockInstance;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.*;
+import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
@@ -17,6 +19,7 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Abstraction of common operations involving interaction with Accumulo such as
@@ -49,7 +52,7 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
             dbInstance = new ZooKeeperInstance(instanceName, zooKeepers);
         }
         try {
-            this.connector = dbInstance.getConnector(accumuloUser, accumuloPassword);
+            this.connector = dbInstance.getConnector(accumuloUser, new PasswordToken(accumuloPassword));
         } catch (AccumuloException e) {
             throw new IOException(e);
         } catch (AccumuloSecurityException e) {
@@ -196,7 +199,12 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
      * @throws TableNotFoundException if the table could not be found
      */
 	public BatchWriter createBatchWriter(String tableName) throws TableNotFoundException {
-		return this.connector.createBatchWriter(tableName, BATCHWRITER_MAXMEMORY, BATCHWRITER_MAXLATENCY, BATCHWRITER_MAXWRITETHREADS);
+        final BatchWriterConfig config = new BatchWriterConfig();
+        config.setMaxWriteThreads(BATCHWRITER_MAXWRITETHREADS);
+        config.setMaxLatency(BATCHWRITER_MAXLATENCY, TimeUnit.MILLISECONDS);
+        config.setMaxMemory(BATCHWRITER_MAXMEMORY);
+        return this.connector.createBatchWriter(tableName, config);
+//		return this.connector.createBatchWriter(tableName, BATCHWRITER_MAXMEMORY, BATCHWRITER_MAXLATENCY, BATCHWRITER_MAXWRITETHREADS);
 	}
 
     /**
@@ -232,7 +240,12 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
      */
 	public BatchDeleter createBatchDeleter(String tableName, Authorizations auths) throws TableNotFoundException {
 		log.debug("Creating a BatchDeleter for " + tableName);
-		return this.connector.createBatchDeleter(tableName, auths != null ? auths : Constants.NO_AUTHS, BATCHSCANNER_NUMQUERYTHREADS, BATCHWRITER_MAXMEMORY, BATCHWRITER_MAXLATENCY, BATCHWRITER_MAXWRITETHREADS);
+        final BatchWriterConfig config = new BatchWriterConfig();
+        config.setMaxWriteThreads(BATCHWRITER_MAXWRITETHREADS);
+        config.setMaxLatency(BATCHWRITER_MAXLATENCY, TimeUnit.MILLISECONDS);
+        config.setMaxMemory(BATCHWRITER_MAXMEMORY);
+        return this.connector.createBatchDeleter(tableName, auths != null ? auths : Constants.NO_AUTHS, BATCHSCANNER_NUMQUERYTHREADS, config);
+//		return this.connector.createBatchDeleter(tableName, auths != null ? auths : Constants.NO_AUTHS, BATCHSCANNER_NUMQUERYTHREADS, BATCHWRITER_MAXMEMORY, BATCHWRITER_MAXLATENCY, BATCHWRITER_MAXWRITETHREADS);
 	}
 
     @Override
@@ -292,8 +305,8 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
 	}
 
 	private void configureBaseScanner(ScannerBase scan, AccumuloScanConfig config) throws IOException {
-		if (config.getCustomIterator() != null){
-			setCustomIteratorOnScanner(scan, config.getCustomIterator());
+		if (config.getIteratorSetting() != null){
+            scan.addScanIterator(config.iteratorSetting);
 		}
 
 		if (config.getColumnFamily() != null) {
@@ -305,22 +318,11 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
 		}
 
 		if (config.getColumnQualifierRegex() != null) {
-			scan.setColumnQualifierRegex(config.getColumnQualifierRegex());
+            final IteratorSetting itr = new IteratorSetting(20, "cqRegex", RegExFilter.class.getCanonicalName());
+            RegExFilter.setRegexs(itr, null, null, config.getColumnQualifierRegex(),null, false);
+            scan.addScanIterator(itr);
 		}
 
-	}
-
-    /**
-     * Configures an iterator for the ScannerBase
-     * @param scan The ScannerBase to set the scanIterator on
-     * @param iteratorConfig The configuration of the scanIterator
-     * @throws IOException
-     */
-	public void setCustomIteratorOnScanner(ScannerBase scan, final ScanIteratorConfig iteratorConfig) throws IOException {
-		scan.setScanIterators(iteratorConfig.priority, iteratorConfig.iteratorClass, iteratorConfig.name);
-		for(ScanIteratorOption option : iteratorConfig.options){
-			scan.setScanIteratorOption(iteratorConfig.name, option.getKey(), option.getValue());
-		}
 	}
 
 	public List<Range> generateRanges(AccumuloScanConfig config) {

@@ -31,12 +31,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.accumulo.core.client.BatchDeleter;
-import org.apache.accumulo.core.client.BatchScanner;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
-import org.apache.accumulo.core.client.TableNotFoundException;
 import org.apache.accumulo.core.data.*;
-import org.apache.accumulo.core.iterators.RegExIterator;
+import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.io.Text;
 import org.apache.log4j.Logger;
@@ -68,11 +66,11 @@ public class AccumuloQueryService implements AminoQueryService {
     public final FeatureFactTranslatorInt translator;
 	public TimedUserExecutionService timedUserExecutionService;
 
-    public String bitLookupTable = "BitmapOutput_bitLookup";
-    public String byBucketTable = "BitmapOutput_byBucket";
+    public String bitLookupTable = "amino_bitmap_bitLookup";
+    public String byBucketTable = "amino_bitmap_byBucket";
     public String resultsTable = "amino_query_result";
 	public String featureLookupTable = "amino_feature_lookup";
-	public String groupHypothesisLUT = "amino_group_hypothesisLUT";
+	public String groupHypothesisLUT = "amino_group_hypothesis_lookup";
 
     public String reverseByBucketTable = "amino_reverse_bitmap_byBucket";
     public String reverseFeatureLookupTable = "amino_reverse_feature_lookup";
@@ -83,6 +81,22 @@ public class AccumuloQueryService implements AminoQueryService {
 	public String auditVisibility = "";
 
     public String reverseItrMemThreshold = "100000000";
+
+    /**
+     * Adds the suffix to all of the tables
+     * @param suffix The suffix to append to the tables
+     */
+    @Override
+    public void addTableSuffix(String suffix){
+
+        bitLookupTable = bitLookupTable + suffix;
+        byBucketTable = byBucketTable + suffix;
+        resultsTable = resultsTable + suffix;
+        featureLookupTable = featureLookupTable + suffix;
+        groupHypothesisLUT = groupHypothesisLUT + suffix;
+        reverseByBucketTable = reverseByBucketTable + suffix;;
+        reverseFeatureLookupTable = reverseFeatureLookupTable + suffix;
+    }
 
     /**
      * Constructs a new AccumuloQueryService. Use of this constructor acknowledges that you will manually set the persistenceService and metadataService properties before calling any methods.
@@ -527,9 +541,10 @@ public class AccumuloQueryService implements AminoQueryService {
 			// Find the hypotheses that the user can see.  Restrict to features as that's all we care about
 			final Scanner hypothesisFeaturesScanner = persistenceService.createScanner(metadataService.hypothesisTable, auths);
 			hypothesisFeaturesScanner.setRange(new Range(auditInfo.getDn()));
-			hypothesisFeaturesScanner.setScanIterators(30, RegExIterator.class.getCanonicalName(), "cqFilterIterator");
-			hypothesisFeaturesScanner.setScanIteratorOption("cqFilterIterator", "colqRegex", "features");
-						
+            final IteratorSetting iteratorSetting = new IteratorSetting(30, "cqFilter", RegExFilter.class.getCanonicalName());
+            RegExFilter.setRegexs(iteratorSetting, null, null, "features", null, false);
+            hypothesisFeaturesScanner.addScanIterator(iteratorSetting);
+
 			// Get all of the HypothesisFeatures of the Hypotheses we can see
             for(Map.Entry<Key, Value> hypothesisFeatureRow : hypothesisFeaturesScanner){
 				// Check to see if we were interrupted and if so. give up.
@@ -698,7 +713,9 @@ public class AccumuloQueryService implements AminoQueryService {
             if(byBucketBatchScanner != null){
 			    byBucketBatchScanner.close();
             }
-			bucketStats.endTime();
+            if(bucketStats != null){
+			    bucketStats.endTime();
+            }
 		}
 		
 		if(featureRanges.size() == 0) {
@@ -1331,15 +1348,17 @@ public class AccumuloQueryService implements AminoQueryService {
         }
 
         // Configure the options on the iterator for the BatchScanner on the reverseByBucketTable
-        revByBucketScanner.setScanIterators(30, ReverseByBucketCombiner.class.getCanonicalName(), revByBucketItr);
-        revByBucketScanner.setScanIteratorOption(revByBucketItr, ReverseByBucketCombiner.OPTION_NUM_RANGES, String.valueOf(features.size()));
+        IteratorSetting iteratorSetting = new IteratorSetting(30, revByBucketItr, ReverseByBucketCombiner.class.getCanonicalName());
+        iteratorSetting.addOption(ReverseByBucketCombiner.OPTION_NUM_RANGES, String.valueOf(features.size()));
+
         if(andIds.size() > 0){
-            revByBucketScanner.setScanIteratorOption(revByBucketItr, ReverseByBucketCombiner.OPTION_AND_IDS, new Gson().toJson(andIds));
+            iteratorSetting.addOption(ReverseByBucketCombiner.OPTION_AND_IDS, new Gson().toJson(andIds));
         }
         if(orIds.size() > 0){
-            revByBucketScanner.setScanIteratorOption(revByBucketItr, ReverseByBucketCombiner.OPTION_OR_IDS, new Gson().toJson(orIds));
+            iteratorSetting.addOption(ReverseByBucketCombiner.OPTION_OR_IDS, new Gson().toJson(orIds));
         }
-        revByBucketScanner.setScanIteratorOption(revByBucketItr, ReverseByBucketCombiner.OPTION_BITMAP_MEM_THRESHOLD, reverseItrMemThreshold);
+        iteratorSetting.addOption(ReverseByBucketCombiner.OPTION_BITMAP_MEM_THRESHOLD, reverseItrMemThreshold);
+        revByBucketScanner.addScanIterator(iteratorSetting);
 
         // Set up the ranges and get ready to scan the amino_reverse_bitmap_byBucket table
         revByBucketScanner.setRanges(ranges);
@@ -1370,9 +1389,10 @@ public class AccumuloQueryService implements AminoQueryService {
         // Create the Scanner and set the iterator to de-conflict hash collisions
         final BatchScanner lookupScanner = persistenceService.createBatchScanner(reverseFeatureLookupTable, auths);
         lookupScanner.setRanges(lookupRanges);
-        lookupScanner.setScanIterators(30, ReverseFeatureCombiner.class.getCanonicalName(), revLookupItr);
-        lookupScanner.setScanIteratorOption(revLookupItr, ReverseFeatureCombiner.OPTION_SALTS, metadataService.getHashCount().toString());
-        lookupScanner.setScanIteratorOption(revLookupItr, ReverseFeatureCombiner.OPTION_MAX_RESULTS, String.valueOf(maxResults));
+        final IteratorSetting itr = new IteratorSetting(30, revLookupItr, ReverseFeatureCombiner.class.getCanonicalName());
+        itr.addOption(ReverseFeatureCombiner.OPTION_SALTS, metadataService.getHashCount().toString());
+        itr.addOption(ReverseFeatureCombiner.OPTION_MAX_RESULTS, String.valueOf(maxResults));
+        lookupScanner.addScanIterator(itr);
 
         // Fetch the results
         try {
@@ -1629,17 +1649,9 @@ public class AccumuloQueryService implements AminoQueryService {
 		scanner.clearScanIterators();
 		
 		// Create the configuration for the scanner iterator
-        final ScanIteratorConfig scanIteratorConfig = new ScanIteratorConfig();
-
-        scanIteratorConfig.priority = 30;
-        scanIteratorConfig.iteratorClass = BitmapANDIterator.class.getCanonicalName();
-        scanIteratorConfig.name = "queryScanIterator";
-
-        // Set the iterator options
-        scanIteratorConfig.options = new HashSet<ScanIteratorOption>(1);
-
+        final IteratorSetting iteratorSetting = new IteratorSetting(30, "queryScanIterator", BitmapANDIterator.class.getCanonicalName());
         final String optionString = new Gson().toJson(bitmaskScanInformation.maskArray);
-        scanIteratorConfig.options.add(new ScanIteratorOption(BitmapANDIterator.OPTION_BITS, optionString));
+        iteratorSetting.addOption(BitmapANDIterator.OPTION_BITS, optionString);
 
         final AccumuloScanConfig config = new AccumuloScanConfig();
         config.setStartRow(resultScanRowId);
@@ -1649,7 +1661,7 @@ public class AccumuloQueryService implements AminoQueryService {
         config.setEndColumnFamily(bitmaskScanInformation.last);
         config.setEndColumnQualifier(TableConstants.ROW_TERMINATOR);
         config.setShardcount(shardCount);
-        config.setCustomIterator(scanIteratorConfig);
+        config.setIteratorSetting(iteratorSetting);
 
 		persistenceService.configureBatchScanner(scanner,config);
 		

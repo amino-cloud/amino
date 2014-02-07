@@ -6,16 +6,13 @@ import com._42six.amino.common.ByBucketKey;
 import com._42six.amino.common.JobUtilities;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.util.PathUtils;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.impl.ConnectorImpl;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.thrift.AuthInfo;
 import org.apache.accumulo.core.util.TextUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
@@ -60,7 +57,7 @@ public class ByBucketJob extends Configured implements Tool {
         Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
         TableOperations tableOps;
         try {
-            tableOps = inst.getConnector(user, password).tableOperations();
+            tableOps = inst.getConnector(user, new PasswordToken(password)).tableOperations();
         } catch (AccumuloException ex) {
             throw new IOException(ex);
         } catch (AccumuloSecurityException ex) {
@@ -128,16 +125,13 @@ public class ByBucketJob extends Configured implements Tool {
 
         final String splitFile = workingDir + "/bucketSplits.txt";
 
-        ConnectorImpl c = null;
+        Connector c = null;
 
         boolean success = false;
         try
         {
             final Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
-            final AuthInfo ai = new AuthInfo();
-            ai.setUser(user);
-            ai.setPassword(password.getBytes());
-            c = new ConnectorImpl(inst, ai.getUser(), ai.getPassword());
+            c = inst.getConnector(user, new PasswordToken(password));
 
             // set number of reducers TODO - Clean this up
             int numReducers = conf.getInt(AMINO_NUM_REDUCERS_BITMAP, 0);
@@ -224,7 +218,7 @@ public class ByBucketJob extends Configured implements Tool {
                     tb = tableName;
                 }
                 System.out.println("Importing the files in '" + workingDir + "/files' to the table: " + tb);
-                c.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", 20, 4, false);
+                c.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", false);
                 result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
             }
             catch (Exception e)

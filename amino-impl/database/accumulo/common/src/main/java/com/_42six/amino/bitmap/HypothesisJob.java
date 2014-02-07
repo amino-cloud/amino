@@ -5,16 +5,12 @@ import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.index.BitmapIndex;
 import com._42six.amino.common.service.datacache.BucketCache;
 import com._42six.amino.common.util.PathUtils;
-import org.apache.accumulo.core.client.AccumuloException;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
-import org.apache.accumulo.core.client.Instance;
-import org.apache.accumulo.core.client.ZooKeeperInstance;
-import org.apache.accumulo.core.client.impl.ConnectorImpl;
+import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.client.mapreduce.lib.partition.RangePartitioner;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
-import org.apache.accumulo.core.security.thrift.AuthInfo;
 import org.apache.accumulo.core.util.TextUtil;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
@@ -62,16 +58,13 @@ public class HypothesisJob extends Configured implements Tool
         final String temp = IteratorUtils.TEMP_SUFFIX;
         final boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); //should always assume it's the first run unless specified
         
-        ConnectorImpl c = null;
+        Connector connector = null;
         PrintStream out;
         boolean success = false;
         try
         {
         	final Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
-        	final AuthInfo ai = new AuthInfo();
-        	ai.setUser(user);
-        	ai.setPassword(password.getBytes());
-        	c = new ConnectorImpl(inst, ai.getUser(), ai.getPassword());
+        	connector = inst.getConnector(user, new PasswordToken(password));
         	
         	int numReducers = conf.getInt(AMINO_NUM_REDUCERS, DEFAULT_NUM_REDUCERS);
         	int numTablets = conf.getInt(AMINO_NUM_TABLETS, -1);
@@ -109,7 +102,7 @@ public class HypothesisJob extends Configured implements Tool
         	out.flush();
         	out.close();
 
-        	success = IteratorUtils.createTable(c.tableOperations(), tableName, splits, blastIndex, blastIndex);
+        	success = IteratorUtils.createTable(connector.tableOperations(), tableName, splits, blastIndex, blastIndex);
         	
         	job.setOutputFormatClass(AccumuloFileOutputFormat.class);
             AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDir + "/files"));
@@ -137,7 +130,7 @@ public class HypothesisJob extends Configured implements Tool
         if (result != 0) {
         	System.out.println("Hypothesis MapReduce job failed. Job results will not be imported into Accumulo.");
         }
-        else if (c != null && success) {
+        else if (connector != null && success) {
         	System.out.println("Importing job results to accumulo...");
         	try
         	{
@@ -145,7 +138,7 @@ public class HypothesisJob extends Configured implements Tool
         		if (!blastIndex){
                     tb = tableName;
                 }
-        		c.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", 20, 4, false);
+        		connector.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", false);
         		result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
         	}
         	catch (Exception e)

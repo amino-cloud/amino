@@ -52,6 +52,16 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		this.persistenceService = persistenceService;
 	}
 
+    /**
+     * Adds the suffix to all of the tables
+     * @param suffix The suffix to append to the tables
+     */
+    @Override
+    public void addTableSuffix(String suffix){
+        metadataTable = metadataTable + suffix;
+        hypothesisTable = hypothesisTable + suffix;
+    }
+
 	public void setGroupService(AccumuloGroupService groupService){
 		this.groupService = groupService;
 	}

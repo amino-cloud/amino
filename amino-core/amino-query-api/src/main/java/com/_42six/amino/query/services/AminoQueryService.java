@@ -18,6 +18,12 @@ import java.util.concurrent.TimeoutException;
  * @author Amino Team
  */
 public interface AminoQueryService {
+    /**
+     * Adds the suffix to all of the tables
+     * @param suffix The suffix to append to the tables
+     */
+    public void addTableSuffix(String suffix);
+
 	/**
 	 * Lists existing AminoQueryResults for a given user.
 	 *
@@ -45,6 +51,7 @@ public interface AminoQueryService {
 	 *
 	 * @param owner         The owner of the result
 	 * @param hypothesisId  The id of the hypothesis to use as the basis for the query
+     * @param maxResults    The maximum number of results to hit before giving up
 	 * @param justification A justification for this query
 	 * @param userid        The name of the user executing the query.
 	 * @param visibility    A list of string corresponding to allowed visibilities for the user.
@@ -79,6 +86,7 @@ public interface AminoQueryService {
      *
      * @param datasourceid The datasource to check the bucket values against
      * @param bucketid The bucket to check the bucket values against
+     * @param bucketValues The values to generate the Hypotheses from
      * @param visibility The Accumulo visibilities
      * @param userid the DN of the person making the request
      * @param justification The justification string for auditing
