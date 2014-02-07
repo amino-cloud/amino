@@ -5,7 +5,9 @@ Here are some instructions for getting Amino up and running with the Numbers exa
 Step 0
 ------
 Make sure that you have the pre-requisite technologies installed. This includes HDFS, Hadoop, ZooKeeper, and Accumulo.
-Also, this assumes that you have at least Java 1.6 installed and Maven
+Also, this assumes that you have at least Java 1.6 installed and Maven.  For Accumulo, there needs to be an account
+that has permissions System.CREATE_TABLE, System.ALTER_TABLE, and System.DROP_TABLE.  You'll also need to set the scan
+authorizations on the user, which for the examples below "U" should suffice.
 
 Step 1
 ------
@@ -25,6 +27,8 @@ This will build 3 jars that are of interest:
     $AMINO/amino-impl/database/accumulo/iterators/target/amino-accumulo-iterators-2.1.0-SNAPSHOT-jar-with-dependencies.jar
     $AMINO/amino-impl/database/accumulo/common/target/amino-accumulo-common-2.1.0-SNAPSHOT-job.jar
     $AMINO/amino-impl/job/number/target/number-2.1.0-SNAPSHOT-job.jar
+
+_NOTE: Make sure that you grab the jars that end in **"-job"**_
 
 Step 3
 -------
@@ -64,7 +68,7 @@ To do so, run the following commands:
 
     hadoop jar number-2.1.0-SNAPSHOT-job.jar com._42six.amino.api.framework.FrameworkDriver --amino_default_config_path /amino/numbers/config &&
     hadoop jar amino-accumulo-common-2.1.0-SNAPSHOT-job.jar com._42six.amino.bitmap.DatabasePrepJob /amino/numbers/out /amino/numbers/config &&
-    hadoop jar amino-accumulo-common-2.1.0-SNAPSHOT-job.jar com._42six.amino.bitmap.ByBucketsJob /amino/numbers/out /amino/numbers/config /amino/numbers/working &&
+    hadoop jar amino-accumulo-common-2.1.0-SNAPSHOT-job.jar com._42six.amino.bitmap.ByBucketJob /amino/numbers/out /amino/numbers/config /amino/numbers/working &&
     hadoop jar amino-accumulo-common-2.1.0-SNAPSHOT-job.jar com._42six.amino.bitmap.BitLookupJob /amino/numbers/out /amino/numbers/config /amino/numbers/working &&
     hadoop jar amino-accumulo-common-2.1.0-SNAPSHOT-job.jar com._42six.amino.bitmap.StatsJob /amino/numbers/out /amino/numbers/config &&
     hadoop jar amino-accumulo-common-2.1.0-SNAPSHOT-job.jar com._42six.amino.bitmap.HypothesisJob /amino/numbers/out /amino/numbers/config /amino/numbers/working &&
