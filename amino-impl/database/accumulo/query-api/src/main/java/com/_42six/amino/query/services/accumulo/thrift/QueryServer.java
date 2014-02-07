@@ -1,9 +1,11 @@
 package com._42six.amino.query.services.accumulo.thrift;
 
 import com._42six.amino.query.services.accumulo.AccumuloGroupService;
+import com._42six.amino.query.services.accumulo.AccumuloMetadataService;
 import com._42six.amino.query.services.accumulo.AccumuloPersistenceService;
-import com._42six.amino.query.thrift.services.ThriftGroupServiceHandler;
-import com._42six.amino.query.thrift.services.ThriftGroupService;
+import com._42six.amino.query.services.accumulo.AccumuloQueryService;
+import com._42six.amino.query.thrift.services.AminoThriftService;
+import com._42six.amino.query.thrift.services.AminoThriftServiceHandler;
 import org.apache.thrift.server.TServer;
 // import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.server.TThreadPoolServer;
@@ -25,10 +27,11 @@ public class QueryServer  {
 
         final AccumuloPersistenceService persistenceService = new AccumuloPersistenceService(instanceName, zooKeepers, user, password);
         final AccumuloGroupService groupService = new AccumuloGroupService(persistenceService);
-        groupService.setGroupMembershipTable("amino_group_membership");
-        groupService.setGroupMetadataTable("amino_group_metadata");
+        final AccumuloMetadataService metadataService = new AccumuloMetadataService(persistenceService);
+        final AccumuloQueryService queryService = new AccumuloQueryService(persistenceService, metadataService);
 
-        final ThriftGroupService.Processor processor = new ThriftGroupService.Processor(new ThriftGroupServiceHandler(groupService));
+        final AminoThriftService.Processor processor = new AminoThriftService.Processor(
+                new AminoThriftServiceHandler(groupService, metadataService, queryService));
 
         final TServerTransport serverTransport = new TServerSocket(9090, 9999999);
 

@@ -1,6 +1,6 @@
 package com._42six.amino.query.services.accumulo.thrift;
 
-import com._42six.amino.query.thrift.services.ThriftGroupService;
+import com._42six.amino.query.thrift.services.AminoThriftService;
 import com.google.common.collect.Sets;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -16,8 +16,6 @@ import java.util.Set;
  */
 public class QueryClient {
 
-    static ThriftGroupService.Client groupServiceClient;
-
     static final Set<String> VISIBILITIES = Sets.newHashSet("U");
 
     public static void main(String[] args){
@@ -26,8 +24,8 @@ public class QueryClient {
         try {
             transport.open();
             final TProtocol protocol = new TBinaryProtocol(transport);
-            groupServiceClient = new ThriftGroupService.Client(protocol);
-            System.out.println(groupServiceClient.listGroups("testUser", VISIBILITIES));
+            final AminoThriftService.Client client = new AminoThriftService.Client(protocol);
+            System.out.println(client.listGroups("testUser", VISIBILITIES));
         } catch (TTransportException e) {
             e.printStackTrace();
         } catch (TException e) {
