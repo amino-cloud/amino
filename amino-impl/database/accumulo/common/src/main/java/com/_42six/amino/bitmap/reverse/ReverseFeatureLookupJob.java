@@ -6,11 +6,9 @@ import com._42six.amino.common.JobUtilities;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.util.PathUtils;
 import org.apache.accumulo.core.client.*;
-import org.apache.accumulo.core.client.impl.ConnectorImpl;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.client.mapreduce.lib.partition.KeyRangePartitioner;
 import org.apache.accumulo.core.client.mapreduce.lib.partition.RangePartitioner;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.TextUtil;
@@ -107,7 +105,7 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
         try
         {
             final Instance instance = new ZooKeeperInstance(instanceName, zooKeepers);
-            connector = instance.getConnector(user, new PasswordToken(password));
+            connector = instance.getConnector(user, password);
 
             splitsPrinter = new PrintStream(new BufferedOutputStream(fs.create(new Path(workingDirectory + "/splits.txt"))));
             for (Text split : splits)

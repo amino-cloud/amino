@@ -8,7 +8,6 @@ import com._42six.amino.common.util.PathUtils;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.TextUtil;
@@ -59,7 +58,8 @@ public class BitLookupJob extends Configured implements Tool {
         Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
         TableOperations tableOps;
         try {
-            tableOps = inst.getConnector(user, new PasswordToken(password)).tableOperations();
+//            tableOps = inst.getConnector(user, new PasswordToken(password)).tableOperations();
+            tableOps = inst.getConnector(user, password).tableOperations();
         } catch (AccumuloException ex) {
             throw new IOException(ex);
         } catch (AccumuloSecurityException ex) {
@@ -131,7 +131,7 @@ public class BitLookupJob extends Configured implements Tool {
         try
         {
             final Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
-            c = inst.getConnector(user, new PasswordToken(password));
+            c = inst.getConnector(user, password);
 
             //set number of reducers
             int numReducers = conf.getInt(AMINO_NUM_REDUCERS_BITMAP, 0);

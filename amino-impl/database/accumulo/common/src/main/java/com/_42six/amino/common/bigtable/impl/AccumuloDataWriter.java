@@ -5,9 +5,7 @@ import com._42six.amino.common.bigtable.BigTableDataWriter;
 import com._42six.amino.common.bigtable.Mutation;
 import com._42six.amino.common.bigtable.MutationProto.ColumnValue;
 import com.google.protobuf.ByteString;
-import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.conf.Configuration;
@@ -37,17 +35,17 @@ public class AccumuloDataWriter implements BigTableDataWriter
 		String username = conf.get(ACCUMULO_USERNAME);
 		String zookeepers = conf.get(ACCUMULO_ZOOKEEPERS);
 
-        try {
-            AccumuloOutputFormat.setConnectorInfo(job, username, new PasswordToken(password));
-        } catch (AccumuloSecurityException e) {
-            e.printStackTrace();
-            throw new IOException(e);
-        }
-        AccumuloOutputFormat.setCreateTables(job, true);
-        AccumuloOutputFormat.setDefaultTableName(job, null);
-        AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zookeepers);
-//		AccumuloOutputFormat.setOutputInfo(conf, username, password.getBytes(), true, null);
-//		AccumuloOutputFormat.setZooKeeperInstance(conf, instanceName, zookeepers);
+//        try {
+//            AccumuloOutputFormat.setConnectorInfo(job, username, password);
+//        } catch (AccumuloSecurityException e) {
+//            e.printStackTrace();
+//            throw new IOException(e);
+//        }
+//        AccumuloOutputFormat.setCreateTables(job, true);
+//        AccumuloOutputFormat.setDefaultTableName(job, null);
+//        AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zookeepers);
+		AccumuloOutputFormat.setOutputInfo(conf, username, password.getBytes(), true, null);
+		AccumuloOutputFormat.setZooKeeperInstance(conf, instanceName, zookeepers);
 	}	
 	
 	@Override

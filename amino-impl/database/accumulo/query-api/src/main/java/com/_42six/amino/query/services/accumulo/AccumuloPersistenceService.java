@@ -9,7 +9,6 @@ import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.admin.SecurityOperations;
 import org.apache.accumulo.core.client.mock.MockInstance;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.*;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.security.Authorizations;
@@ -52,7 +51,7 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
             dbInstance = new ZooKeeperInstance(instanceName, zooKeepers);
         }
         try {
-            this.connector = dbInstance.getConnector(accumuloUser, new PasswordToken(accumuloPassword));
+            this.connector = dbInstance.getConnector(accumuloUser, accumuloPassword);
         } catch (AccumuloException e) {
             throw new IOException(e);
         } catch (AccumuloSecurityException e) {
@@ -199,12 +198,12 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
      * @throws TableNotFoundException if the table could not be found
      */
 	public BatchWriter createBatchWriter(String tableName) throws TableNotFoundException {
-        final BatchWriterConfig config = new BatchWriterConfig();
-        config.setMaxWriteThreads(BATCHWRITER_MAXWRITETHREADS);
-        config.setMaxLatency(BATCHWRITER_MAXLATENCY, TimeUnit.MILLISECONDS);
-        config.setMaxMemory(BATCHWRITER_MAXMEMORY);
-        return this.connector.createBatchWriter(tableName, config);
-//		return this.connector.createBatchWriter(tableName, BATCHWRITER_MAXMEMORY, BATCHWRITER_MAXLATENCY, BATCHWRITER_MAXWRITETHREADS);
+//        final BatchWriterConfig config = new BatchWriterConfig();
+//        config.setMaxWriteThreads(BATCHWRITER_MAXWRITETHREADS);
+//        config.setMaxLatency(BATCHWRITER_MAXLATENCY, TimeUnit.MILLISECONDS);
+//        config.setMaxMemory(BATCHWRITER_MAXMEMORY);
+//        return this.connector.createBatchWriter(tableName, config);
+		return this.connector.createBatchWriter(tableName, BATCHWRITER_MAXMEMORY, BATCHWRITER_MAXLATENCY, BATCHWRITER_MAXWRITETHREADS);
 	}
 
     /**
@@ -240,12 +239,12 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
      */
 	public BatchDeleter createBatchDeleter(String tableName, Authorizations auths) throws TableNotFoundException {
 		log.debug("Creating a BatchDeleter for " + tableName);
-        final BatchWriterConfig config = new BatchWriterConfig();
-        config.setMaxWriteThreads(BATCHWRITER_MAXWRITETHREADS);
-        config.setMaxLatency(BATCHWRITER_MAXLATENCY, TimeUnit.MILLISECONDS);
-        config.setMaxMemory(BATCHWRITER_MAXMEMORY);
-        return this.connector.createBatchDeleter(tableName, auths != null ? auths : Constants.NO_AUTHS, BATCHSCANNER_NUMQUERYTHREADS, config);
-//		return this.connector.createBatchDeleter(tableName, auths != null ? auths : Constants.NO_AUTHS, BATCHSCANNER_NUMQUERYTHREADS, BATCHWRITER_MAXMEMORY, BATCHWRITER_MAXLATENCY, BATCHWRITER_MAXWRITETHREADS);
+//        final BatchWriterConfig config = new BatchWriterConfig();
+//        config.setMaxWriteThreads(BATCHWRITER_MAXWRITETHREADS);
+//        config.setMaxLatency(BATCHWRITER_MAXLATENCY, TimeUnit.MILLISECONDS);
+//        config.setMaxMemory(BATCHWRITER_MAXMEMORY);
+//        return this.connector.createBatchDeleter(tableName, auths != null ? auths : Constants.NO_AUTHS, BATCHSCANNER_NUMQUERYTHREADS, config);
+		return this.connector.createBatchDeleter(tableName, auths != null ? auths : Constants.NO_AUTHS, BATCHSCANNER_NUMQUERYTHREADS, BATCHWRITER_MAXMEMORY, BATCHWRITER_MAXLATENCY, BATCHWRITER_MAXWRITETHREADS);
 	}
 
     @Override

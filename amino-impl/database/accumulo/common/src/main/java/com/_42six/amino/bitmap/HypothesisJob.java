@@ -8,7 +8,6 @@ import com._42six.amino.common.util.PathUtils;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.client.mapreduce.lib.partition.RangePartitioner;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.TextUtil;
@@ -64,7 +63,7 @@ public class HypothesisJob extends Configured implements Tool
         try
         {
         	final Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
-        	connector = inst.getConnector(user, new PasswordToken(password));
+        	connector = inst.getConnector(user, password);
         	
         	int numReducers = conf.getInt(AMINO_NUM_REDUCERS, DEFAULT_NUM_REDUCERS);
         	int numTablets = conf.getInt(AMINO_NUM_TABLETS, -1);

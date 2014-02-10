@@ -3,7 +3,6 @@ package com._42six.amino.common.accumulo;
 import com._42six.amino.common.FeatureFactType;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.admin.TableOperations;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.PartialKey;
 import org.apache.accumulo.core.data.Range;
@@ -37,7 +36,7 @@ public class IteratorUtils {
         Connector connector;
 		try
 		{	
-			connector = instance.getConnector(user, new PasswordToken(password));
+			connector = instance.getConnector(user, password);
 		} catch (AccumuloException e) {
 			throw new IOException(e);
 		} catch(AccumuloSecurityException e) {

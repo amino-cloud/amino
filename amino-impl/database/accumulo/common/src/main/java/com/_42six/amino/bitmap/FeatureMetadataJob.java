@@ -14,7 +14,6 @@ import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
-import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -691,7 +690,8 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 			Connector conn;
 			Authorizations auths;
 			try {
-				conn = inst.getConnector(user, new PasswordToken(password));
+//				conn = inst.getConnector(user, new PasswordToken(password));
+                conn = inst.getConnector(user, password);
 				auths = conn.securityOperations().getUserAuthorizations(user);
 			} catch (AccumuloException ex) {
 				throw new IOException(ex);
@@ -754,7 +754,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 		final Instance btInstance = new ZooKeeperInstance(instanceName, zooKeepers);
 		Connector connector;
 		try {
-			connector = btInstance.getConnector(user, new PasswordToken(password));
+			connector = btInstance.getConnector(user, password);
 		} catch (AccumuloException ex) {
 			throw new IOException(ex);
 		} catch (AccumuloSecurityException ex) {
@@ -763,19 +763,19 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 
 		BatchWriter writer = null;
 		try {
-            final BatchWriterConfig config = new BatchWriterConfig();
-            config.setMaxLatency(maxLatency, TimeUnit.MILLISECONDS);
-            config.setMaxMemory(maxMemory);
-            config.setMaxWriteThreads(maxWriteThreads);
+//            final BatchWriterConfig config = new BatchWriterConfig();
+//            config.setMaxLatency(maxLatency, TimeUnit.MILLISECONDS);
+//            config.setMaxMemory(maxMemory);
+//            config.setMaxWriteThreads(maxWriteThreads);
 			if (blastIndex)
 			{
-                writer = connector.createBatchWriter(metadataTable + IteratorUtils.TEMP_SUFFIX, config);
-//				writer = connector.createBatchWriter(metadataTable + IteratorUtils.TEMP_SUFFIX, maxMemory, maxLatency, maxWriteThreads);
+//                writer = connector.createBatchWriter(metadataTable + IteratorUtils.TEMP_SUFFIX, config);
+				writer = connector.createBatchWriter(metadataTable + IteratorUtils.TEMP_SUFFIX, maxMemory, maxLatency, maxWriteThreads);
 			}
 			else
 			{
-                writer = connector.createBatchWriter(metadataTable,config);
-//				writer = connector.createBatchWriter(metadataTable, maxMemory, maxLatency, maxWriteThreads);
+//                writer = connector.createBatchWriter(metadataTable,config);
+				writer = connector.createBatchWriter(metadataTable, maxMemory, maxLatency, maxWriteThreads);
 			}
 			final int numberOfShards = conf.getInt(BitmapConfigHelper.BITMAP_CONFIG_NUM_SHARDS, 10);
 			final int numberOfHashes = conf.getInt("amino.bitmap.num-hashes", 1);
@@ -811,7 +811,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 		TableOperations tableOps;
 		try
 		{
-			tableOps = inst.getConnector(user, new PasswordToken(password)).tableOperations();
+			tableOps = inst.getConnector(user, password).tableOperations();
 			deleteTables(tableOps, true, metadataTable + IteratorUtils.TEMP_SUFFIX);
 			IteratorUtils.compactTable(tableOps, metadataTable, true);
 
@@ -840,7 +840,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 
 		TableOperations tableOps;
 		try {
-			tableOps = inst.getConnector(user, new PasswordToken(password)).tableOperations();
+			tableOps = inst.getConnector(user, password).tableOperations();
 
 			String metadataTableOld = metadataTable + IteratorUtils.OLD_SUFFIX;
 			String lookupTableOld = lookupTable + IteratorUtils.OLD_SUFFIX;
@@ -926,7 +926,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 
 
         final Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
-        final Connector conn = inst.getConnector(user, new PasswordToken(password));
+        final Connector conn = inst.getConnector(user, password);
         final Authorizations auths = conn.securityOperations().getUserAuthorizations(user);
 
         final Job job = new Job(conf, "Amino feature metadata job");
@@ -938,10 +938,10 @@ public final class FeatureMetadataJob extends Configured implements Tool {
         job.setMapOutputValueClass(Mutation.class);
         job.setInputFormatClass(AccumuloInputFormat.class);
         AccumuloInputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-//        AccumuloInputFormat.setInputInfo(job, user, password, metadataTable, auths);
-        AccumuloInputFormat.setConnectorInfo(job, user, new PasswordToken(password));
-        AccumuloInputFormat.setInputTableName(job, metadataTable);
-        AccumuloInputFormat.setScanAuthorizations(job, auths);
+        AccumuloInputFormat.setInputInfo(job, user, password, metadataTable, auths);
+//        AccumuloInputFormat.setConnectorInfo(job, user, new PasswordToken(password));
+//        AccumuloInputFormat.setInputTableName(job, metadataTable);
+//        AccumuloInputFormat.setScanAuthorizations(job, auths);
         //AccumuloInputFormat.setRegex(job, AccumuloInputFormat.RegexType.ROW, "feature.*");
         AccumuloInputFormat.setRanges(job, Collections.singleton(new Range(new Text("feature"), TableConstants.FEATURE_END)));
         AccumuloInputFormat.fetchColumns(job, Collections.singleton(new Pair<Text, Text>(new Text("JSON"), null)));
@@ -952,10 +952,10 @@ public final class FeatureMetadataJob extends Configured implements Tool {
         job.setOutputValueClass(Mutation.class);
         job.setOutputFormatClass(AccumuloOutputFormat.class);
         AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-//        AccumuloOutputFormat.setOutputInfo(job, user, password, false, metadataTable);
-        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
-        AccumuloOutputFormat.setCreateTables(job, true);
-        AccumuloOutputFormat.setDefaultTableName(job, metadataTable);
+        AccumuloOutputFormat.setOutputInfo(job, user, password, false, metadataTable);
+//        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
+//        AccumuloOutputFormat.setCreateTables(job, true);
+//        AccumuloOutputFormat.setDefaultTableName(job, metadataTable);
 
         // Run the MapReduce
         final boolean complete = job.waitForCompletion(true);
