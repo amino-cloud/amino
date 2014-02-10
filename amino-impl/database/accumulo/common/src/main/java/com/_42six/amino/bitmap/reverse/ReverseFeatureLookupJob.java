@@ -63,7 +63,8 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
         System.out.println("Input paths: [" + inputPaths + "].");
         System.out.println("Cache paths: [" + cachePaths + "].");
 
-        JobUtilities.deleteDirectory(conf, workingDirectory);
+//        JobUtilities.deleteDirectory(conf, workingDirectory);
+        JobUtilities.resetWorkingDirectory(this.getConf(), workingDirectory);
         PathUtils.setCachePath(job.getConfiguration(), cachePaths);
         SequenceFileInputFormat.setInputPaths(job, inputPaths);
 

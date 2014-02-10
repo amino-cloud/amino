@@ -99,8 +99,8 @@ public class ByBucketJob extends Configured implements Tool {
         job.setOutputValueClass(Value.class);
 
         final String workingDirectory = args[2]; // TODO: use configuration instead of positional argument
-        JobUtilities.deleteDirectory(this.getConf(), workingDirectory);
-
+//        JobUtilities.deleteDirectory(this.getConf(), workingDirectory);
+        JobUtilities.resetWorkingDirectory(this.getConf(), workingDirectory);
         int numTablets = -1;
         if (args.length > 3){
             numTablets = Integer.parseInt(args[3]);

@@ -10,25 +10,39 @@ import org.apache.hadoop.fs.Path;
 
 public class JobUtilities 
 {
+    public static void resetWorkingDirectory(Configuration conf, String workingDir) throws Exception
+    {
+        deleteDirectory(conf, workingDir);
+        final FsShell shell = new FsShell(conf);
+        final String[] command = new String[2];
+        command[0] = "-mkdir";
+        command[1] = workingDir + "/failures";
+        shell.run(command);
+    }
+
 	public static void deleteDirectory(Configuration conf, String outputPath) throws Exception
 	{
-		FsShell shell = new FsShell();
+		final FsShell shell = new FsShell();
 		shell.setConf(conf);
 
-		String[] delCommand = new String[2];
+		final String[] delCommand = new String[2];
 		delCommand[0] = "-rmr";
+//        delCommand[1] = "-r";
 		delCommand[1] = outputPath;
 		shell.run(delCommand);
 	}
 	
 	public static int failureDirHasFiles(Configuration conf, String failureDir) throws IOException 
 	{
-		FileSystem fs = FileSystem.get(conf);
-        FileStatus[] status = fs.listStatus(new Path(failureDir));
-        int fileCount = status.length;
-        System.out.println(fileCount + " files found in the failures directory on bulk import.");
-        fs.close();
-        if (fileCount > 0) return 1;
-        else return 0;
-	}
+        FileSystem fs = null;
+        try {
+            fs = FileSystem.get(conf);
+            final FileStatus[] status = fs.listStatus(new Path(failureDir));
+            int fileCount = status.length;
+            System.out.println(fileCount + " files found in the failures directory on bulk import.");
+            return (fileCount > 0) ? 1 : 0;
+        } finally {
+            if(fs != null){fs.close();}
+        }
+    }
 }
