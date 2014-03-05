@@ -31,7 +31,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
 
     private static final String ROW_IDS = "loader.rowIds";
     private static final String ROW_SEPARATOR = "loader.separator";
-    private static final String DATA_TYPE = "loader.dataType";
+
 
     private final Hashtable<Text, Text> bucketsAndDisplayNames = new Hashtable<Text, Text>();
 
@@ -62,7 +62,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
         String authorizations = conf.get(AUTHORIZATIONS);
         String rowIds = conf.get(ROW_IDS);
         String rowSeparator = conf.get(ROW_SEPARATOR, ",");
-        String dataType = conf.get(DATA_TYPE, "PARSED"); // Valid choices are RAW, PARSED, or TDF
+
         final List<Range> ranges = new ArrayList<Range>();
 
         for(String row : rowIds.split(rowSeparator)){
@@ -71,15 +71,11 @@ public abstract class AccumuloDataLoader implements DataLoader {
 
         // TODO - Add ability to scan on temporal ranges
 
-        final List<Pair<Text, Text>> columns = new ArrayList<Pair<Text, Text>>(1);
-        columns.add(new Pair<Text, Text>(new Text("DATA_TYPE"), new Text(dataType)));
-
         System.out.println("Grabbing data from table '" + tableName + "'");
 
         AccumuloInputFormat.setZooKeeperInstance(conf, instanceName, zookeeperInfo);
         AccumuloInputFormat.setInputInfo(conf, userName, password.getBytes(), tableName, new Authorizations(authorizations.getBytes()));
         AccumuloInputFormat.addIterator(conf, new IteratorSetting(30, WholeRowIterator.class));
-        AccumuloInputFormat.fetchColumns(conf, columns);
         AccumuloInputFormat.setRanges(conf, ranges);
     }
 
@@ -118,7 +114,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
      *
      * @return MapWritable with all of the bucketed values
      */
-    protected abstract MapWritable processWholeRow(Key key, Value value);
+    protected abstract MapWritable processWholeRow(Key key, Value value) throws IOException;
 
     @Override
     public List<Text> getBuckets() {
@@ -131,28 +127,8 @@ public abstract class AccumuloDataLoader implements DataLoader {
     }
 
     @Override
-    public String getDataSourceName() {
-        return "Warehaus";
-    }
-
-    @Override
     public void setConfig(Configuration config) {
         this.config = config;
-    }
-
-    @Override
-    public String getVisibility() {
-        return "U";
-    }
-
-    @Override
-    public String getDataSetName(MapWritable mw) {
-        return "Warehuas DS";
-    }
-
-    @Override
-    public String getHumanReadableVisibility() {
-        return "UNCLASSIFIED";
     }
 
     @Override

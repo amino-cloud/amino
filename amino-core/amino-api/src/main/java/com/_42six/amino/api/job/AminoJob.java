@@ -5,6 +5,11 @@ import org.apache.hadoop.conf.Configuration;
 import com._42six.amino.data.DataLoader;
 
 public interface AminoJob {
+    public static final String CFG_DOMAIN_ID = "AminoJob.domainId";
+    public static final String CFG_DOMAIN_NAME = "AminoJob.domainName";
+    public static final String CFG_DOMAIN_DESC = "AminoJob.description";
+    public static final String CFG_REDUCER_CLASSES = "AminoJob.reducer.classes";
+    public static final String CFG_DATA_LOADER = "AminoJob.dataLoader";
 	
 	public JobOutputEstimate getJobEstimate();
 	public String getJobName();
