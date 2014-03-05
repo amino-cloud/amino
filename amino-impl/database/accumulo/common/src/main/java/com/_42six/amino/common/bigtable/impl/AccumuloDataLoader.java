@@ -9,7 +9,6 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.user.WholeRowIterator;
 import org.apache.accumulo.core.security.Authorizations;
-import org.apache.accumulo.core.util.Pair;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
@@ -19,7 +18,10 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
 
 public abstract class AccumuloDataLoader implements DataLoader {
     private static final String INSTANCE = "bigtable.instance";
@@ -60,16 +62,13 @@ public abstract class AccumuloDataLoader implements DataLoader {
         String userName = conf.get(USERNAME);
         String password = conf.get(PASSWORD);
         String authorizations = conf.get(AUTHORIZATIONS);
-        String rowIds = conf.get(ROW_IDS);
+        String rowIds = conf.get(ROW_IDS, "");
         String rowSeparator = conf.get(ROW_SEPARATOR, ",");
 
         final List<Range> ranges = new ArrayList<Range>();
-
-        for(String row : rowIds.split(rowSeparator)){
+        for (String row : rowIds.split(rowSeparator)) {
             ranges.add(new Range(row));
         }
-
-        // TODO - Add ability to scan on temporal ranges
 
         System.out.println("Grabbing data from table '" + tableName + "'");
 
@@ -84,7 +83,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
         Key key;
         Value value;
         try {
-            if(!this.recordReader.nextKeyValue()) {
+            if (!this.recordReader.nextKeyValue()) {
                 return null;
             }
 
@@ -103,15 +102,14 @@ public abstract class AccumuloDataLoader implements DataLoader {
 
     /**
      * Process a whole row from the WholeRowIterator.  This will generally be of the form:
-     *
+     * <p/>
      * for(Map.Entry<Key,Value> entry : WholeRowIterator.decodeRow(key,value).entrySet()){
-     *     process values from entry
-     *     place results into outputMap
+     * process values from entry
+     * place results into outputMap
      * }
      *
-     * @param key The Key returned from the WholeRowIterator
+     * @param key   The Key returned from the WholeRowIterator
      * @param value The Value returned from the WholeRowIterator
-     *
      * @return MapWritable with all of the bucketed values
      */
     protected abstract MapWritable processWholeRow(Key key, Value value) throws IOException;
@@ -122,7 +120,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
     }
 
     @Override
-    public Hashtable<Text,Text> getBucketDisplayNames() {
+    public Hashtable<Text, Text> getBucketDisplayNames() {
         return bucketsAndDisplayNames;
     }
 
@@ -132,8 +130,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
     }
 
     @Override
-    public boolean canReadFrom(InputSplit inputSplit)
-    {
+    public boolean canReadFrom(InputSplit inputSplit) {
         return true;
     }
 
