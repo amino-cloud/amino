@@ -29,367 +29,355 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
-public final class FrameworkDriver extends Configured implements Tool 
-{
-	private static final String AMINO_NUM_REDUCERS = "amino.num.reducers";
-	private static final String AMINO_NUM_REDUCERS_ENRICH_PHASE1 = "amino.enrich.phase1.num.reducers";
-	private static final String AMINO_NUM_REDUCERS_ENRICH_PHASE2 = "amino.enrich.phase2.num.reducers";
+public final class FrameworkDriver extends Configured implements Tool {
+    private static final String AMINO_NUM_REDUCERS = "amino.num.reducers";
+    private static final String AMINO_NUM_REDUCERS_ENRICH_PHASE1 = "amino.enrich.phase1.num.reducers";
+    private static final String AMINO_NUM_REDUCERS_ENRICH_PHASE2 = "amino.enrich.phase2.num.reducers";
 
-	private static final int DEFAULT_NUM_REDUCERS = 14;
-
-
-	private static final int JOB_TYPE_NORMAL = 0;
-	private static final int JOB_TYPE_ENRICHMENT = 1;
-	private static final int JOB_TYPE_REUSE_ENRICHMENT = 2;
-
-	private String enrichmentOutput = "";
-	private static boolean stopOnFirstPhase = false;
-
-	static class XMLFileNameFilter implements FilenameFilter {
-		public boolean accept(File directory, String filename) {
-			return filename.endsWith(".xml");
-		}
-	}
-
-	public static Options constructGnuOptions() {
-		final Options gnuOptions = new Options();
-		Option aminoDefaultConfigurationOption = new Option("d", "amino_default_config_path", true, "The path where the amino default file lives.");
-		aminoDefaultConfigurationOption.setRequired(true);
-		gnuOptions.addOption(aminoDefaultConfigurationOption);
-		gnuOptions.addOption("c", "amino_config_file_path", true, "A CSV of filenames or paths which will be acted like a classpath setting up configurations!");
-		gnuOptions.addOption("stop", "stop_on_first_phase", false, "Stop after the first phase of an AminoEnrichmentJob");
-
-		Option propertyOverride = new Option("D", "property_override", true, "A map of key/value configuration properties to override (ie: 'key=value')");
-		propertyOverride.setValueSeparator('=');
-		propertyOverride.setArgs(2);
-		gnuOptions.addOption(propertyOverride);
-
-		return gnuOptions;
-	}
+    private static final int DEFAULT_NUM_REDUCERS = 14;
 
 
-	public static List<String> getUserConfigFiles(final String path) throws IOException {
-		File configPath = new File(path);
-		if(!configPath.exists()) {
-			throw new IOException(path + " does not exist!");
-		}
-		// We are going to assume that this is a top level directory with configuration files in it, we are not going to recur downwards
-		LinkedList<String> paths = new LinkedList<String>();
-		if(configPath.isDirectory()) {
-			for(File file : configPath.listFiles(new XMLFileNameFilter())) {
-				paths.push(file.getAbsolutePath());
-			}
-		} else {
-			paths.push(configPath.getAbsolutePath());
-		}
-		return paths;
-	}
+    private static final int JOB_TYPE_NORMAL = 0;
+    private static final int JOB_TYPE_ENRICHMENT = 1;
+    private static final int JOB_TYPE_REUSE_ENRICHMENT = 2;
 
-	public static void main(String[] args) throws Exception 
-	{
-		CommandLineParser cmdLineGnuParser = new GnuParser();
-		CommandLine commandLine = cmdLineGnuParser.parse(constructGnuOptions(), args);
+    private String enrichmentOutput = "";
+    private static boolean stopOnFirstPhase = false;
 
-		final String userConfFilePath = commandLine.getOptionValue("amino_config_file_path", "");
-		final String aminoDefaultConfigPath = commandLine.getOptionValue("amino_default_config_path");
+    static class XMLFileNameFilter implements FilenameFilter {
+        public boolean accept(File directory, String filename) {
+            return filename.endsWith(".xml");
+        }
+    }
 
-		stopOnFirstPhase = commandLine.hasOption("stop");
+    public static Options constructGnuOptions() {
+        final Options gnuOptions = new Options();
+        Option aminoDefaultConfigurationOption = new Option("d", "amino_default_config_path", true, "The path where the amino default file lives.");
+        aminoDefaultConfigurationOption.setRequired(true);
+        gnuOptions.addOption(aminoDefaultConfigurationOption);
+        gnuOptions.addOption("c", "amino_config_file_path", true, "A CSV of filenames or paths which will be acted like a classpath setting up configurations!");
+        gnuOptions.addOption("stop", "stop_on_first_phase", false, "Stop after the first phase of an AminoEnrichmentJob");
 
-		Configuration conf = new Configuration();
-		conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, aminoDefaultConfigPath);
+        Option propertyOverride = new Option("D", "property_override", true, "A map of key/value configuration properties to override (ie: 'key=value')");
+        propertyOverride.setValueSeparator('=');
+        propertyOverride.setArgs(2);
+        gnuOptions.addOption(propertyOverride);
 
-		//create a single DistributedCacheService so that multiple cache entries are deduped.
-		//cache files are added after each config is loaded in case the the property value changes.
-		DistributedCacheService distributedCacheService = new DistributedCacheService();
-		
-		// 1. load AminoDefaults
-		AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-		distributedCacheService.addFilesToDistributedCache(conf);
+        return gnuOptions;
+    }
 
-		// 2. load user config files, allowing them to overwrite
-		if(!StringUtils.isEmpty(userConfFilePath)) {
-			for(String path : getUserConfigFiles(userConfFilePath)) {
-				Configuration userConf = new Configuration(false);
-				userConf.addResource(new FileInputStream(path));
-				HadoopConfigurationUtils.mergeConfs(conf, userConf);
-			}
-		}
-		distributedCacheService.addFilesToDistributedCache(conf);
 
-		// 3. load command line arguments as properties, allowing them to overwrite
-		final Properties propertyOverrides = commandLine.getOptionProperties("property_override");
-		for (Object key: propertyOverrides.keySet()) {
-			conf.set((String)key, (String)propertyOverrides.get(key));
-		}
-		distributedCacheService.addFilesToDistributedCache(conf);
+    public static List<String> getUserConfigFiles(final String path) throws IOException {
+        File configPath = new File(path);
+        if (!configPath.exists()) {
+            throw new IOException(path + " does not exist!");
+        }
+        // We are going to assume that this is a top level directory with configuration files in it, we are not going to recur downwards
+        LinkedList<String> paths = new LinkedList<String>();
+        if (configPath.isDirectory()) {
+            for (File file : configPath.listFiles(new XMLFileNameFilter())) {
+                paths.push(file.getAbsolutePath());
+            }
+        } else {
+            paths.push(configPath.getAbsolutePath());
+        }
+        return paths;
+    }
 
-		int res = ToolRunner.run(conf, new FrameworkDriver(), args);
-		System.exit(res);
-	}
+    public static void main(String[] args) throws Exception {
+        System.out.println("1");
 
-	public int run(String[] args) throws Exception
-	{
-		ServiceLoader<? extends AminoJob> jobs = ServiceLoader.load(AminoJob.class);
-		if (!jobs.iterator().hasNext())
-		{
-			jobs = ServiceLoader.load(AminoEnrichmentJob.class);
-		}
-		if (!jobs.iterator().hasNext())
-		{
-			jobs = ServiceLoader.load(AminoReuseEnrichmentJob.class);
-		}
+        CommandLineParser cmdLineGnuParser = new GnuParser();
+        CommandLine commandLine = cmdLineGnuParser.parse(constructGnuOptions(), args);
 
-		Configuration conf = getConf();
-		// AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-		// boolean complete = createTables(conf);
+        final String userConfFilePath = commandLine.getOptionValue("amino_config_file_path", "");
+        final String aminoDefaultConfigPath = commandLine.getOptionValue("amino_default_config_path");
+
+        stopOnFirstPhase = commandLine.hasOption("stop");
+
+        Configuration conf = new Configuration();
+        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, aminoDefaultConfigPath);
+
+        //create a single DistributedCacheService so that multiple cache entries are deduped.
+        //cache files are added after each config is loaded in case the the property value changes.
+        DistributedCacheService distributedCacheService = new DistributedCacheService();
+
+        // 1. load AminoDefaults
+        AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
+        distributedCacheService.addFilesToDistributedCache(conf);
+
+        System.out.println("2");
+        // 2. load user config files, allowing them to overwrite
+        if (!StringUtils.isEmpty(userConfFilePath)) {
+            for (String path : getUserConfigFiles(userConfFilePath)) {
+                Configuration userConf = new Configuration(false);
+                userConf.addResource(new FileInputStream(path));
+                HadoopConfigurationUtils.mergeConfs(conf, userConf);
+            }
+        }
+        distributedCacheService.addFilesToDistributedCache(conf);
+
+        System.out.println("3");
+        // 3. load command line arguments as properties, allowing them to overwrite
+        final Properties propertyOverrides = commandLine.getOptionProperties("property_override");
+        for (Object key : propertyOverrides.keySet()) {
+            conf.set((String) key, (String) propertyOverrides.get(key));
+        }
+        distributedCacheService.addFilesToDistributedCache(conf);
+
+        System.out.println("4");
+        int res = ToolRunner.run(conf, new FrameworkDriver(), args);
+        System.exit(res);
+    }
+
+    public int run(String[] args) throws Exception {
+        System.out.println("5");
+        ServiceLoader<? extends AminoJob> jobs = ServiceLoader.load(AminoJob.class);
+        if (!jobs.iterator().hasNext()) {
+            jobs = ServiceLoader.load(AminoEnrichmentJob.class);
+        }
+        if (!jobs.iterator().hasNext()) {
+            jobs = ServiceLoader.load(AminoReuseEnrichmentJob.class);
+        }
+        System.out.println("6 - Jobs => " + jobs.toString());
+
+        Configuration conf = getConf();
+        // AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
+        // boolean complete = createTables(conf);
         boolean complete = true;
 
-		//boolean complete = true;
-		for (AminoJob aj : jobs)
-		{
-			aj.setConfig(conf);
-			if (complete)
-			{
-				Job job = new Job(conf, aj.getJobName());
-				job.setJarByClass(aj.getClass());
+        System.out.println("Config => " + conf.toString());
 
-				//Add their class to the conf so I can grab them in the Reduce phase 
-				AminoDriverUtils.setAminoJob(job.getConfiguration(), aj.getClass());
+        //boolean complete = true;
+        for (AminoJob aj : jobs) {
+            System.out.println("7 - Job -> " + aj.getJobName());
+            aj.setConfig(conf);
+            if (complete) {
+                Job job = new Job(conf, aj.getJobName());
+                job.setJarByClass(aj.getClass());
 
-				int jobType = setJobParameters(job, aj);
+                //Add their class to the conf so I can grab them in the Reduce phase
+                AminoDriverUtils.setAminoJob(job.getConfiguration(), aj.getClass());
+
+                int jobType = setJobParameters(job, aj);
 
                 // Call job configuration for special properties
                 jobConfiguration(job);
 
-				complete = job.waitForCompletion(true);
+                complete = job.waitForCompletion(true);
 
-				if (jobType == JOB_TYPE_ENRICHMENT || jobType == JOB_TYPE_REUSE_ENRICHMENT)
-				{
-					if (!stopOnFirstPhase) {
-						stopOnFirstPhase = conf.getBoolean("stop.on.first.phase", stopOnFirstPhase);
-					}
-					if (complete && !stopOnFirstPhase) 
-					{
-						complete = runSecondPhaseEnrichmentJob((AminoEnrichmentJob)aj, conf, jobType);
-						if (jobType == JOB_TYPE_REUSE_ENRICHMENT) ((AminoReuseEnrichmentJob)aj).directoryCleanup(conf);
-					}
-					else if (!complete)
-					{
-						System.err.println("Job failed, unable to run second enrichment step");
-					}
-				}
-			}
-		}
-
-		return complete ? 0 : 1;
-	}
-
-        /**
-         * Adds configuration options to the job.
-         *
-         * @param job       Map Reduce job that will be run
-         */
-        private void jobConfiguration(Job job) {
-            // TODO: Can this go in setJobParameters?
-
-            // Set the "user classpath first" configuration option. In some versions of hadoop
-            // the TaskRunner doesn't seem to check this property when assembling the classpath
-            try {
-                Method m = Job.class.getMethod("setUserClassesTakesPrecedence", new Class[]{boolean.class});
-                m.invoke(job, job.getConfiguration().getBoolean("mapreduce.user.classpath.first", false));
-            } catch (Exception e) {
-                System.err.println("Warning: Job Configuration for mapreduce.user.classpath.first failed");
+                if (jobType == JOB_TYPE_ENRICHMENT || jobType == JOB_TYPE_REUSE_ENRICHMENT) {
+                    if (!stopOnFirstPhase) {
+                        stopOnFirstPhase = conf.getBoolean("stop.on.first.phase", stopOnFirstPhase);
+                    }
+                    if (complete && !stopOnFirstPhase) {
+                        complete = runSecondPhaseEnrichmentJob((AminoEnrichmentJob) aj, conf, jobType);
+                        if (jobType == JOB_TYPE_REUSE_ENRICHMENT) ((AminoReuseEnrichmentJob) aj).directoryCleanup(conf);
+                    } else if (!complete) {
+                        System.err.println("Job failed, unable to run second enrichment step");
+                    }
+                }
             }
         }
 
-	private int setJobParameters(Job job, AminoJob aj) throws Exception
-	{
-		Configuration conf = job.getConfiguration();
-		AminoInputFormat.setDataLoader(job.getConfiguration(), aj.getDataLoaderClass().newInstance());
+        return complete ? 0 : 1;
+    }
 
-		if (aj instanceof AminoEnrichmentJob)
-		{
-			String output = "";
-			int returnType = JOB_TYPE_ENRICHMENT;
+    /**
+     * Adds configuration options to the job.
+     *
+     * @param job Map Reduce job that will be run
+     */
+    private void jobConfiguration(Job job) {
+        // TODO: Can this go in setJobParameters?
 
-			if (aj instanceof AminoReuseEnrichmentJob)
-			{
-				System.out.println("Running REUSE Enrichment Join Job");
+        // Set the "user classpath first" configuration option. In some versions of hadoop
+        // the TaskRunner doesn't seem to check this property when assembling the classpath
+        try {
+            Method m = Job.class.getMethod("setUserClassesTakesPrecedence", new Class[]{boolean.class});
+            m.invoke(job, job.getConfiguration().getBoolean("mapreduce.user.classpath.first", false));
+        } catch (Exception e) {
+            System.err.println("Warning: Job Configuration for mapreduce.user.classpath.first failed");
+        }
+    }
 
-				AminoReuseEnrichmentJob reuseJob = (AminoReuseEnrichmentJob)aj;
-				AminoInputFormat.setDataLoader(job.getConfiguration(), reuseJob.getFirstPhaseDataLoaderClass().newInstance());
+    private int setJobParameters(Job job, AminoJob aj) throws Exception {
+        Configuration conf = job.getConfiguration();
+        AminoInputFormat.setDataLoader(job.getConfiguration(), aj.getDataLoaderClass().newInstance());
 
-				String root = conf.get(AminoDriverUtils.ENRICHMENT_ROOT_OUTPUT);
-				String front = "";
-				if (!root.endsWith("/")) front = "/";
-				root += front;
-				String dir = reuseJob.getOutputSubDirectory(conf);
-				output += root + dir;
+        if (aj instanceof AminoEnrichmentJob) {
+            String output = "";
+            int returnType = JOB_TYPE_ENRICHMENT;
 
-				returnType = JOB_TYPE_REUSE_ENRICHMENT;
-			}
-			else
-			{
-				System.out.println("Running Enrichment Join Job");
-			}
+            if (aj instanceof AminoReuseEnrichmentJob) {
+                System.out.println("Running REUSE Enrichment Join Job");
 
-			int numReducers = conf.getInt(AMINO_NUM_REDUCERS_ENRICH_PHASE1, conf.getInt(AMINO_NUM_REDUCERS, DEFAULT_NUM_REDUCERS));
-			job.setNumReduceTasks(numReducers);
+                AminoReuseEnrichmentJob reuseJob = (AminoReuseEnrichmentJob) aj;
+                AminoInputFormat.setDataLoader(job.getConfiguration(), reuseJob.getFirstPhaseDataLoaderClass().newInstance());
 
-			// Our Framework mapper and reducer
-			job.setMapperClass(FrameworkEnrichmentJoinMapper.class);
-			job.setCombinerClass(FrameworkEnrichmentJoinCombiner.class);
-			job.setReducerClass(FrameworkEnrichmentJoinReducer.class);
+                String root = conf.get(AminoDriverUtils.ENRICHMENT_ROOT_OUTPUT);
+                String front = "";
+                if (!root.endsWith("/")) front = "/";
+                root += front;
+                String dir = reuseJob.getOutputSubDirectory(conf);
+                output += root + dir;
 
-			job.setMapOutputKeyClass(EnrichmentJoinKey.class); //Different
-			job.setMapOutputValueClass(MapWritable.class); 
+                returnType = JOB_TYPE_REUSE_ENRICHMENT;
+            } else {
+                System.out.println("Running Enrichment Join Job");
+            }
 
-			job.setOutputKeyClass(BucketStripped.class);
-			job.setOutputValueClass(MapWritable.class); //Different
+            int numReducers = conf.getInt(AMINO_NUM_REDUCERS_ENRICH_PHASE1, conf.getInt(AMINO_NUM_REDUCERS, DEFAULT_NUM_REDUCERS));
+            job.setNumReduceTasks(numReducers);
 
-			job.setPartitionerClass(NaturalKeyPartitioner.class);
-			job.setGroupingComparatorClass(NaturalKeyGroupingComparator.class);
-			job.setSortComparatorClass(CompositeKeyComparator.class);
+            // Our Framework mapper and reducer
+            job.setMapperClass(FrameworkEnrichmentJoinMapper.class);
+            job.setCombinerClass(FrameworkEnrichmentJoinCombiner.class);
+            job.setReducerClass(FrameworkEnrichmentJoinReducer.class);
 
-			job.setInputFormatClass(AminoMultiInputFormat.class);
+            job.setMapOutputKeyClass(EnrichmentJoinKey.class); //Different
+            job.setMapOutputValueClass(MapWritable.class);
 
-			AminoEnrichmentJob aej = (AminoEnrichmentJob)aj;
-			// AminoMultiInputFormat.setJoinDataLoader(conf, aej.getEnrichmentDataLoader().newInstance());
-			AminoMultiInputFormat.setJoinDataLoaders(conf, aej.getEnrichmentDataLoaders());
-			AminoMultiInputFormat.setEnrichWorker(conf, aej.getEnrichWorker().newInstance());
+            job.setOutputKeyClass(BucketStripped.class);
+            job.setOutputValueClass(MapWritable.class); //Different
 
-			job.setOutputFormatClass(SequenceFileOutputFormat.class);
+            job.setPartitionerClass(NaturalKeyPartitioner.class);
+            job.setGroupingComparatorClass(NaturalKeyGroupingComparator.class);
+            job.setSortComparatorClass(CompositeKeyComparator.class);
 
-			// TODO If it already exists, and its age is less than job running frequency, just reuse it instead of doing the above job...
-			if (output.length() == 0){
+            job.setInputFormatClass(AminoMultiInputFormat.class);
+
+            AminoEnrichmentJob aej = (AminoEnrichmentJob) aj;
+            // AminoMultiInputFormat.setJoinDataLoader(conf, aej.getEnrichmentDataLoader().newInstance());
+            AminoMultiInputFormat.setJoinDataLoaders(conf, aej.getEnrichmentDataLoaders());
+            AminoMultiInputFormat.setEnrichWorker(conf, aej.getEnrichWorker().newInstance());
+
+            job.setOutputFormatClass(SequenceFileOutputFormat.class);
+
+            // TODO If it already exists, and its age is less than job running frequency, just reuse it instead of doing the above job...
+            if (output.length() == 0) {
                 output = getEnrichmentOutputPath(aej, conf);
             }
-			System.out.println("Output will be written to: " + PathUtils.getJobDataPath(output));
-			
-			SequenceFileOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
-			JobUtilities.deleteDirectory(conf, output);
+            System.out.println("Output will be written to: " + PathUtils.getJobDataPath(output));
 
-			CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(conf), aj, output, conf);
+            SequenceFileOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
+            JobUtilities.deleteDirectory(conf, output);
 
-			return returnType;
+            CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(conf), aj, output, conf);
 
-		}
-		else
-		{
-			System.out.println("\n==================== Running Amino Job =================\n");
+            return returnType;
 
-			// Our Framework mapper and reducer
-			job.setMapperClass(FrameworkMapper.class);
-			job.setReducerClass(FrameworkReducer.class);
+        } else {
+            System.out.println("\n==================== Running Amino Job =================\n");
 
-			job.setMapOutputKeyClass(BucketStripped.class);
-			job.setMapOutputValueClass(MapWritable.class); 
+            // Our Framework mapper and reducer
+            job.setMapperClass(FrameworkMapper.class);
+            job.setReducerClass(FrameworkReducer.class);
 
-			job.setOutputKeyClass(BucketStripped.class);
-			job.setOutputValueClass(AminoWritable.class);
+            job.setMapOutputKeyClass(BucketStripped.class);
+            job.setMapOutputValueClass(MapWritable.class);
 
-			job.setInputFormatClass(AminoInputFormat.class);
+            job.setOutputKeyClass(BucketStripped.class);
+            job.setOutputValueClass(AminoWritable.class);
 
-			job.setOutputFormatClass(AminoOutputFormat.class);
-			job.setNumReduceTasks(conf.getInt(AMINO_NUM_REDUCERS, DEFAULT_NUM_REDUCERS));
+            job.setInputFormatClass(AminoInputFormat.class);
 
-			AminoOutputFormat.setAminoConfigPath(job, job.getConfiguration().get(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY));
+            job.setOutputFormatClass(AminoOutputFormat.class);
+            job.setNumReduceTasks(conf.getInt(AMINO_NUM_REDUCERS, DEFAULT_NUM_REDUCERS));
 
-			String output = conf.get("amino.output");
-			System.out.println("Output will be written to: " + PathUtils.getJobDataPath(output));
-			AminoOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
-			JobUtilities.deleteDirectory(conf, output);
+            AminoOutputFormat.setAminoConfigPath(job, job.getConfiguration().get(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY));
 
-			CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(conf), aj, output, conf);
-			return JOB_TYPE_NORMAL;
-		}
-	}
+            String output = conf.get("amino.output");
+            System.out.println("Output will be written to: " + PathUtils.getJobDataPath(output));
+            AminoOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
+            JobUtilities.deleteDirectory(conf, output);
 
-	private String getEnrichmentOutputPath(AminoEnrichmentJob aej, Configuration conf)
-	{
-		String output = conf.get(AminoDriverUtils.ENRICHMENT_ROOT_OUTPUT);
-		String front = "";
-		if (!output.endsWith("/")){
+            CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(conf), aj, output, conf);
+            return JOB_TYPE_NORMAL;
+        }
+    }
+
+    private String getEnrichmentOutputPath(AminoEnrichmentJob aej, Configuration conf) {
+        String output = conf.get(AminoDriverUtils.ENRICHMENT_ROOT_OUTPUT);
+        String front = "";
+        if (!output.endsWith("/")) {
             front = "/";
         }
-		output += front + aej.getDataLoaderClass().getSimpleName() + "_" + aej.getEnrichWorker().getSimpleName();
-		this.enrichmentOutput = output;
+        output += front + aej.getDataLoaderClass().getSimpleName() + "_" + aej.getEnrichWorker().getSimpleName();
+        this.enrichmentOutput = output;
 
-		return output;
-	}
+        return output;
+    }
 
-	private boolean runSecondPhaseEnrichmentJob(AminoEnrichmentJob aej, Configuration conf, int jobType) throws Exception
-	{
-		System.out.println("Running Amino Job");
+    private boolean runSecondPhaseEnrichmentJob(AminoEnrichmentJob aej, Configuration conf, int jobType) throws Exception {
+        System.out.println("Running Amino Job");
 
-		final Job job = new Job(conf, aej.getJobName() + " phase 2");
-		job.setJarByClass(aej.getClass());
+        final Job job = new Job(conf, aej.getJobName() + " phase 2");
+        job.setJarByClass(aej.getClass());
 
-		AminoDriverUtils.setAminoJob(job.getConfiguration(), aej.getClass());
+        AminoDriverUtils.setAminoJob(job.getConfiguration(), aej.getClass());
 
-		if (jobType == JOB_TYPE_ENRICHMENT)
-		{
-			job.getConfiguration().set(AminoDriverUtils.ENRICHMENT_OUTPUT, this.enrichmentOutput);
-		}
-		else if (jobType == JOB_TYPE_REUSE_ENRICHMENT)
-		{
-			String root = conf.get(AminoDriverUtils.ENRICHMENT_ROOT_OUTPUT);
-			String front = "";
-			if (!root.endsWith("/")) {
+        if (jobType == JOB_TYPE_ENRICHMENT) {
+            job.getConfiguration().set(AminoDriverUtils.ENRICHMENT_OUTPUT, this.enrichmentOutput);
+        } else if (jobType == JOB_TYPE_REUSE_ENRICHMENT) {
+            String root = conf.get(AminoDriverUtils.ENRICHMENT_ROOT_OUTPUT);
+            String front = "";
+            if (!root.endsWith("/")) {
                 front = "/";
             }
-			root += front;
+            root += front;
 
-			final Iterable<String> inputs = ((AminoReuseEnrichmentJob)aej).getSecondPhaseEnrichmentInputDirectories(job.getConfiguration());
-			String inputStr = "";
-			System.out.println("Using enrichment input paths:");
-			for (String input : inputs)
-			{
-				if (inputStr.length() > 0){
+            final Iterable<String> inputs = ((AminoReuseEnrichmentJob) aej).getSecondPhaseEnrichmentInputDirectories(job.getConfiguration());
+            String inputStr = "";
+            System.out.println("Using enrichment input paths:");
+            for (String input : inputs) {
+                if (inputStr.length() > 0) {
                     inputStr += "," + PathUtils.getJobDataPath(root + input);
                 } else {
                     inputStr += PathUtils.getJobDataPath(root + input);
                 }
-				System.out.println(PathUtils.getJobDataPath(root + input));
-			}
+                System.out.println(PathUtils.getJobDataPath(root + input));
+            }
 
-			job.getConfiguration().set(AminoDriverUtils.ENRICHMENT_OUTPUT, inputStr);
+            job.getConfiguration().set(AminoDriverUtils.ENRICHMENT_OUTPUT, inputStr);
 
-			//Need to do this because the first phase data loader is sitting in this slot currently
-			AminoInputFormat.setDataLoader(job.getConfiguration(), aej.getDataLoaderClass().newInstance());
-		}
+            //Need to do this because the first phase data loader is sitting in this slot currently
+            AminoInputFormat.setDataLoader(job.getConfiguration(), aej.getDataLoaderClass().newInstance());
+        }
 
-		int numReducers = job.getConfiguration().getInt(AMINO_NUM_REDUCERS_ENRICH_PHASE2, job.getConfiguration().getInt(AMINO_NUM_REDUCERS, DEFAULT_NUM_REDUCERS));
-		job.setNumReduceTasks(numReducers);
+        int numReducers = job.getConfiguration().getInt(AMINO_NUM_REDUCERS_ENRICH_PHASE2, job.getConfiguration().getInt(AMINO_NUM_REDUCERS, DEFAULT_NUM_REDUCERS));
+        job.setNumReduceTasks(numReducers);
 
-		job.setMapperClass(FrameworkMapper.class);
-		job.setReducerClass(FrameworkReducer.class);
+        job.setMapperClass(FrameworkMapper.class);
+        job.setReducerClass(FrameworkReducer.class);
 
-		job.setMapOutputKeyClass(BucketStripped.class);
-		job.setMapOutputValueClass(MapWritable.class); 
+        job.setMapOutputKeyClass(BucketStripped.class);
+        job.setMapOutputValueClass(MapWritable.class);
 
-		job.setOutputKeyClass(BucketStripped.class);
-		job.setOutputValueClass(AminoWritable.class);
+        job.setOutputKeyClass(BucketStripped.class);
+        job.setOutputValueClass(AminoWritable.class);
 
-		job.setInputFormatClass(AminoMultiInputFormat.class);
-		AminoMultiInputFormat.setDataLoader(job.getConfiguration(), aej.getDataLoaderClass().newInstance());
+        job.setInputFormatClass(AminoMultiInputFormat.class);
+        AminoMultiInputFormat.setDataLoader(job.getConfiguration(), aej.getDataLoaderClass().newInstance());
 
-                // Call job configuration for special properties
-                jobConfiguration(job);
+        // Call job configuration for special properties
+        jobConfiguration(job);
 
-		@SuppressWarnings("serial")
-		ArrayList<Class<? extends DataLoader>> joinSource = new ArrayList<Class<? extends DataLoader>>(){{add(EnrichmentDataLoader.class); }};
-		AminoMultiInputFormat.setJoinDataLoaders(job.getConfiguration(), joinSource);
+        @SuppressWarnings("serial")
+        ArrayList<Class<? extends DataLoader>> joinSource = new ArrayList<Class<? extends DataLoader>>() {{
+            add(EnrichmentDataLoader.class);
+        }};
+        AminoMultiInputFormat.setJoinDataLoaders(job.getConfiguration(), joinSource);
 
-		job.setOutputFormatClass(AminoOutputFormat.class);
-		AminoOutputFormat.setAminoConfigPath(job, job.getConfiguration().get(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY));
+        job.setOutputFormatClass(AminoOutputFormat.class);
+        AminoOutputFormat.setAminoConfigPath(job, job.getConfiguration().get(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY));
 
-		String output = job.getConfiguration().get("amino.output");
-		System.out.println("Output will be written to: " + PathUtils.getJobDataPath(output));
-		AminoOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
-		JobUtilities.deleteDirectory(job.getConfiguration(), output);
-		CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(job.getConfiguration()), aej, output, job.getConfiguration());
-		
-		return job.waitForCompletion(true);
-	}
+        String output = job.getConfiguration().get("amino.output");
+        System.out.println("Output will be written to: " + PathUtils.getJobDataPath(output));
+        AminoOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
+        JobUtilities.deleteDirectory(job.getConfiguration(), output);
+        CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(job.getConfiguration()), aej, output, job.getConfiguration());
+
+        return job.waitForCompletion(true);
+    }
 }

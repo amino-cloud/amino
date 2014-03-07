@@ -36,13 +36,11 @@ public class NumberLoader implements DataLoader {
 
     @Override
     public InputFormat getInputFormat() {
-        // TODO Auto-generated method stub
         return new TextInputFormat();
     }
 
     @Override
     public void initializeFormat(Job job) throws IOException {
-        // TODO Auto-generated method stub
         Configuration conf = job.getConfiguration();
         AminoConfiguration.loadDefault(conf, NumberLoader.class.getSimpleName(), true);
         dataLoc = conf.get("data.location");
@@ -53,8 +51,7 @@ public class NumberLoader implements DataLoader {
 
     @Override
     public MapWritable getNext() throws IOException {
-        // TODO Auto-generated method stub
-        Text val = null;
+        Text val;
         try {
             // We have nothing else so return null
             if (!this.reader.nextKeyValue()) {

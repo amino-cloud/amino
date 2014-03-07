@@ -35,7 +35,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
     private static final String ROW_SEPARATOR = "loader.separator";
 
 
-    private final Hashtable<Text, Text> bucketsAndDisplayNames = new Hashtable<Text, Text>();
+    protected final Hashtable<Text, Text> bucketsAndDisplayNames = new Hashtable<Text, Text>();
 
     @SuppressWarnings("rawtypes")
     RecordReader recordReader = null;
