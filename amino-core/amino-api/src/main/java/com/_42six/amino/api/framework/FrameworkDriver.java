@@ -21,6 +21,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,6 +38,7 @@ public final class FrameworkDriver extends Configured implements Tool {
 
     private static final int DEFAULT_NUM_REDUCERS = 14;
 
+    private static final Logger logger = LoggerFactory.getLogger(FrameworkDriver.class);
 
     private static final int JOB_TYPE_NORMAL = 0;
     private static final int JOB_TYPE_ENRICHMENT = 1;
@@ -66,7 +69,6 @@ public final class FrameworkDriver extends Configured implements Tool {
         return gnuOptions;
     }
 
-
     public static List<String> getUserConfigFiles(final String path) throws IOException {
         File configPath = new File(path);
         if (!configPath.exists()) {
@@ -85,8 +87,6 @@ public final class FrameworkDriver extends Configured implements Tool {
     }
 
     public static void main(String[] args) throws Exception {
-        System.out.println("1");
-
         CommandLineParser cmdLineGnuParser = new GnuParser();
         CommandLine commandLine = cmdLineGnuParser.parse(constructGnuOptions(), args);
 
@@ -106,7 +106,6 @@ public final class FrameworkDriver extends Configured implements Tool {
         AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
         distributedCacheService.addFilesToDistributedCache(conf);
 
-        System.out.println("2");
         // 2. load user config files, allowing them to overwrite
         if (!StringUtils.isEmpty(userConfFilePath)) {
             for (String path : getUserConfigFiles(userConfFilePath)) {
@@ -117,7 +116,6 @@ public final class FrameworkDriver extends Configured implements Tool {
         }
         distributedCacheService.addFilesToDistributedCache(conf);
 
-        System.out.println("3");
         // 3. load command line arguments as properties, allowing them to overwrite
         final Properties propertyOverrides = commandLine.getOptionProperties("property_override");
         for (Object key : propertyOverrides.keySet()) {
@@ -125,13 +123,11 @@ public final class FrameworkDriver extends Configured implements Tool {
         }
         distributedCacheService.addFilesToDistributedCache(conf);
 
-        System.out.println("4");
         int res = ToolRunner.run(conf, new FrameworkDriver(), args);
         System.exit(res);
     }
 
     public int run(String[] args) throws Exception {
-        System.out.println("5");
         ServiceLoader<? extends AminoJob> jobs = ServiceLoader.load(AminoJob.class);
         if (!jobs.iterator().hasNext()) {
             jobs = ServiceLoader.load(AminoEnrichmentJob.class);
@@ -139,24 +135,21 @@ public final class FrameworkDriver extends Configured implements Tool {
         if (!jobs.iterator().hasNext()) {
             jobs = ServiceLoader.load(AminoReuseEnrichmentJob.class);
         }
-        System.out.println("6 - Jobs => " + jobs.toString());
 
         Configuration conf = getConf();
         // AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
         // boolean complete = createTables(conf);
         boolean complete = true;
 
-        System.out.println("Config => " + conf.toString());
-
         //boolean complete = true;
         for (AminoJob aj : jobs) {
-            System.out.println("7 - Job -> " + aj.getJobName());
+            logger.info("Running Job -> " + aj.getJobName());
             aj.setConfig(conf);
             if (complete) {
                 Job job = new Job(conf, aj.getJobName());
                 job.setJarByClass(aj.getClass());
 
-                //Add their class to the conf so I can grab them in the Reduce phase
+                // Add the class to the conf it can be grabbed in the Reduce phase
                 AminoDriverUtils.setAminoJob(job.getConfiguration(), aj.getClass());
 
                 int jobType = setJobParameters(job, aj);
@@ -202,8 +195,9 @@ public final class FrameworkDriver extends Configured implements Tool {
     }
 
     private int setJobParameters(Job job, AminoJob aj) throws Exception {
-        Configuration conf = job.getConfiguration();
-        AminoInputFormat.setDataLoader(job.getConfiguration(), aj.getDataLoaderClass().newInstance());
+        final Configuration conf = job.getConfiguration();
+        final Class<? extends DataLoader> dataLoaderClass = aj.getDataLoaderClass();
+        AminoInputFormat.setDataLoader(job.getConfiguration(), dataLoaderClass.newInstance());
 
         if (aj instanceof AminoEnrichmentJob) {
             String output = "";
@@ -235,11 +229,11 @@ public final class FrameworkDriver extends Configured implements Tool {
             job.setCombinerClass(FrameworkEnrichmentJoinCombiner.class);
             job.setReducerClass(FrameworkEnrichmentJoinReducer.class);
 
-            job.setMapOutputKeyClass(EnrichmentJoinKey.class); //Different
+            job.setMapOutputKeyClass(EnrichmentJoinKey.class); // Different
             job.setMapOutputValueClass(MapWritable.class);
 
             job.setOutputKeyClass(BucketStripped.class);
-            job.setOutputValueClass(MapWritable.class); //Different
+            job.setOutputValueClass(MapWritable.class); // Different
 
             job.setPartitionerClass(NaturalKeyPartitioner.class);
             job.setGroupingComparatorClass(NaturalKeyGroupingComparator.class);

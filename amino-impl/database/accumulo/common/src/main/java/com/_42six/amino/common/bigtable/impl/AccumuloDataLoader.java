@@ -5,8 +5,8 @@ import com._42six.amino.data.DataLoader;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.data.Key;
-import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
+import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.iterators.user.WholeRowIterator;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.hadoop.conf.Configuration;
@@ -16,30 +16,36 @@ import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.RecordReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 
 public abstract class AccumuloDataLoader implements DataLoader {
+
+    private static final Logger logger = LoggerFactory.getLogger(AccumuloDataLoader.class);
+
     private static final String INSTANCE = "bigtable.instance";
-    private static final String ZOOKEEPERS = "zookeepers";
+    private static final String ZOOKEEPERS = "bigtable.zookeepers";
     private static final String TABLE = "bigtable.table";
     private static final String USERNAME = "bigtable.username";
     private static final String PASSWORD = "bigtable.password";
     private static final String AUTHORIZATIONS = "bigtable.authorizations";
 
     private static final String ROW_IDS = "loader.rowIds";
-    private static final String ROW_SEPARATOR = "loader.separator";
 
-
-    protected final Hashtable<Text, Text> bucketsAndDisplayNames = new Hashtable<Text, Text>();
+    /**
+     * All of the buckets that this DataLoader knows about
+     */
+    // TODO - Load configurations from the setConfig method
+    protected static final Hashtable<Text, Text> bucketsAndDisplayNames = new Hashtable<Text, Text>();
 
     @SuppressWarnings("rawtypes")
     RecordReader recordReader = null;
-    private Configuration config;
+    protected Configuration config;
 
     @Override
     public InputFormat<Key, Value> getInputFormat() {
@@ -63,19 +69,18 @@ public abstract class AccumuloDataLoader implements DataLoader {
         String password = conf.get(PASSWORD);
         String authorizations = conf.get(AUTHORIZATIONS);
         String rowIds = conf.get(ROW_IDS, "");
-        String rowSeparator = conf.get(ROW_SEPARATOR, ",");
 
-        final List<Range> ranges = new ArrayList<Range>();
-        for (String row : rowIds.split(rowSeparator)) {
-            ranges.add(new Range(row));
-        }
-
-        System.out.println("Grabbing data from table '" + tableName + "'");
-
+        logger.info("Grabbing data from table: " + tableName);
         AccumuloInputFormat.setZooKeeperInstance(conf, instanceName, zookeeperInfo);
         AccumuloInputFormat.setInputInfo(conf, userName, password.getBytes(), tableName, new Authorizations(authorizations.getBytes()));
+
+        // Name is needed for ACCUMULO-1267
+        final IteratorSetting regexSetting = new IteratorSetting(20, "Warehaus Row Regex", RegExFilter.class);
+        RegExFilter.setRegexs(regexSetting, rowIds, null, null, null, false);
+        AccumuloInputFormat.addIterator(conf, regexSetting);
         AccumuloInputFormat.addIterator(conf, new IteratorSetting(30, WholeRowIterator.class));
-        AccumuloInputFormat.setRanges(conf, ranges);
+
+        logger.info("Fetching rows: " + rowIds);
     }
 
     @Override
@@ -84,6 +89,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
         Value value;
         try {
             if (!this.recordReader.nextKeyValue()) {
+                logger.warn("ACCUMULO_DATA_LOADER: no nextKeyValue");
                 return null;
             }
 
@@ -94,6 +100,12 @@ public abstract class AccumuloDataLoader implements DataLoader {
         }
 
         if (key == null || value == null) {
+            if (key == null) {
+                logger.error("Key was null");
+            }
+            if (value == null) {
+                logger.warn("Value was null");
+            }
             return null;
         }
 
