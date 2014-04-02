@@ -28,14 +28,14 @@ public abstract class AccumuloDataLoader implements DataLoader {
 
     private static final Logger logger = LoggerFactory.getLogger(AccumuloDataLoader.class);
 
-    private static final String INSTANCE = "bigtable.instance";
-    private static final String ZOOKEEPERS = "bigtable.zookeepers";
-    private static final String TABLE = "bigtable.table";
-    private static final String USERNAME = "bigtable.username";
-    private static final String PASSWORD = "bigtable.password";
-    private static final String AUTHORIZATIONS = "bigtable.authorizations";
+    public static final String CFG_INSTANCE = "dataloader.instance";
+    public static final String CFG_ZOOKEEPERS = "dataloader.zookeepers";
+    public static final String CFG_TABLE = "dataloader.table";
+    public static final String CFG_USERNAME = "dataloader.username";
+    public static final String CFG_PASSWORD = "dataloader.password";
+    public static final String CFG_AUTHS = "dataloader.authorizations";
 
-    private static final String ROW_IDS = "loader.rowIds";
+    public static final String CFG_ROW_IDS = "loader.rowIds";
 
     /**
      * All of the buckets that this DataLoader knows about
@@ -62,13 +62,13 @@ public abstract class AccumuloDataLoader implements DataLoader {
     public void initializeFormat(Job job) throws IOException {
         final Configuration conf = job.getConfiguration();
         AminoConfiguration.loadDefault(conf, AccumuloDataLoader.class.getSimpleName(), true);
-        String instanceName = conf.get(INSTANCE);
-        String zookeeperInfo = conf.get(ZOOKEEPERS);
-        String tableName = conf.get(TABLE);
-        String userName = conf.get(USERNAME);
-        String password = conf.get(PASSWORD);
-        String authorizations = conf.get(AUTHORIZATIONS);
-        String rowIds = conf.get(ROW_IDS, "");
+        String instanceName = conf.get(CFG_INSTANCE);
+        String zookeeperInfo = conf.get(CFG_ZOOKEEPERS);
+        String tableName = conf.get(CFG_TABLE);
+        String userName = conf.get(CFG_USERNAME);
+        String password = conf.get(CFG_PASSWORD);
+        String authorizations = conf.get(CFG_AUTHS);
+        String rowIds = conf.get(CFG_ROW_IDS, "");
 
         logger.info("Grabbing data from table: " + tableName);
         AccumuloInputFormat.setZooKeeperInstance(conf, instanceName, zookeeperInfo);

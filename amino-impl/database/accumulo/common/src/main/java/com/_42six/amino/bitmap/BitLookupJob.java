@@ -2,6 +2,7 @@ package com._42six.amino.bitmap;
 
 import com._42six.amino.common.*;
 import com._42six.amino.common.accumulo.IteratorUtils;
+import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.index.BitmapIndex;
 import com._42six.amino.common.service.datacache.BucketCache;
 import com._42six.amino.common.util.PathUtils;
@@ -34,11 +35,6 @@ import java.io.PrintStream;
 import java.util.*;
 
 public class BitLookupJob extends Configured implements Tool {
-    private static final String BIGTABLE_INSTANCE = "bigtable.instance";
-    private static final String BIGTABLE_ZOOKEEPERS = "bigtable.zookeepers";
-    private static final String BIGTABLE_USERNAME = "bigtable.username";
-    private static final String BIGTABLE_PASSWORD = "bigtable.password";
-
     private static final String AMINO_NUM_REDUCERS = "amino.num.reducers";
     private static final String AMINO_NUM_REDUCERS_BITMAP = "amino.num.reducers.job.bitmap";
     private static final int DEFAULT_NUM_REDUCERS = 14;
@@ -48,10 +44,10 @@ public class BitLookupJob extends Configured implements Tool {
 
     private static boolean recreateTables(Configuration conf) throws IOException {
         //AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-        String instanceName = conf.get(BIGTABLE_INSTANCE);
-        String zooKeepers = conf.get(BIGTABLE_ZOOKEEPERS);
-        String user = conf.get(BIGTABLE_USERNAME);
-        String password = conf.get(BIGTABLE_PASSWORD);
+        String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
+        String user = conf.get(TableConstants.CFG_USER);
+        String password = conf.get(TableConstants.CFG_PASSWORD);
         String indexTable = conf.get("amino.bitmap.indexTable");
         boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); //should always assume it's the first run unless specified
 
@@ -116,10 +112,10 @@ public class BitLookupJob extends Configured implements Tool {
     public int execute(Job job, String inputDir, String workingDir, int numTabletsCommandLine) throws IOException, InterruptedException, ClassNotFoundException
     {
         final Configuration conf = job.getConfiguration();
-        final String instanceName = conf.get(BIGTABLE_INSTANCE);
-        final String zooKeepers = conf.get(BIGTABLE_ZOOKEEPERS);
-        final String user = conf.get(BIGTABLE_USERNAME);
-        final String password = conf.get(BIGTABLE_PASSWORD);
+        final String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        final String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
+        final String user = conf.get(TableConstants.CFG_USER);
+        final String password = conf.get(TableConstants.CFG_PASSWORD);
         final String tableName = conf.get("amino.bitmap.indexTable");
         final String temp = IteratorUtils.TEMP_SUFFIX;
         final boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); //should always assume it's the first run unless specified

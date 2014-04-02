@@ -7,6 +7,12 @@ import org.apache.hadoop.io.Text;
  */
 public class TableConstants {
 
+    // Constants for connecting to the database
+    public static final String CFG_USER = "bigtable.username";
+    public static final String CFG_PASSWORD = "bigtable.password";
+    public static final String CFG_ZOOKEEPERS = "bigtable.zookeepers";
+    public static final String CFG_INSTANCE = "bigtable.instance";
+
 	// Column Family/Qualifiers that we re-use over and over
 	public static final Text API_FIELD = new Text("api_version");
 	public static final Text BUCKETID_FIELD = new Text("bucketIds");

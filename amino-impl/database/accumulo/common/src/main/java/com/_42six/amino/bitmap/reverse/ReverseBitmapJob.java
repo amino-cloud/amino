@@ -3,6 +3,7 @@ package com._42six.amino.bitmap.reverse;
 import com._42six.amino.bitmap.BitmapConfigHelper;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.accumulo.IteratorUtils;
+import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.util.PathUtils;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
@@ -19,20 +20,14 @@ import java.io.IOException;
 
 public class ReverseBitmapJob extends Configured implements Tool  
 {
-	private static final String ACCUMULO_INSTANCE = "bigtable.instance";
-    private static final String ACCUMULO_ZOOKEEPERS = "bigtable.zookeepers";
-    private static final String ACCUMULO_USERNAME = "bigtable.username";
-    private static final String ACCUMULO_PASSWORD = "bigtable.password";
-    
     private static final String AMINO_NUM_REDUCERS = "amino.num.reducers";
 	private static final int DEFAULT_NUM_REDUCERS = 14;
 	
 	private static boolean recreateTables(Configuration conf) throws IOException {
-        //AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-        String instanceName = conf.get(ACCUMULO_INSTANCE);
-        String zooKeepers = conf.get(ACCUMULO_ZOOKEEPERS);
-        String user = conf.get(ACCUMULO_USERNAME);
-        String password = conf.get(ACCUMULO_PASSWORD);
+        String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String user = conf.get(TableConstants.CFG_USER);
+        String password = conf.get(TableConstants.CFG_PASSWORD);
         boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); // should always assume it's the first run unless specified
         String tableName = conf.get("amino.bitmap.bucketTable");
 		tableName = tableName.replace("amino_", "amino_reverse_");
@@ -50,11 +45,10 @@ public class ReverseBitmapJob extends Configured implements Tool
 	{
         System.out.println("\n================================ ReverseBitmapJob ================================\n");
 		final Configuration conf = getConf();
-        //AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-        String instanceName = conf.get(ACCUMULO_INSTANCE);
-        String zooKeepers = conf.get(ACCUMULO_ZOOKEEPERS);
-        String user = conf.get(ACCUMULO_USERNAME);
-        String password = conf.get(ACCUMULO_PASSWORD);
+        String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String user = conf.get(TableConstants.CFG_USER);
+        String password = conf.get(TableConstants.CFG_PASSWORD);
                 
         boolean complete = recreateTables(conf);
 

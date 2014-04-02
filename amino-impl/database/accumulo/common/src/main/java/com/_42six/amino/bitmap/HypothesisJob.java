@@ -2,6 +2,7 @@ package com._42six.amino.bitmap;
 
 import com._42six.amino.common.*;
 import com._42six.amino.common.accumulo.IteratorUtils;
+import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.index.BitmapIndex;
 import com._42six.amino.common.service.datacache.BucketCache;
 import com._42six.amino.common.util.PathUtils;
@@ -35,11 +36,6 @@ import java.util.*;
 
 public class HypothesisJob extends Configured implements Tool 
 {
-	private static final String ACCUMULO_INSTANCE = "bigtable.instance";
-    private static final String ACCUMULO_ZOOKEEPERS = "bigtable.zookeepers";
-    private static final String ACCUMULO_USERNAME = "bigtable.username";
-    private static final String ACCUMULO_PASSWORD = "bigtable.password";
-    
     private static final String AMINO_NUM_REDUCERS = "amino.num.reducers";
     private static final String AMINO_NUM_TABLETS = "amino.bigtable.number.of.shards";
     private static final String AMINO_NUM_TABLETS_HYPOTHESIS = "amino.bigtable.number.of.shards.hypothesis";
@@ -49,10 +45,10 @@ public class HypothesisJob extends Configured implements Tool
 	{
 		final Configuration conf = job.getConfiguration();
 		//AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-		final String instanceName = conf.get(ACCUMULO_INSTANCE);
-        final String zooKeepers = conf.get(ACCUMULO_ZOOKEEPERS);
-        final String user = conf.get(ACCUMULO_USERNAME);
-        final String password = conf.get(ACCUMULO_PASSWORD);
+        String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String user = conf.get(TableConstants.CFG_USER);
+        String password = conf.get(TableConstants.CFG_PASSWORD);
         final String tableName = conf.get("amino.bitmap.featureLookupTable");
         final String temp = IteratorUtils.TEMP_SUFFIX;
         final boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); //should always assume it's the first run unless specified

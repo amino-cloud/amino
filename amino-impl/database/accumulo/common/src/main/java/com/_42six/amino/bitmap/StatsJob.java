@@ -1,6 +1,7 @@
 package com._42six.amino.bitmap;
 
 import com._42six.amino.common.AminoConfiguration;
+import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.util.PathUtils;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.commons.lang.StringUtils;
@@ -13,11 +14,7 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 public class StatsJob extends Configured implements Tool {
-	private static final String ACCUMULO_INSTANCE = "bigtable.instance";
-    private static final String ACCUMULO_ZOOKEEPERS = "bigtable.zookeepers";
-    private static final String ACCUMULO_USERNAME = "bigtable.username";
-    private static final String ACCUMULO_PASSWORD = "bigtable.password";
-    
+
     private static final String AMINO_NUM_REDUCERS = "amino.num.reducers";
     private static final String AMINO_NUM_REDUCERS_STATS = "amino.num.reducers.job.stats";
     
@@ -48,11 +45,10 @@ public class StatsJob extends Configured implements Tool {
 	public int run(String[] args) throws Exception {
         System.out.println("\n================================ Stats Job ================================\n");
 		Configuration conf = getConf();
-        //AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-        String instanceName = conf.get(ACCUMULO_INSTANCE);
-        String zooKeepers = conf.get(ACCUMULO_ZOOKEEPERS);
-        String user = conf.get(ACCUMULO_USERNAME);
-        String password = conf.get(ACCUMULO_PASSWORD);
+        String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String user = conf.get(TableConstants.CFG_USER);
+        String password = conf.get(TableConstants.CFG_PASSWORD);
         
         //recreateLookupTable(conf);
 

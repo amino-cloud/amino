@@ -679,10 +679,10 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 		}
 
 		private Scanner createScanner(Configuration conf) throws IOException {
-			final String instanceName = conf.get("bigtable.instance");
-			final String zooKeepers = conf.get("bigtable.zookeepers");
-			final String user = conf.get("bigtable.username");
-			final byte[] password = conf.get("bigtable.password").getBytes();
+            String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+            String zooKeepers = conf.get(TableConstants.CFG_USER);
+            String user = conf.get(TableConstants.CFG_USER);
+            String password = conf.get(TableConstants.CFG_PASSWORD);
 			final String indexTable = conf.get("amino.bitmap.indexTable");
 			final boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true);
 
@@ -740,10 +740,10 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 	}
 
 	public void writeNumberOfHashesAndShards(Configuration conf, boolean blastIndex) throws IOException {
-		final String instanceName = conf.get("bigtable.instance");
-		final String zooKeepers = conf.get("bigtable.zookeepers");
-		final String user = conf.get("bigtable.username");
-		final byte[] password = conf.get("bigtable.password").getBytes();
+        String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String user = conf.get(TableConstants.CFG_USER);
+        String password = conf.get(TableConstants.CFG_PASSWORD);
 		final String metadataTable = conf.get("amino.metadataTable");
 		final long maxMemory = conf.getLong("bigtable.maxMemory", 1000000L);
 		final long maxLatency = conf.getLong("bigtable.maxLatency", 1000L);
@@ -917,10 +917,10 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 
         final Configuration conf = getConf();
         //AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-        final String instanceName = conf.get("bigtable.instance");
-        final String zooKeepers = conf.get("bigtable.zookeepers");
-        final String user = conf.get("bigtable.username");
-        final byte[] password = conf.get("bigtable.password").getBytes();
+        String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String user = conf.get(TableConstants.CFG_USER);
+        final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes();
         final String metadataTable = conf.get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX; // You want to make sure you use the temp here even if blastIndex is false
         final boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); // See above, you always want to use temp for this input even if false
 

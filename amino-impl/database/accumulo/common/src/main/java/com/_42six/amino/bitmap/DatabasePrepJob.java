@@ -132,16 +132,15 @@ public class DatabasePrepJob extends Configured implements Tool {
         System.out.println("\n=============================== DatabasePrepJob ================================\n");
 
         final Configuration conf = getConf();
-        AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
+//        AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
         final Job job = new Job(conf, "Amino BT meta importer");
         job.setJarByClass(this.getClass());
 
         // Get config values
-        final String instanceName = conf.get("bigtable.instance");
-        final String zooKeepers = conf.get("bigtable.zookeepers");
-        final String user = conf.get("bigtable.username");
-        final byte[] password = conf.get("bigtable.password").getBytes();
-        //final String metadataTable = conf.get("amino.metadataTable");
+        final String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        final String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
+        final String user = conf.get(TableConstants.CFG_USER);
+        final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes();
         final String metadataTable = conf.get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
         final String metadataPaths = StringUtils.join(PathUtils.getJobMetadataPaths(conf, args[0]), ',');
         System.out.println("Metadata paths: [" + metadataPaths + "].");

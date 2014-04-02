@@ -4,6 +4,7 @@ import com._42six.amino.bitmap.BitmapConfigHelper;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.JobUtilities;
 import com._42six.amino.common.accumulo.IteratorUtils;
+import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.util.PathUtils;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
@@ -31,11 +32,6 @@ import java.util.TreeSet;
 
 public class ReverseFeatureLookupJob extends Configured implements Tool
 {
-    private static final String BIGTABLE_INSTANCE = "bigtable.instance";
-    private static final String BIGTABLE_ZOOKEEPERS = "bigtable.zookeepers";
-    private static final String BIGTABLE_USERNAME = "bigtable.username";
-    private static final String BIGTABLE_PASSWORD = "bigtable.password";
-
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
         conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, args[1]); // TODO: use flag instead of positional
@@ -82,10 +78,10 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
         job.setNumReduceTasks(numberOfShards);
 
         // Grab params for connecting to BigTable instance
-        final String instanceName = conf.get(BIGTABLE_INSTANCE);
-        final String zooKeepers = conf.get(BIGTABLE_ZOOKEEPERS);
-        final String user = conf.get(BIGTABLE_USERNAME);
-        final String password = conf.get(BIGTABLE_PASSWORD);
+        String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String user = conf.get(TableConstants.CFG_USER);
+        String password = conf.get(TableConstants.CFG_PASSWORD);
         final String tableName = conf.get("amino.bitmap.featureLookupTable").replace("amino_", "amino_reverse_");
 
         boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); // should always assume it's the first run unless specified
