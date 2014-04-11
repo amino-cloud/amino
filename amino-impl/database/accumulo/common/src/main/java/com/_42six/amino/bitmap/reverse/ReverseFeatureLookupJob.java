@@ -79,7 +79,7 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
 
         // Grab params for connecting to BigTable instance
         String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
         final String tableName = conf.get("amino.bitmap.featureLookupTable").replace("amino_", "amino_reverse_");

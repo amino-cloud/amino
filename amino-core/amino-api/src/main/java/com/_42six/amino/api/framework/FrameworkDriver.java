@@ -128,7 +128,6 @@ public final class FrameworkDriver extends Configured implements Tool {
     }
 
     public int run(String[] args) throws Exception {
-	logger.warn("For Jeff: " + this.getClass().getResource("/ssl/application.priv"));
         ServiceLoader<? extends AminoJob> jobs = ServiceLoader.load(AminoJob.class);
         if (!jobs.iterator().hasNext()) {
             jobs = ServiceLoader.load(AminoEnrichmentJob.class);

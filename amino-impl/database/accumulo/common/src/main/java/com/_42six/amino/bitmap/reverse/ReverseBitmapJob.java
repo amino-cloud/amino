@@ -25,7 +25,7 @@ public class ReverseBitmapJob extends Configured implements Tool
 	
 	private static boolean recreateTables(Configuration conf) throws IOException {
         String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
         boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); // should always assume it's the first run unless specified
@@ -35,9 +35,7 @@ public class ReverseBitmapJob extends Configured implements Tool
         final TableOperations tableOps = IteratorUtils.connect(instanceName, zooKeepers, user, password).tableOperations();
 
         int numShards = conf.getInt(BitmapConfigHelper.BITMAP_CONFIG_NUM_SHARDS, 10);
-        boolean success = IteratorUtils.createTable(tableOps, tableName, numShards, blastIndex, blastIndex);
-        
-        return success;
+        return IteratorUtils.createTable(tableOps, tableName, numShards, blastIndex, blastIndex);
     }
 
 	@Override
@@ -46,7 +44,7 @@ public class ReverseBitmapJob extends Configured implements Tool
         System.out.println("\n================================ ReverseBitmapJob ================================\n");
 		final Configuration conf = getConf();
         String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
                 

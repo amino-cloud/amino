@@ -46,7 +46,7 @@ public class HypothesisJob extends Configured implements Tool
 		final Configuration conf = job.getConfiguration();
 		//AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
         String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
         final String tableName = conf.get("amino.bitmap.featureLookupTable");

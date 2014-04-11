@@ -41,7 +41,7 @@ public class ByBucketJob extends Configured implements Tool {
     private static boolean recreateTables(Configuration conf) throws IOException {
         //AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
         String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
         String bucketTable = conf.get("amino.bitmap.bucketTable");
@@ -102,14 +102,14 @@ public class ByBucketJob extends Configured implements Tool {
             numTablets = Integer.parseInt(args[3]);
         }
 
-        return execute(job, inputDir, workingDirectory, numTablets);
+        return execute(job, workingDirectory, numTablets);
     }
 
-    public int execute(Job job, String inputDir, String workingDir, int numTabletsCommandLine) throws IOException, InterruptedException, ClassNotFoundException
+    public int execute(Job job, String workingDir, int numTabletsCommandLine) throws IOException, InterruptedException, ClassNotFoundException
     {
         final Configuration conf = job.getConfiguration();
         String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
         final String tableName = conf.get(BitmapConfigHelper.AMINO_BITMAP_BUCKET_TABLE);

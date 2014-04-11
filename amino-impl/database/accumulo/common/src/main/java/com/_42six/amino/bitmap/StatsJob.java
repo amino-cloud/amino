@@ -46,7 +46,7 @@ public class StatsJob extends Configured implements Tool {
         System.out.println("\n================================ Stats Job ================================\n");
 		Configuration conf = getConf();
         String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
         

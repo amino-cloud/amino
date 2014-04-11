@@ -9,6 +9,7 @@ import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
 import com._42six.amino.common.translator.FeatureFactTranslatorInt;
 import com.google.gson.Gson;
+import com.sun.istack.internal.NotNull;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.admin.TableOperations;
@@ -35,7 +36,6 @@ import org.apache.hadoop.util.ToolRunner;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 public final class FeatureMetadataJob extends Configured implements Tool {
 
@@ -680,7 +680,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 
 		private Scanner createScanner(Configuration conf) throws IOException {
             String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-            String zooKeepers = conf.get(TableConstants.CFG_USER);
+            String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
             String user = conf.get(TableConstants.CFG_USER);
             String password = conf.get(TableConstants.CFG_PASSWORD);
 			final String indexTable = conf.get("amino.bitmap.indexTable");
@@ -741,7 +741,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 
 	public void writeNumberOfHashesAndShards(Configuration conf, boolean blastIndex) throws IOException {
         String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
 		final String metadataTable = conf.get("amino.metadataTable");
@@ -918,7 +918,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
         final Configuration conf = getConf();
         //AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
         String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_USER);
+        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         String user = conf.get(TableConstants.CFG_USER);
         final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes();
         final String metadataTable = conf.get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX; // You want to make sure you use the temp here even if blastIndex is false
