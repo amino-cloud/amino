@@ -9,7 +9,6 @@ import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
 import com._42six.amino.common.translator.FeatureFactTranslatorInt;
 import com.google.gson.Gson;
-import com.sun.istack.internal.NotNull;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.admin.TableOperations;
