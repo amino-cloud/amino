@@ -57,7 +57,25 @@ public class DatabasePrepJob extends Configured implements Tool {
         if (success) success = IteratorUtils.createTable(tableOps, groupHypothesisLUTable, false, false);
         if (success) success = IteratorUtils.createTable(tableOps, groupMetadataTable, false, false);
 
+        if (success) {
+            setProperty(tableOps,
+                    Arrays.asList(metaTable,
+                        hypoTable,
+                        resultTable,
+                        membershipTable,
+                        groupHypothesisLUT,
+                        groupMetadataTable),
+                    "table.classpath.context",
+                    "amino");
+        }
+
         return success;
+    }
+
+    private static setProperty(TableOperations tableOperations, Collection<String> tableNames, String property, String value) {
+        for (String tableName : tableNames) {
+            tableOperations.setProperty(tableName, property, value);
+        }
     }
 
     public static class MetadataConsolidatorReducer
