@@ -162,7 +162,7 @@ public class DatabasePrepJob extends Configured implements Tool {
         // Outputs
         job.setOutputFormatClass(AccumuloOutputFormat.class);
         AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-        AccumuloOutputFormat.setOutputInfo(job, user, password, true, metadataTable);
+        AccumuloOutputFormat.setOutputInfo(job.getConfiguration(), user, password, true, metadataTable);
 //        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
 //        AccumuloOutputFormat.setCreateTables(job, true);
 //        AccumuloOutputFormat.setDefaultTableName(job, metadataTable);

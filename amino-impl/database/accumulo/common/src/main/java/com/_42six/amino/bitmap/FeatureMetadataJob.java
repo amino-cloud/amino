@@ -937,7 +937,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
         job.setMapOutputValueClass(Mutation.class);
         job.setInputFormatClass(AccumuloInputFormat.class);
         AccumuloInputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-        AccumuloInputFormat.setInputInfo(job, user, password, metadataTable, auths);
+        AccumuloInputFormat.setInputInfo(job.getConfiguration(), user, password, metadataTable, auths);
 //        AccumuloInputFormat.setConnectorInfo(job, user, new PasswordToken(password));
 //        AccumuloInputFormat.setInputTableName(job, metadataTable);
 //        AccumuloInputFormat.setScanAuthorizations(job, auths);
@@ -951,7 +951,7 @@ public final class FeatureMetadataJob extends Configured implements Tool {
         job.setOutputValueClass(Mutation.class);
         job.setOutputFormatClass(AccumuloOutputFormat.class);
         AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-        AccumuloOutputFormat.setOutputInfo(job, user, password, false, metadataTable);
+        AccumuloOutputFormat.setOutputInfo(job.getConfiguration(), user, password, false, metadataTable);
 //        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
 //        AccumuloOutputFormat.setCreateTables(job, true);
 //        AccumuloOutputFormat.setDefaultTableName(job, metadataTable);

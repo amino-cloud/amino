@@ -73,7 +73,7 @@ public class ReverseBitmapJob extends Configured implements Tool
 	        job.setNumReduceTasks(conf.getInt(AMINO_NUM_REDUCERS, DEFAULT_NUM_REDUCERS));
 	        job.setOutputFormatClass(AccumuloOutputFormat.class);
             AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-            AccumuloOutputFormat.setOutputInfo(job, user, password.getBytes(), true, null);
+            AccumuloOutputFormat.setOutputInfo(job.getConfiguration(), user, password.getBytes(), true, null);
 //            AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
 //            AccumuloOutputFormat.setCreateTables(job, true);
 //            AccumuloOutputFormat.setDefaultTableName(job, null);
