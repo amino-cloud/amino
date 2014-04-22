@@ -9,7 +9,7 @@ import org.apache.hadoop.io.WritableComparable;
 import com._42six.amino.common.BucketStripped;
 
 @SuppressWarnings("rawtypes")
-public class EnrichmentJoinKey implements WritableComparable
+public class EnrichmentJoinKey implements WritableComparable<EnrichmentJoinKey>
 {
 	private String naturalKey;
 	private int type;
@@ -74,9 +74,9 @@ public class EnrichmentJoinKey implements WritableComparable
 	}
 
 	@Override
-	public int compareTo(Object other) 
+	public int compareTo(EnrichmentJoinKey other) 
 	{
-		return this.naturalKey.compareTo(((EnrichmentJoinKey)other).naturalKey);
+		return this.naturalKey.compareTo(other.naturalKey);
 	}
 
 }
