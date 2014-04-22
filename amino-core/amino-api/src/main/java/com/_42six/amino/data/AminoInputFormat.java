@@ -58,8 +58,7 @@ public class AminoInputFormat extends InputFormat<MapWritable, MapWritable> {
             loader.initializeFormat(myJob);
             @SuppressWarnings("rawtypes")
             InputFormat inputFormat = loader.getInputFormat();
-            return inputFormat.getSplits(new JobContext(
-                    myJob.getConfiguration(), myJob.getJobID()));
+            return inputFormat.getSplits(myJob);
         } catch (ClassNotFoundException e) {
             throw new IOException(e);
         } catch (InstantiationException e) {

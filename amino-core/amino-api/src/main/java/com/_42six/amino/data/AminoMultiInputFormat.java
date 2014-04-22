@@ -200,7 +200,7 @@ public class AminoMultiInputFormat extends AminoInputFormat
 			Job myJob = new Job(new Configuration(conf));
 			loader.initializeFormat(myJob);
 
-			List<InputSplit> retVal = loader.getInputFormat().getSplits(new JobContext(myJob.getConfiguration(), myJob.getJobID()));
+			List<InputSplit> retVal = loader.getInputFormat().getSplits(myJob);
 			
 //			myJob = new Job(jobContext.getConfiguration());
 //			//Need this because loadDefault doesn't override properties from the previous data loader, so if both loaders use the same property for the data location, it will use the old location
@@ -233,7 +233,7 @@ public class AminoMultiInputFormat extends AminoInputFormat
 		//No need for this...happens in initializeFormat
 		//AminoConfiguration.loadDefault(myJob.getConfiguration(), joinLoader.getClass().getSimpleName());
 		joinLoader.initializeFormat(myJob);
-		retVal.addAll(joinLoader.getInputFormat().getSplits(new JobContext(myJob.getConfiguration(), myJob.getJobID())));
+		retVal.addAll(joinLoader.getInputFormat().getSplits(myJob));
 		
 		return retVal;
 	}
