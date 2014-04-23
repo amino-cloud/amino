@@ -45,6 +45,7 @@ public class ByBucketJob extends Configured implements Tool {
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
         String bucketTable = conf.get("amino.bitmap.bucketTable");
+        final String tableContext = conf.get("amino.tableContext", "amino");
         boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); //should always assume it's the first run unless specified
 
         Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
@@ -58,7 +59,7 @@ public class ByBucketJob extends Configured implements Tool {
         }
 
         int numShards = conf.getInt(BitmapConfigHelper.BITMAP_CONFIG_NUM_SHARDS, 10);
-        return  IteratorUtils.createTable(tableOps, bucketTable, numShards, blastIndex, blastIndex);
+        return  IteratorUtils.createTable(tableOps, bucketTable, tableContext, numShards, blastIndex, blastIndex);
     }
 
     public int run(String[] args) throws Exception {
@@ -114,6 +115,7 @@ public class ByBucketJob extends Configured implements Tool {
         String password = conf.get(TableConstants.CFG_PASSWORD);
         final String tableName = conf.get(BitmapConfigHelper.AMINO_BITMAP_BUCKET_TABLE);
         final String temp = IteratorUtils.TEMP_SUFFIX;
+        final String tableContext = conf.get("amino.tableContext", "amino");
         final boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); //should always assume it's the first run unless specified
 
         final String splitFile = workingDir + "/bucketSplits.txt";
@@ -174,7 +176,7 @@ public class ByBucketJob extends Configured implements Tool {
             out.flush();
             out.close();
 
-            success = IteratorUtils.createTable(c.tableOperations(), tableName, splits, blastIndex, blastIndex);
+            success = IteratorUtils.createTable(c.tableOperations(), tableName, tableContext, splits, blastIndex, blastIndex);
 
             job.setOutputFormatClass(AccumuloFileOutputFormat.class);
 

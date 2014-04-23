@@ -83,7 +83,7 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
         final String tableName = conf.get("amino.bitmap.featureLookupTable").replace("amino_", "amino_reverse_");
-
+        final String tableContext = conf.get("amino.tableContext", "amino");
         boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); // should always assume it's the first run unless specified
 
         Connector connector = null;
@@ -112,7 +112,7 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
             splitsPrinter.flush();
             splitsPrinter.close();
 
-            success = IteratorUtils.createTable(connector.tableOperations(), tableName, splits, blastIndex, blastIndex);
+            success = IteratorUtils.createTable(connector.tableOperations(), tableName, tableContext, splits, blastIndex, blastIndex);
 
             job.setOutputFormatClass(AccumuloFileOutputFormat.class);
             AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDirectory + "/files"));

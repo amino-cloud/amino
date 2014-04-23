@@ -29,13 +29,14 @@ public class ReverseBitmapJob extends Configured implements Tool
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
         boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); // should always assume it's the first run unless specified
+        final String tableContext = conf.get("amino.tableContext", "amino");
         String tableName = conf.get("amino.bitmap.bucketTable");
 		tableName = tableName.replace("amino_", "amino_reverse_");
 
         final TableOperations tableOps = IteratorUtils.connect(instanceName, zooKeepers, user, password).tableOperations();
 
         int numShards = conf.getInt(BitmapConfigHelper.BITMAP_CONFIG_NUM_SHARDS, 10);
-        return IteratorUtils.createTable(tableOps, tableName, numShards, blastIndex, blastIndex);
+        return IteratorUtils.createTable(tableOps, tableName, tableContext, numShards, blastIndex, blastIndex);
     }
 
 	@Override

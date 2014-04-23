@@ -1,7 +1,11 @@
 package com._42six.amino.bitmap;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 
+import org.apache.accumulo.core.client.AccumuloException;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.data.Mutation;
@@ -36,47 +40,32 @@ public class DatabasePrepJob extends Configured implements Tool {
     private static boolean createTables(Configuration conf) throws IOException
     {
         // AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-        String instanceName = conf.get("bigtable.instance");
-        String zooKeepers = conf.get("bigtable.zookeepers");
-        String user = conf.get("bigtable.username");
-        String password = conf.get("bigtable.password");
-        String metaTable = conf.get("amino.metadataTable");
-        String hypoTable = conf.get("amino.hypothesisTable");
-        String resultTable = conf.get("amino.queryResultTable");
-        String membershipTable = conf.get("amino.groupMembershipTable");
-        String groupHypothesisLUTable = conf.get("amino.groupHypothesisLUT");
-        String groupMetadataTable = conf.get("amino.groupMetadataTable");
-        boolean blastMeta = conf.getBoolean("amino.first.run", false);
+        final String instanceName = conf.get("bigtable.instance");
+        final String zooKeepers = conf.get("bigtable.zookeepers");
+        final String user = conf.get("bigtable.username");
+        final String password = conf.get("bigtable.password");
+        final String metaTable = conf.get("amino.metadataTable");
+        final String hypoTable = conf.get("amino.hypothesisTable");
+        final String resultTable = conf.get("amino.queryResultTable");
+        final String membershipTable = conf.get("amino.groupMembershipTable");
+        final String groupHypothesisLUTable = conf.get("amino.groupHypothesisLUT");
+        final String groupMetadataTable = conf.get("amino.groupMetadataTable");
+        final String tableContext = conf.get("amino.tableContext", "amino");
+        final boolean blastMeta = conf.getBoolean("amino.first.run", false);
 
         final TableOperations tableOps = IteratorUtils.connect(instanceName, zooKeepers, user, password).tableOperations();
 
-        boolean success = IteratorUtils.createTable(tableOps, metaTable, blastMeta, true);
-        if (success) success = IteratorUtils.createTable(tableOps, hypoTable, false, false);
-        if (success) success = IteratorUtils.createTable(tableOps, resultTable, false, false);
-        if (success) success = IteratorUtils.createTable(tableOps, membershipTable, false, false);
-        if (success) success = IteratorUtils.createTable(tableOps, groupHypothesisLUTable, false, false);
-        if (success) success = IteratorUtils.createTable(tableOps, groupMetadataTable, false, false);
-
-        if (success) {
-            setProperty(tableOps,
-                    Arrays.asList(metaTable,
-                        hypoTable,
-                        resultTable,
-                        membershipTable,
-                        groupHypothesisLUT,
-                        groupMetadataTable),
-                    "table.classpath.context",
-                    "amino");
-        }
+        boolean success = IteratorUtils.createTable(tableOps, metaTable, tableContext, blastMeta, true);
+        if (success) success = IteratorUtils.createTable(tableOps, hypoTable, tableContext, false, false);
+        if (success) success = IteratorUtils.createTable(tableOps, resultTable, tableContext, false, false);
+        if (success) success = IteratorUtils.createTable(tableOps, membershipTable, tableContext, false, false);
+        if (success) success = IteratorUtils.createTable(tableOps, groupHypothesisLUTable, tableContext, false, false);
+        if (success) success = IteratorUtils.createTable(tableOps, groupMetadataTable, tableContext, false, false);
 
         return success;
     }
 
-    private static setProperty(TableOperations tableOperations, Collection<String> tableNames, String property, String value) {
-        for (String tableName : tableNames) {
-            tableOperations.setProperty(tableName, property, value);
-        }
-    }
+
 
     public static class MetadataConsolidatorReducer
             extends Reducer<Text, Text, Text, Mutation> {

@@ -49,6 +49,7 @@ public class BitLookupJob extends Configured implements Tool {
         String user = conf.get(TableConstants.CFG_USER);
         String password = conf.get(TableConstants.CFG_PASSWORD);
         String indexTable = conf.get("amino.bitmap.indexTable");
+        String tableContext = conf.get("amino.tableContext", "amino");
         boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); //should always assume it's the first run unless specified
 
         Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
@@ -62,7 +63,7 @@ public class BitLookupJob extends Configured implements Tool {
             throw new IOException(ex);
         }
 
-        return IteratorUtils.createTable(tableOps, indexTable, blastIndex, blastIndex);
+        return IteratorUtils.createTable(tableOps, indexTable, tableContext, blastIndex, blastIndex);
     }
 
     public int run(String[] args) throws Exception {
@@ -117,6 +118,7 @@ public class BitLookupJob extends Configured implements Tool {
         final String user = conf.get(TableConstants.CFG_USER);
         final String password = conf.get(TableConstants.CFG_PASSWORD);
         final String tableName = conf.get("amino.bitmap.indexTable");
+        final String tableContext = conf.get("amino.tableContext", "amino");
         final String temp = IteratorUtils.TEMP_SUFFIX;
         final boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); //should always assume it's the first run unless specified
 
@@ -174,7 +176,7 @@ public class BitLookupJob extends Configured implements Tool {
             out.flush();
             out.close();
 
-            success = IteratorUtils.createTable(c.tableOperations(), tableName, splits, blastIndex, blastIndex);
+            success = IteratorUtils.createTable(c.tableOperations(), tableName, tableContext, splits, blastIndex, blastIndex);
 
             job.setOutputFormatClass(AccumuloFileOutputFormat.class);
             AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDir + "/files"));
