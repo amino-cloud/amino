@@ -6,6 +6,7 @@ import java.util.Collection;
 
 import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.ClientConfiguration;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
@@ -169,7 +170,7 @@ public class DatabasePrepJob extends Configured implements Tool {
 
         // Outputs
         job.setOutputFormatClass(AccumuloOutputFormat.class);
-        AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
+        AccumuloOutputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zooKeepers));
         AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
         AccumuloOutputFormat.setCreateTables(job, true);
         AccumuloOutputFormat.setDefaultTableName(job, metadataTable);

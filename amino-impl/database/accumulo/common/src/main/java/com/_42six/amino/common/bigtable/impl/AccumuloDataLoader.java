@@ -3,6 +3,7 @@ package com._42six.amino.common.bigtable.impl;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.data.DataLoader;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.ClientConfiguration;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
@@ -73,7 +74,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
         String rowIds = conf.get(CFG_ROW_IDS, "");
 
         logger.info("Grabbing data from table: " + tableName);
-        AccumuloInputFormat.setZooKeeperInstance(job, instanceName, zookeeperInfo);
+        AccumuloInputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zookeeperInfo));
 
         try {
             AccumuloInputFormat.setConnectorInfo(job, userName, new PasswordToken(password.getBytes("UTF-8")));

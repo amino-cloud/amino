@@ -6,6 +6,8 @@ import com._42six.amino.common.bigtable.Mutation;
 import com._42six.amino.common.bigtable.MutationProto.ColumnValue;
 import com.google.protobuf.ByteString;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.ClientConfiguration;
+import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Value;
@@ -46,7 +48,7 @@ public class AccumuloDataWriter implements BigTableDataWriter
 //        AccumuloOutputFormat.setCreateTables(job, true);
 //        AccumuloOutputFormat.setDefaultTableName(job, null);
 //        AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zookeepers);
-		AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zookeepers);
+        AccumuloInputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zookeepers));
 
         try {
             AccumuloOutputFormat.setConnectorInfo(job, username, new PasswordToken(password.getBytes("UTF-8")));
