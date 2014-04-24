@@ -14,9 +14,10 @@ public class JobUtilities
     {
         deleteDirectory(conf, workingDir);
         final FsShell shell = new FsShell(conf);
-        final String[] command = new String[2];
+        final String[] command = new String[3];
         command[0] = "-mkdir";
-        command[1] = workingDir + "/failures";
+        command[1] = "-p";
+        command[2] = workingDir + "/failures";
         shell.run(command);
     }
 
