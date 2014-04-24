@@ -2,8 +2,10 @@ package com._42six.amino.common.bigtable.impl;
 
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.data.DataLoader;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
@@ -71,14 +73,22 @@ public abstract class AccumuloDataLoader implements DataLoader {
         String rowIds = conf.get(CFG_ROW_IDS, "");
 
         logger.info("Grabbing data from table: " + tableName);
-        AccumuloInputFormat.setZooKeeperInstance(conf, instanceName, zookeeperInfo);
-        AccumuloInputFormat.setInputInfo(conf, userName, password.getBytes(), tableName, new Authorizations(authorizations.getBytes()));
+        AccumuloInputFormat.setZooKeeperInstance(job, instanceName, zookeeperInfo);
+
+        try {
+            AccumuloInputFormat.setConnectorInfo(job, userName, new PasswordToken(password.getBytes("UTF-8")));
+        } catch (AccumuloSecurityException e) {
+            throw new IOException("Error setting Accumulo connector info", e);
+        }
+
+        AccumuloInputFormat.setInputTableName(job, tableName);
+        AccumuloInputFormat.setScanAuthorizations(job, new Authorizations(authorizations.getBytes()));
 
         // Name is needed for ACCUMULO-1267
         final IteratorSetting regexSetting = new IteratorSetting(20, "Warehaus Row Regex", RegExFilter.class);
         RegExFilter.setRegexs(regexSetting, rowIds, null, null, null, false);
-        AccumuloInputFormat.addIterator(conf, regexSetting);
-        AccumuloInputFormat.addIterator(conf, new IteratorSetting(30, WholeRowIterator.class));
+        AccumuloInputFormat.addIterator(job, regexSetting);
+        AccumuloInputFormat.addIterator(job, new IteratorSetting(30, WholeRowIterator.class));
 
         logger.info("Fetching rows: " + rowIds);
     }

@@ -8,6 +8,7 @@ import org.apache.accumulo.core.client.AccumuloException;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -147,7 +148,7 @@ public class DatabasePrepJob extends Configured implements Tool {
         final String instanceName = conf.get(TableConstants.CFG_INSTANCE);
         final String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         final String user = conf.get(TableConstants.CFG_USER);
-        final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes();
+        final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes("UTF-8");
         final String metadataTable = conf.get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
         final String metadataPaths = StringUtils.join(PathUtils.getJobMetadataPaths(conf, args[0]), ',');
         System.out.println("Metadata paths: [" + metadataPaths + "].");
@@ -169,7 +170,9 @@ public class DatabasePrepJob extends Configured implements Tool {
         // Outputs
         job.setOutputFormatClass(AccumuloOutputFormat.class);
         AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-        AccumuloOutputFormat.setOutputInfo(job.getConfiguration(), user, password, true, metadataTable);
+        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
+        AccumuloOutputFormat.setCreateTables(job, true);
+        AccumuloOutputFormat.setDefaultTableName(job, metadataTable);
 //        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
 //        AccumuloOutputFormat.setCreateTables(job, true);
 //        AccumuloOutputFormat.setDefaultTableName(job, metadataTable);
