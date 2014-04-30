@@ -3,6 +3,7 @@ package com._42six.amino.bitmap;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.util.PathUtils;
+import org.apache.accumulo.core.client.BatchWriterConfig;
 import org.apache.accumulo.core.client.ClientConfiguration;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
@@ -85,14 +86,14 @@ public class StatsJob extends Configured implements Tool {
         }
         
         job.setOutputFormatClass(AccumuloOutputFormat.class);
-        AccumuloInputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zooKeepers));
+
+        AccumuloOutputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zooKeepers));
         AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password.getBytes("UTF-8")));
         AccumuloOutputFormat.setCreateTables(job, true);
 
 //        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
 //        AccumuloOutputFormat.setCreateTables(job, true);
 //        AccumuloOutputFormat.setDefaultTableName(job, null);
-
         boolean complete = job.waitForCompletion(true);
         if (!complete)
 		{

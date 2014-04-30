@@ -134,9 +134,9 @@ public class IteratorUtils {
 				tableOps.addSplits(tableName, sortedSplits);
 			}
 
-			tableOps.setProperty(tableName,
-					org.apache.accumulo.core.conf.Property.TABLE_LOAD_BALANCER.getKey(),
-					org.apache.accumulo.server.master.balancer.TableLoadBalancer.class.getName());
+//			tableOps.setProperty(tableName,
+//					org.apache.accumulo.core.conf.Property.TABLE_LOAD_BALANCER.getKey(),
+//					org.apache.accumulo.server.master.balancer.TableLoadBalancer.class.getName());
 			tableOps.setProperty(tableName, "table.classpath.context", tableContext);
 			tableOps.flush(tableName, null, null, false); // so the splits get balanced. (not sure if a major compaction is required to do this)
 			

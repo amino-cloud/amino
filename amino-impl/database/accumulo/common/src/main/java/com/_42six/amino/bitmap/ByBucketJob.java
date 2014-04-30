@@ -27,10 +27,12 @@ import org.apache.hadoop.util.ToolRunner;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class ByBucketJob extends Configured implements Tool {
+
     private static final String AMINO_NUM_REDUCERS = "amino.num.reducers";
     private static final String AMINO_NUM_REDUCERS_BITMAP = "amino.num.reducers.job.bitmap";
     private static final int DEFAULT_NUM_REDUCERS = 14;
@@ -212,8 +214,10 @@ public class ByBucketJob extends Configured implements Tool {
                 if (!blastIndex){
                     tb = tableName;
                 }
-                System.out.println("Importing the files in '" + workingDir + "/files' to the table: " + tb);
-                c.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", false);
+                Path filesPath = FileSystem.get(job.getConfiguration()) .resolvePath(new Path(workingDir + "/files"));
+                Path failuresPath = FileSystem.get(job.getConfiguration()).resolvePath(new Path(workingDir + "/failures"));
+                System.out.println("Importing the files in '" + filesPath.toString() + "' to the table: " + tb);
+                c.tableOperations().importDirectory(tb, filesPath.toString(), failuresPath.toString(), false);
                 result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
             }
             catch (Exception e)

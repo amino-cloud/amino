@@ -66,6 +66,11 @@
 			<url>http://download.java.net/maven/2</url>
 		</repository>
 		<repository>
+			<id>gov-ext-release</id>
+			<name>GovFoundry External Snapshots</name>
+			<url>http://maven.govfoundry.metagno.me:8081/artifactory/ext-release-local</url>
+		</repository>
+		<repository>
 			<id>gov-ext-snapshot</id>
 			<name>GovFoundry External Snapshots</name>
 			<url>http://maven.govfoundry.metagno.me:8081/artifactory/ext-snapshot-local</url>
