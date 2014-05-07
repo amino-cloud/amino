@@ -1,6 +1,5 @@
 package com._42six.amino.common.bigtable.impl;
 
-import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.data.DataLoader;
 import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
@@ -61,7 +60,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
     @Override
     public void initializeFormat(Job job) throws IOException {
         final Configuration conf = job.getConfiguration();
-        AminoConfiguration.loadDefault(conf, AccumuloDataLoader.class.getSimpleName(), true);
+        // AminoConfiguration.loadDefault(conf, AccumuloDataLoader.class.getSimpleName(), true);
         String instanceName = conf.get(CFG_INSTANCE);
         String zookeeperInfo = conf.get(CFG_ZOOKEEPERS);
         String tableName = conf.get(CFG_TABLE);

@@ -9,7 +9,6 @@ import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
 import com._42six.amino.common.translator.FeatureFactTranslatorInt;
 import com.google.gson.Gson;
-import com.sun.istack.internal.NotNull;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.admin.TableOperations;
@@ -748,8 +747,9 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 		final long maxMemory = conf.getLong("bigtable.maxMemory", 1000000L);
 		final long maxLatency = conf.getLong("bigtable.maxLatency", 1000L);
 		final int maxWriteThreads = conf.getInt("bigtable.maxWriteThreads", 10);
-		final String aminoVis = conf.get("amino.visibility");
-		final ColumnVisibility cv = new ColumnVisibility(aminoVis.getBytes());
+//		final String aminoVis = conf.get("amino.visibility");
+		// final ColumnVisibility cv = new ColumnVisibility(aminoVis.getBytes());
+        final ColumnVisibility cv = new ColumnVisibility();
 
 		final Instance btInstance = new ZooKeeperInstance(instanceName, zooKeepers);
 		Connector connector;

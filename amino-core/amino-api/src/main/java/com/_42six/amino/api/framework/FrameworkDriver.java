@@ -87,20 +87,20 @@ public final class FrameworkDriver extends Configured implements Tool {
     }
 
     public static void main(String[] args) throws Exception {
-        CommandLineParser cmdLineGnuParser = new GnuParser();
-        CommandLine commandLine = cmdLineGnuParser.parse(constructGnuOptions(), args);
+        final CommandLineParser cmdLineGnuParser = new GnuParser();
+        final CommandLine commandLine = cmdLineGnuParser.parse(constructGnuOptions(), args);
 
         final String userConfFilePath = commandLine.getOptionValue("amino_config_file_path", "");
         final String aminoDefaultConfigPath = commandLine.getOptionValue("amino_default_config_path");
 
         stopOnFirstPhase = commandLine.hasOption("stop");
 
-        Configuration conf = new Configuration();
+        final Configuration conf = new Configuration();
         conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, aminoDefaultConfigPath);
 
-        //create a single DistributedCacheService so that multiple cache entries are deduped.
-        //cache files are added after each config is loaded in case the the property value changes.
-        DistributedCacheService distributedCacheService = new DistributedCacheService();
+        // create a single DistributedCacheService so that multiple cache entries are deduped.
+        // Cache files are added after each config is loaded in case the the property value changes.
+        final DistributedCacheService distributedCacheService = new DistributedCacheService();
 
         // 1. load AminoDefaults
         AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
