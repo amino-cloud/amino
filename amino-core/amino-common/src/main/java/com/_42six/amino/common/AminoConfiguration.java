@@ -1,12 +1,13 @@
 package com._42six.amino.common;
 
-import java.io.IOException;
-import java.util.Map.Entry;
-
+import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+
+import java.io.IOException;
+import java.util.Map.Entry;
 
 public class AminoConfiguration extends Configuration {
 
@@ -20,13 +21,15 @@ public class AminoConfiguration extends Configuration {
 	 * can't overwrite any hadoop property.
 	 * 
 	 * @param conf current properties
-	 * @param className
+	 * @param className The name of the class to look for the config for.  This is will look for a configuration file
+     *                  with the same name as the class
 	 * @param overrideValues true to overwrite already-set properties in conf
 	 * @throws IOException
 	 */
 	public static void loadDefault(Configuration conf, String className, boolean overrideValues)
 			throws IOException {
-		// TODO (soup): Validate parameters and throw exceptions
+        Preconditions.checkNotNull(conf);
+        MorePreconditions.checkNotNullOrEmpty(className);
 
 		final String defaultConfigurationPath = conf
 				.get(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY);
@@ -34,21 +37,19 @@ public class AminoConfiguration extends Configuration {
 		// Make sure that we have a valid Amino Object
 		if (defaultConfigurationPath == null) {
 			throw new IllegalArgumentException(
-					"This configuration does not have the default configuration path for amino specified!");
+					"This configuration does not have the default configuration path for Amino specified!");
 		}
 
-		FileSystem fs = FileSystem.get(conf);
-
-		final Path defaultConfigFilePath = new Path(String.format("%s/%s.xml",
-				defaultConfigurationPath, className));
+		final FileSystem fs = FileSystem.get(conf);
+		final Path defaultConfigFilePath = new Path(String.format("%s/%s.xml", defaultConfigurationPath, className));
 
 		if (!fs.exists(defaultConfigFilePath)) {
 			throw new IOException("File " + defaultConfigFilePath.toString()
 					+ " does not exist!");
 		}
 		
-		Configuration otherConfig = new Configuration(false);
-		FSDataInputStream fsdis = fs.open(defaultConfigFilePath);
+		final Configuration otherConfig = new Configuration(false);
+		final FSDataInputStream fsdis = fs.open(defaultConfigFilePath);
 		otherConfig.addResource(fsdis);
 		
 		for(Entry<String, String> entry : otherConfig) {
