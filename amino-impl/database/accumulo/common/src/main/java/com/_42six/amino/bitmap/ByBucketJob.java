@@ -214,10 +214,10 @@ public class ByBucketJob extends Configured implements Tool {
                 if (!blastIndex){
                     tb = tableName;
                 }
-                Path filesPath = FileSystem.get(job.getConfiguration()) .resolvePath(new Path(workingDir + "/files"));
-                Path failuresPath = FileSystem.get(job.getConfiguration()).resolvePath(new Path(workingDir + "/failures"));
-                System.out.println("Importing the files in '" + filesPath.toString() + "' to the table: " + tb);
-                c.tableOperations().importDirectory(tb, filesPath.toString(), failuresPath.toString(), false);
+                String filesPath = workingDir + "/files";
+                String failuresPath = workingDir + "/failures";
+                System.out.println("Importing the files in '" + filesPath + "' to the table: " + tb);
+                c.tableOperations().importDirectory(tb, filesPath, failuresPath, false);
                 result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
             }
             catch (Exception e)
