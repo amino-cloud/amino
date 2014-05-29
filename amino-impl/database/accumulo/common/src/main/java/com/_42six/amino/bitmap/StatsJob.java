@@ -3,7 +3,12 @@ package com._42six.amino.bitmap;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.util.PathUtils;
+import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.ClientConfiguration;
+import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
+import org.apache.accumulo.core.security.Authorizations;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -12,6 +17,8 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+
+import java.io.IOException;
 
 public class StatsJob extends Configured implements Tool {
 
@@ -82,11 +89,16 @@ public class StatsJob extends Configured implements Tool {
         }
         
         job.setOutputFormatClass(AccumuloOutputFormat.class);
-        AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-        AccumuloOutputFormat.setOutputInfo(job, user, password.getBytes(), true, null);
-//        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
-//        AccumuloOutputFormat.setCreateTables(job, true);
-//        AccumuloOutputFormat.setDefaultTableName(job, null);
+
+        AccumuloOutputFormat.setZooKeeperInstance(job,
+                new ClientConfiguration().withInstance(instanceName).withZkHosts(zooKeepers));
+        try {
+            AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
+        } catch (AccumuloSecurityException e) {
+            throw new IOException(e);
+        }
+        AccumuloOutputFormat.setCreateTables(job, true);
+        AccumuloOutputFormat.setDefaultTableName(job, null);
 
         boolean complete = job.waitForCompletion(true);
         if (!complete)

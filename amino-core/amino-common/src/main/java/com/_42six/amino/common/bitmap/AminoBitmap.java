@@ -60,16 +60,10 @@ public class AminoBitmap implements Iterable<Integer>{  // EWAHCompressedBitmap 
 
     // creates an iterator of unset bits, up to the largest index of the set bits.
     public Iterator<Integer> notIterator(){
-        final EWAHCompressedBitmap notBitmap;
-        try {
-            notBitmap = bitmap.clone();
-            notBitmap.not();
-            return notBitmap.iterator(); // memory leak?
-        } catch (CloneNotSupportedException e) {
-            return null;
-        }
+        final EWAHCompressedBitmap notBitmap = bitmap.clone();
+        notBitmap.not();
+        return notBitmap.iterator(); // memory leak?
     }
-
 
     public int sizeInBytes(){
         return this.bitmap.sizeInBytes();

@@ -14,6 +14,7 @@ import org.apache.accumulo.core.client.Scanner;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.data.Range;
@@ -937,11 +938,9 @@ public final class FeatureMetadataJob extends Configured implements Tool {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Mutation.class);
         job.setInputFormatClass(AccumuloInputFormat.class);
-        AccumuloInputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-        AccumuloInputFormat.setInputInfo(job, user, password, metadataTable, auths);
-//        AccumuloInputFormat.setConnectorInfo(job, user, new PasswordToken(password));
-//        AccumuloInputFormat.setInputTableName(job, metadataTable);
-//        AccumuloInputFormat.setScanAuthorizations(job, auths);
+        AccumuloInputFormat.setConnectorInfo(job, user, new PasswordToken(password));
+        AccumuloInputFormat.setInputTableName(job, metadataTable);
+        AccumuloInputFormat.setScanAuthorizations(job, auths);
         //AccumuloInputFormat.setRegex(job, AccumuloInputFormat.RegexType.ROW, "feature.*");
         AccumuloInputFormat.setRanges(job, Collections.singleton(new Range(new Text("feature"), TableConstants.FEATURE_END)));
         AccumuloInputFormat.fetchColumns(job, Collections.singleton(new Pair<Text, Text>(new Text("JSON"), null)));
@@ -951,11 +950,9 @@ public final class FeatureMetadataJob extends Configured implements Tool {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Mutation.class);
         job.setOutputFormatClass(AccumuloOutputFormat.class);
-        AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-        AccumuloOutputFormat.setOutputInfo(job, user, password, false, metadataTable);
-//        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
-//        AccumuloOutputFormat.setCreateTables(job, true);
-//        AccumuloOutputFormat.setDefaultTableName(job, metadataTable);
+        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
+        AccumuloOutputFormat.setCreateTables(job, true);
+        AccumuloOutputFormat.setDefaultTableName(job, metadataTable);
 
         // Run the MapReduce
         final boolean complete = job.waitForCompletion(true);
