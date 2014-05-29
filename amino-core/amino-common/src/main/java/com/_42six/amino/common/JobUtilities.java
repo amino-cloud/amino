@@ -14,9 +14,25 @@ public class JobUtilities
     {
         deleteDirectory(conf, workingDir);
         final FsShell shell = new FsShell(conf);
-        final String[] command = new String[2];
+        
+        String[] command = new String[3];
         command[0] = "-mkdir";
-        command[1] = workingDir + "/failures";
+        command[1] = "-p";
+        command[2] = workingDir + "/failures";
+        shell.run(command);
+
+        command = new String[4];
+        command[0] = "-chgrp";
+        command[1] = "-R";
+        command[2] = conf.get("amino.hdfs.workingDirectory.group");
+        command[3] = workingDir;
+        shell.run(command);
+
+        command = new String[4];
+        command[0] = "-chmod";
+        command[1] = "-R";
+        command[2] = "g+rwx";
+        command[3] = workingDir;
         shell.run(command);
     }
 

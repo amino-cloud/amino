@@ -37,6 +37,10 @@
 		<value>1</value>
 	</property>
 	<property>
+		<name>amino.hdfs.workingDirectory.group</name>
+		<value>users</value>
+	</property>
+	<property>
 		<name>amino.metadataTable</name>
 		<value>amino_metadata_numbers</value>
 	</property>
