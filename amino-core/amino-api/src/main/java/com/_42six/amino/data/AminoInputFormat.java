@@ -4,7 +4,6 @@ import com._42six.amino.common.HadoopConfigurationUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.mapreduce.*;
-import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,8 +58,8 @@ public class AminoInputFormat extends InputFormat<MapWritable, MapWritable> {
             loader.initializeFormat(myJob);
             @SuppressWarnings("rawtypes")
             InputFormat inputFormat = loader.getInputFormat();
-//            return inputFormat.getSplits(new JobContextImpl(myJob.getConfiguration(), myJob.getJobID()));
-            return inputFormat.getSplits(jobContext);
+
+            return inputFormat.getSplits(myJob);
         } catch (ClassNotFoundException e) {
             throw new IOException(e);
         } catch (InstantiationException e) {

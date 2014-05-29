@@ -6,7 +6,10 @@ import com._42six.amino.common.bigtable.Mutation;
 import com._42six.amino.common.bigtable.MutationProto.ColumnValue;
 import com.google.protobuf.ByteString;
 import org.apache.accumulo.core.client.AccumuloSecurityException;
+import org.apache.accumulo.core.client.ClientConfiguration;
+import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.conf.Configuration;
@@ -36,15 +39,15 @@ public class AccumuloDataWriter implements BigTableDataWriter
 		String username = conf.get(ACCUMULO_USERNAME);
 		String zookeepers = conf.get(ACCUMULO_ZOOKEEPERS);
 
+        AccumuloInputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zookeepers));
+
         try {
-            AccumuloOutputFormat.setConnectorInfo(job, username, password);
+            AccumuloOutputFormat.setConnectorInfo(job, username, new PasswordToken(password.getBytes("UTF-8")));
         } catch (AccumuloSecurityException e) {
-            e.printStackTrace();
-            throw new IOException(e);
+            throw new IOException("Could not set Accumulo connector info", e);
         }
+
         AccumuloOutputFormat.setCreateTables(job, true);
-        AccumuloOutputFormat.setDefaultTableName(job, null);
-        AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zookeepers);
 	}	
 	
 	@Override

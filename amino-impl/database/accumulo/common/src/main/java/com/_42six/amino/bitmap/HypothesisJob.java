@@ -52,7 +52,7 @@ public class HypothesisJob extends Configured implements Tool
         final String tableName = conf.get("amino.bitmap.featureLookupTable");
         final String temp = IteratorUtils.TEMP_SUFFIX;
         final boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); //should always assume it's the first run unless specified
-        
+        final String tableContext = conf.get("amino.tableContext", "amino");
         Connector connector = null;
         PrintStream out;
         boolean success = false;
@@ -97,7 +97,7 @@ public class HypothesisJob extends Configured implements Tool
         	out.flush();
         	out.close();
 
-        	success = IteratorUtils.createTable(connector.tableOperations(), tableName, splits, blastIndex, blastIndex);
+        	success = IteratorUtils.createTable(connector.tableOperations(), tableName, tableContext, splits, blastIndex, blastIndex);
         	
         	job.setOutputFormatClass(AccumuloFileOutputFormat.class);
             AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDir + "/files"));
@@ -133,6 +133,7 @@ public class HypothesisJob extends Configured implements Tool
         		if (!blastIndex){
                     tb = tableName;
                 }
+                JobUtilities.setGroupAndPermissions(conf, workingDir);
         		connector.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", false);
         		result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
         	}

@@ -28,7 +28,7 @@ public class AccumuloMetadataServiceTest extends AccumuloTest {
 	
 	@Ignore @Test
 	public void testListDataSources() throws IOException {
-		List<DatasourceMetadata> datasourceMetadatas = metadataService.listDataSources(visArray);
+        List<DatasourceMetadata> datasourceMetadatas = metadataService.listDataSources(visArray);
 		assertTrue(datasourceMetadatas.size() > 0);
 	}
 	

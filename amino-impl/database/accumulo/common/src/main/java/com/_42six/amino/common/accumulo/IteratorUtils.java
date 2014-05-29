@@ -44,12 +44,12 @@ public class IteratorUtils {
 		}
         return connector;
 	}
-	public static boolean createTable(TableOperations tableOps, String tableName, boolean deleteIfExists, boolean markAsTemp) throws IOException
+	public static boolean createTable(TableOperations tableOps, String tableName, String tableContext, boolean deleteIfExists, boolean markAsTemp) throws IOException
 	{
-		return createTable(tableOps, tableName, 1, deleteIfExists, markAsTemp);
+		return createTable(tableOps, tableName, tableContext, 1, deleteIfExists, markAsTemp);
 	}
 
-	public static boolean createTable(TableOperations tableOps, String tableName, SortedSet<Text> splits, boolean deleteIfExists, boolean markAsTemp) throws IOException
+	public static boolean createTable(TableOperations tableOps, String tableName, String tableContext, SortedSet<Text> splits, boolean deleteIfExists, boolean markAsTemp) throws IOException
 	{
 		boolean success = true;
 		tableName = getTableName(tableName, markAsTemp);
@@ -58,12 +58,12 @@ public class IteratorUtils {
 		{
 			success = executeTableDeletion(tableOps, tableName);
 
-			if (success) success = executeTableCreation(tableOps, tableName, splits);
+			if (success) success = executeTableCreation(tableOps, tableName, tableContext, splits);
 		}
 		return success;
 	}
 
-	public static boolean createTable(TableOperations tableOps, String tableName, int numShards, boolean deleteIfExists, boolean markAsTemp) throws IOException
+	public static boolean createTable(TableOperations tableOps, String tableName, String tableContext, int numShards, boolean deleteIfExists, boolean markAsTemp) throws IOException
 	{
 		boolean success = true;
 		tableName = getTableName(tableName, markAsTemp);
@@ -74,7 +74,7 @@ public class IteratorUtils {
 			if (success)
 			{
 				SortedSet<Text> sortedSplits = getDefaultSplits(numShards);
-				success = executeTableCreation(tableOps, tableName, sortedSplits);
+				success = executeTableCreation(tableOps, tableName, tableContext, sortedSplits);
 			}
 		}
 		return success;
@@ -121,7 +121,7 @@ public class IteratorUtils {
 		}
 	}
 
-	private static boolean executeTableCreation(TableOperations tableOps, String tableName, SortedSet<Text> sortedSplits) throws IOException
+	private static boolean executeTableCreation(TableOperations tableOps, String tableName, String tableContext, SortedSet<Text> sortedSplits) throws IOException
 	{
 		try {
 			if (sortedSplits == null)
@@ -134,10 +134,10 @@ public class IteratorUtils {
 				tableOps.addSplits(tableName, sortedSplits);
 			}
 
-			tableOps.setProperty(tableName,
-					org.apache.accumulo.core.conf.Property.TABLE_LOAD_BALANCER.getKey(),
-					org.apache.accumulo.server.master.balancer.TableLoadBalancer.class.getName());
-
+//			tableOps.setProperty(tableName,
+//					org.apache.accumulo.core.conf.Property.TABLE_LOAD_BALANCER.getKey(),
+//					org.apache.accumulo.server.master.balancer.TableLoadBalancer.class.getName());
+			tableOps.setProperty(tableName, "table.classpath.context", tableContext);
 			tableOps.flush(tableName, null, null, false); // so the splits get balanced. (not sure if a major compaction is required to do this)
 			
 			return true;
@@ -231,6 +231,18 @@ public class IteratorUtils {
 				e.printStackTrace();
 			}
 			else {
+				throw new IOException(e);
+			}
+		}
+	}
+
+	public static void setProperty(TableOperations tableOperations, Collection<String> tableNames, String property, String value) throws IOException {
+		for (String tableName : tableNames) {
+			try {
+				tableOperations.setProperty(tableName, property, value);
+			} catch (AccumuloException e) {
+				throw new IOException(e);
+			} catch (AccumuloSecurityException e) {
 				throw new IOException(e);
 			}
 		}

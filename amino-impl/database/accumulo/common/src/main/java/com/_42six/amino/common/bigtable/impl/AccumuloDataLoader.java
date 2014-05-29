@@ -72,17 +72,18 @@ public abstract class AccumuloDataLoader implements DataLoader {
         String rowIds = conf.get(CFG_ROW_IDS, "");
 
         logger.info("Grabbing data from table: " + tableName);
-//        AccumuloInputFormat.setZooKeeperInstance(job, instanceName, zookeeperInfo);
-//        AccumuloInputFormat.setInputInfo(job, userName, password.getBytes(), tableName, new Authorizations(authorizations.getBytes()));
-        AccumuloInputFormat.setZooKeeperInstance(job,
-                new ClientConfiguration().withInstance(instanceName).withZkHosts(zookeeperInfo));
+
+        AccumuloInputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zookeeperInfo));
+
         try {
-            AccumuloInputFormat.setConnectorInfo(job, userName, new PasswordToken(password));
+            AccumuloInputFormat.setConnectorInfo(job, userName, new PasswordToken(password.getBytes("UTF-8")));
         } catch (AccumuloSecurityException e) {
-            throw new IOException(e);
+            throw new IOException("Error setting Accumulo connector info", e);
         }
-        AccumuloInputFormat.setScanAuthorizations(job, new Authorizations(authorizations));
+
         AccumuloInputFormat.setInputTableName(job, tableName);
+        AccumuloInputFormat.setScanAuthorizations(job, new Authorizations(authorizations.getBytes()));
+
 
         // Name is needed for ACCUMULO-1267
         final IteratorSetting regexSetting = new IteratorSetting(20, "Warehaus Row Regex", RegExFilter.class);

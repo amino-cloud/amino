@@ -938,9 +938,12 @@ public final class FeatureMetadataJob extends Configured implements Tool {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Mutation.class);
         job.setInputFormatClass(AccumuloInputFormat.class);
+
+        AccumuloInputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zooKeepers));
         AccumuloInputFormat.setConnectorInfo(job, user, new PasswordToken(password));
         AccumuloInputFormat.setInputTableName(job, metadataTable);
         AccumuloInputFormat.setScanAuthorizations(job, auths);
+
         //AccumuloInputFormat.setRegex(job, AccumuloInputFormat.RegexType.ROW, "feature.*");
         AccumuloInputFormat.setRanges(job, Collections.singleton(new Range(new Text("feature"), TableConstants.FEATURE_END)));
         AccumuloInputFormat.fetchColumns(job, Collections.singleton(new Pair<Text, Text>(new Text("JSON"), null)));
@@ -950,8 +953,10 @@ public final class FeatureMetadataJob extends Configured implements Tool {
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(Mutation.class);
         job.setOutputFormatClass(AccumuloOutputFormat.class);
+
+        AccumuloOutputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zooKeepers));
         AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
-        AccumuloOutputFormat.setCreateTables(job, true);
+        AccumuloOutputFormat.setCreateTables(job, false);
         AccumuloOutputFormat.setDefaultTableName(job, metadataTable);
 
         // Run the MapReduce

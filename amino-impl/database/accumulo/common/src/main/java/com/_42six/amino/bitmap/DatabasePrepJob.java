@@ -1,7 +1,12 @@
 package com._42six.amino.bitmap;
 
-import java.io.IOException;
-
+import com._42six.amino.common.AminoConfiguration;
+import com._42six.amino.common.Metadata;
+import com._42six.amino.common.accumulo.*;
+import com._42six.amino.common.bigtable.TableConstants;
+import com._42six.amino.common.util.PathUtils;
+import com.google.gson.Gson;
+import org.apache.accumulo.core.client.ClientConfiguration;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
@@ -16,17 +21,7 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
-import com._42six.amino.common.AminoConfiguration;
-import com._42six.amino.common.Metadata;
-import com._42six.amino.common.accumulo.BtBucketMetadata;
-import com._42six.amino.common.accumulo.BtDatasourceMetadata;
-import com._42six.amino.common.accumulo.BtDomainMetadata;
-import com._42six.amino.common.accumulo.BtFeatureMetadata;
-import com._42six.amino.common.accumulo.BtMetadata;
-import com._42six.amino.common.accumulo.IteratorUtils;
-import com._42six.amino.common.bigtable.TableConstants;
-import com._42six.amino.common.util.PathUtils;
-import com.google.gson.Gson;
+import java.io.IOException;
 
 /**
  * Job for importing the metadata information from the framework driver into the Accumulo metadata table. Also creates
@@ -37,29 +32,32 @@ public class DatabasePrepJob extends Configured implements Tool {
     private static boolean createTables(Configuration conf) throws IOException
     {
         // AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-        String instanceName = conf.get("bigtable.instance");
-        String zooKeepers = conf.get("bigtable.zookeepers");
-        String user = conf.get("bigtable.username");
-        String password = conf.get("bigtable.password");
-        String metaTable = conf.get("amino.metadataTable");
-        String hypoTable = conf.get("amino.hypothesisTable");
-        String resultTable = conf.get("amino.queryResultTable");
-        String membershipTable = conf.get("amino.groupMembershipTable");
-        String groupHypothesisLUTable = conf.get("amino.groupHypothesisLUT");
-        String groupMetadataTable = conf.get("amino.groupMetadataTable");
-        boolean blastMeta = conf.getBoolean("amino.first.run", false);
+        final String instanceName = conf.get("bigtable.instance");
+        final String zooKeepers = conf.get("bigtable.zookeepers");
+        final String user = conf.get("bigtable.username");
+        final String password = conf.get("bigtable.password");
+        final String metaTable = conf.get("amino.metadataTable");
+        final String hypoTable = conf.get("amino.hypothesisTable");
+        final String resultTable = conf.get("amino.queryResultTable");
+        final String membershipTable = conf.get("amino.groupMembershipTable");
+        final String groupHypothesisLUTable = conf.get("amino.groupHypothesisLUT");
+        final String groupMetadataTable = conf.get("amino.groupMetadataTable");
+        final String tableContext = conf.get("amino.tableContext", "amino");
+        final boolean blastMeta = conf.getBoolean("amino.first.run", false);
 
         final TableOperations tableOps = IteratorUtils.connect(instanceName, zooKeepers, user, password).tableOperations();
 
-        boolean success = IteratorUtils.createTable(tableOps, metaTable, blastMeta, true);
-        if (success) success = IteratorUtils.createTable(tableOps, hypoTable, false, false);
-        if (success) success = IteratorUtils.createTable(tableOps, resultTable, false, false);
-        if (success) success = IteratorUtils.createTable(tableOps, membershipTable, false, false);
-        if (success) success = IteratorUtils.createTable(tableOps, groupHypothesisLUTable, false, false);
-        if (success) success = IteratorUtils.createTable(tableOps, groupMetadataTable, false, false);
+        boolean success = IteratorUtils.createTable(tableOps, metaTable, tableContext, blastMeta, true);
+        if (success) success = IteratorUtils.createTable(tableOps, hypoTable, tableContext, false, false);
+        if (success) success = IteratorUtils.createTable(tableOps, resultTable, tableContext, false, false);
+        if (success) success = IteratorUtils.createTable(tableOps, membershipTable, tableContext, false, false);
+        if (success) success = IteratorUtils.createTable(tableOps, groupHypothesisLUTable, tableContext, false, false);
+        if (success) success = IteratorUtils.createTable(tableOps, groupMetadataTable, tableContext, false, false);
 
         return success;
     }
+
+
 
     public static class MetadataConsolidatorReducer
             extends Reducer<Text, Text, Text, Mutation> {
@@ -141,7 +139,7 @@ public class DatabasePrepJob extends Configured implements Tool {
         final String instanceName = conf.get(TableConstants.CFG_INSTANCE);
         final String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         final String user = conf.get(TableConstants.CFG_USER);
-        final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes();
+        final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes("UTF-8");
         final String metadataTable = conf.get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
         final String metadataPaths = StringUtils.join(PathUtils.getJobMetadataPaths(conf, args[0]), ',');
         System.out.println("Metadata paths: [" + metadataPaths + "].");
@@ -162,8 +160,8 @@ public class DatabasePrepJob extends Configured implements Tool {
 
         // Outputs
         job.setOutputFormatClass(AccumuloOutputFormat.class);
-//        AccumuloOutputFormat.setZooKeeperInstance(job, instanceName, zooKeepers);
-//        AccumuloOutputFormat.setOutputInfo(job, user, password, true, metadataTable);
+
+        AccumuloOutputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zooKeepers));
         AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
         AccumuloOutputFormat.setCreateTables(job, true);
         AccumuloOutputFormat.setDefaultTableName(job, metadataTable);
