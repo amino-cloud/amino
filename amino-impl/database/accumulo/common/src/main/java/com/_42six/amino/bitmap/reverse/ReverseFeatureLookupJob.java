@@ -146,6 +146,7 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
             try
             {
                 final String importTable = (!blastIndex) ? tableName : tableName + IteratorUtils.TEMP_SUFFIX;
+                JobUtilities.setGroupAndPermissions(conf, workingDirectory);
                 connector.tableOperations().importDirectory(importTable, workingDirectory + "/files", workingDirectory + "/failures", false);
                 result = JobUtilities.failureDirHasFiles(conf, workingDirectory + "/failures");
             }

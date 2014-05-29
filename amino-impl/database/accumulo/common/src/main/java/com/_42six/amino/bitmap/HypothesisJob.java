@@ -133,6 +133,7 @@ public class HypothesisJob extends Configured implements Tool
         		if (!blastIndex){
                     tb = tableName;
                 }
+                JobUtilities.setGroupAndPermissions(conf, workingDir);
         		connector.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", false);
         		result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
         	}

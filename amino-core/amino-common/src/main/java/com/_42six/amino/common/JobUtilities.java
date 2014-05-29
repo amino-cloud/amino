@@ -14,27 +14,50 @@ public class JobUtilities
     {
         deleteDirectory(conf, workingDir);
         final FsShell shell = new FsShell(conf);
-        final String[] command = new String[3];
+        String[] command = new String[3];
         command[0] = "-mkdir";
         command[1] = "-p";
         command[2] = workingDir + "/failures";
         shell.run(command);
+
+        setGroupAndPermissions(conf, workingDir);
     }
 
-	public static void deleteDirectory(Configuration conf, String outputPath) throws Exception
-	{
-		final FsShell shell = new FsShell();
-		shell.setConf(conf);
+    public static void setGroupAndPermissions(Configuration conf, String workingDir) throws Exception
+    {
+        final FsShell shell = new FsShell(conf);
 
-		final String[] delCommand = new String[2];
-		delCommand[0] = "-rmr";
+        String[] command = new String[4];
+        command[0] = "-chgrp";
+        command[1] = "-R";
+        command[2] = conf.get("amino.hdfs.workingDirectory.group");
+        command[3] = workingDir;
+        shell.run(command);
+
+        command = new String[4];
+        command[0] = "-chmod";
+        command[1] = "-R";
+        command[2] = "g+rwx";
+        command[3] = workingDir;
+        shell.run(command);
+
+        shell.close();
+    }
+
+    public static void deleteDirectory(Configuration conf, String outputPath) throws Exception
+    {
+        final FsShell shell = new FsShell();
+        shell.setConf(conf);
+
+        final String[] delCommand = new String[2];
+        delCommand[0] = "-rmr";
 //        delCommand[1] = "-r";
-		delCommand[1] = outputPath;
-		shell.run(delCommand);
-	}
-	
-	public static int failureDirHasFiles(Configuration conf, String failureDir) throws IOException 
-	{
+        delCommand[1] = outputPath;
+        shell.run(delCommand);
+    }
+    
+    public static int failureDirHasFiles(Configuration conf, String failureDir) throws IOException 
+    {
         FileSystem fs = null;
         try {
             fs = FileSystem.get(conf);

@@ -17,6 +17,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -217,6 +218,7 @@ public class ByBucketJob extends Configured implements Tool {
                 String filesPath = workingDir + "/files";
                 String failuresPath = workingDir + "/failures";
                 System.out.println("Importing the files in '" + filesPath + "' to the table: " + tb);
+                JobUtilities.setGroupAndPermissions(conf, workingDir);
                 c.tableOperations().importDirectory(tb, filesPath, failuresPath, false);
                 result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
             }

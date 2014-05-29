@@ -211,6 +211,7 @@ public class BitLookupJob extends Configured implements Tool {
                     tb = tableName;
                 }
                 System.out.println("Importing the files in '" + workingDir + "/files' to the table: " + tb);
+                JobUtilities.setGroupAndPermissions(conf, workingDir);
                 c.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", false);
                 result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
             }
