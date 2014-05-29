@@ -1,39 +1,67 @@
 <?xml version="1.0"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <artifactId>amino-accumulo</artifactId>
-    <groupId>com._42six.amino.impl</groupId>
-    <version>2.1.0-SNAPSHOT</version>
-  </parent>
-  <artifactId>amino-accumulo-query-api</artifactId>
-  <name>amino-accumulo-query-api</name>
-  <description>Accumulo specific implementations of the Query API</description>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.11</version>
-      <scope>test</scope>
-    </dependency>
-	<dependency>
-		<groupId>com._42six.amino.impl</groupId>
-		<artifactId>amino-accumulo-common</artifactId>
-		<version>${project.parent.version}</version>
-	</dependency>
-	<dependency>
-		<groupId>com._42six.amino.impl</groupId>
-		<artifactId>amino-accumulo-iterators</artifactId>
-		<version>${project.parent.version}</version>
-	</dependency>
-	<dependency>
-		<groupId>com._42six.amino.core</groupId>
-		<artifactId>amino-query-api</artifactId>
-		<version>${project.parent.version}</version>
-	</dependency>      
-  </dependencies>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <artifactId>amino-accumulo</artifactId>
+        <groupId>com._42six.amino.impl</groupId>
+        <version>2.2.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>amino-accumulo-query-api</artifactId>
+    <name>amino-accumulo-query-api</name>
+    <description>Accumulo specific implementations of the Query API</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.accumulo</groupId>
+            <artifactId>accumulo-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com._42six.amino.core</groupId>
+            <artifactId>amino-common</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com._42six.amino.impl</groupId>
+            <artifactId>amino-accumulo-iterators</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com._42six.amino.core</groupId>
+            <artifactId>amino-query-api</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+    </dependencies>
 </project>

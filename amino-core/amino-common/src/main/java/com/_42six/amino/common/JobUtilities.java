@@ -41,10 +41,11 @@ public class JobUtilities
 		final FsShell shell = new FsShell();
 		shell.setConf(conf);
 
-		final String[] delCommand = new String[2];
-		delCommand[0] = "-rmr";
-//        delCommand[1] = "-r";
-		delCommand[1] = outputPath;
+		final String[] delCommand = new String[3];
+//		delCommand[0] = "-rmr";
+        delCommand[0] = "-rm";
+        delCommand[1] = "-r";
+		delCommand[2] = outputPath;
 		shell.run(delCommand);
 	}
 	

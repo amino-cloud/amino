@@ -10,6 +10,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.task.JobContextImpl;
 
 
 public class AminoMultiInputFormat extends AminoInputFormat
@@ -200,8 +201,9 @@ public class AminoMultiInputFormat extends AminoInputFormat
 			Job myJob = new Job(new Configuration(conf));
 			loader.initializeFormat(myJob);
 
-			List<InputSplit> retVal = loader.getInputFormat().getSplits(new JobContext(myJob.getConfiguration(), myJob.getJobID()));
-			
+//			List<InputSplit> retVal = loader.getInputFormat().getSplits(new JobContextImpl(myJob.getConfiguration(), myJob.getJobID()));
+            List<InputSplit> retVal = loader.getInputFormat().getSplits(jobContext);
+
 //			myJob = new Job(jobContext.getConfiguration());
 //			//Need this because loadDefault doesn't override properties from the previous data loader, so if both loaders use the same property for the data location, it will use the old location
 //			AminoConfiguration.overrideDefault(jobContext.getConfiguration(), joinLoader.getClass().getSimpleName());
@@ -233,8 +235,9 @@ public class AminoMultiInputFormat extends AminoInputFormat
 		//No need for this...happens in initializeFormat
 		//AminoConfiguration.loadDefault(myJob.getConfiguration(), joinLoader.getClass().getSimpleName());
 		joinLoader.initializeFormat(myJob);
-		retVal.addAll(joinLoader.getInputFormat().getSplits(new JobContext(myJob.getConfiguration(), myJob.getJobID())));
-		
+//		retVal.addAll(joinLoader.getInputFormat().getSplits(new JobContextImpl(myJob.getConfiguration(), myJob.getJobID())));
+		retVal.addAll(joinLoader.getInputFormat().getSplits(jobContext));
+
 		return retVal;
 	}
 
