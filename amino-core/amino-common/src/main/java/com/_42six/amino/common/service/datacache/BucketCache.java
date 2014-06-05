@@ -29,7 +29,7 @@ public class BucketCache {
 		
 		for (String cachePath : PathUtils.getCachePaths(conf)) {
 			String bucketCachePath = cachePath + BUCKET_CACHE_FOLDER;
-			MapFile.Reader reader = new MapFile.Reader(FileSystem.get(conf), bucketCachePath, conf);
+            MapFile.Reader reader = new MapFile.Reader(new Path(bucketCachePath), conf);
 			IntWritable key = new IntWritable();
 			Bucket value = new Bucket();
 			while (reader.next(key, value)) {
@@ -56,7 +56,8 @@ public class BucketCache {
 		MapFile.Writer writer = null; 
 		
 		try {
-			writer = new MapFile.Writer(conf, fs, bucketCachePath, IntWritable.class, Bucket.class);
+			writer = new MapFile.Writer(conf, new Path(bucketCachePath), MapFile.Writer.keyClass(IntWritable.class),
+                    MapFile.Writer.valueClass(Bucket.class));
 			
 			ArrayList<IntWritable> keyList = new ArrayList<IntWritable>();
 			for (IntWritable i : bucketCache.keySet()) {
@@ -76,7 +77,7 @@ public class BucketCache {
 		
 		if (writeToDistributedCache) {
 			for (FileStatus status : fs.listStatus(new Path(bucketCachePath))) {
-				if (!status.isDir()) {
+				if (!status.isDirectory()) {
 					DistributedCache.addCacheFile(status.getPath().toUri(), conf);
 				}
 			}
@@ -94,11 +95,7 @@ public class BucketCache {
 		Bucket bucket = bucketCache.get(bucketStripped.getCacheHash());
 		return bucket.getBucketName();
 	}
-	
-	public Collection<Bucket> getAllBuckets() {
-		return bucketCache.values();
-	}
-	
+
 	public MapWritable toMapWritableKey() {
 		MapWritable mw = new MapWritable();
 		MapWritable bucketMap = new MapWritable();

@@ -73,24 +73,28 @@ public abstract class AccumuloDataLoader implements DataLoader {
 
         logger.info("Grabbing data from table: " + tableName);
 
-        AccumuloInputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zookeeperInfo));
-
         try {
-            AccumuloInputFormat.setConnectorInfo(job, userName, new PasswordToken(password.getBytes("UTF-8")));
-        } catch (AccumuloSecurityException e) {
-            throw new IOException("Error setting Accumulo connector info", e);
+            AccumuloInputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zookeeperInfo));
+
+            try {
+                AccumuloInputFormat.setConnectorInfo(job, userName, new PasswordToken(password.getBytes("UTF-8")));
+            } catch (AccumuloSecurityException e) {
+                throw new IOException("Error setting Accumulo connector info", e);
+            }
+
+            AccumuloInputFormat.setInputTableName(job, tableName);
+            AccumuloInputFormat.setScanAuthorizations(job, new Authorizations(authorizations.getBytes()));
+
+
+            // Name is needed for ACCUMULO-1267
+            final IteratorSetting regexSetting = new IteratorSetting(20, "Warehaus Row Regex", RegExFilter.class);
+            RegExFilter.setRegexs(regexSetting, rowIds, null, null, null, false);
+            AccumuloInputFormat.addIterator(job, regexSetting);
+            AccumuloInputFormat.addIterator(job, new IteratorSetting(30, WholeRowIterator.class));
+
+        } catch (IllegalStateException e){
+            logger.warn("Attempting to initalizeFormat when it's already been initalized");
         }
-
-        AccumuloInputFormat.setInputTableName(job, tableName);
-        AccumuloInputFormat.setScanAuthorizations(job, new Authorizations(authorizations.getBytes()));
-
-
-        // Name is needed for ACCUMULO-1267
-        final IteratorSetting regexSetting = new IteratorSetting(20, "Warehaus Row Regex", RegExFilter.class);
-        RegExFilter.setRegexs(regexSetting, rowIds, null, null, null, false);
-        AccumuloInputFormat.addIterator(job, regexSetting);
-        AccumuloInputFormat.addIterator(job, new IteratorSetting(30, WholeRowIterator.class));
-
         logger.info("Fetching rows: " + rowIds);
     }
 

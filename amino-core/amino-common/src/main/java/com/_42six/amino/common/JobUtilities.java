@@ -26,18 +26,19 @@ public class JobUtilities
     public static void setGroupAndPermissions(Configuration conf, String workingDir) throws Exception
     {
         final FsShell shell = new FsShell(conf);
+        final String workingGroup = conf.get("amino.hdfs.workingDirectory.group","accumulo");
 
         String[] command = new String[4];
         command[0] = "-chgrp";
         command[1] = "-R";
-        command[2] = conf.get("amino.hdfs.workingDirectory.group");
+        command[2] = workingGroup;
         command[3] = workingDir;
         shell.run(command);
 
         command = new String[4];
         command[0] = "-chmod";
         command[1] = "-R";
-        command[2] = "g+rwx";
+        command[2] = "ugo=rwx"; // TODO - This probably isn't the most secure
         command[3] = workingDir;
         shell.run(command);
 
@@ -49,9 +50,10 @@ public class JobUtilities
         final FsShell shell = new FsShell();
         shell.setConf(conf);
 
-        final String[] delCommand = new String[2];
-        delCommand[0] = "-rmr";
-        delCommand[1] = outputPath;
+        final String[] delCommand = new String[3];
+        delCommand[0] = "-rm";
+        delCommand[1] = "-R";
+        delCommand[2] = outputPath;
         shell.run(delCommand);
     }
 
