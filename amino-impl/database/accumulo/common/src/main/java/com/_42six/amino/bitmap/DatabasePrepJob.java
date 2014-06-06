@@ -1,26 +1,24 @@
 package com._42six.amino.bitmap;
 
-import com._42six.amino.api.framework.FrameworkDriver;
-import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.Metadata;
 import com._42six.amino.common.accumulo.*;
 import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.util.PathUtils;
+import com.google.common.base.Optional;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import org.apache.accumulo.core.client.ClientConfiguration;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.Option;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
-import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
@@ -29,11 +27,10 @@ import java.io.IOException;
  * Job for importing the metadata information from the framework driver into the Accumulo metadata table. Also creates
  * any tables that might be missing
  */
-public class DatabasePrepJob extends Configured implements Tool {
+public class DatabasePrepJob extends BitmapJob {
 
     private static boolean createTables(Configuration conf) throws IOException
     {
-        // AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
         final String instanceName = conf.get("bigtable.instance");
         final String zooKeepers = conf.get("bigtable.zookeepers");
         final String user = conf.get("bigtable.username");
@@ -133,31 +130,13 @@ public class DatabasePrepJob extends Configured implements Tool {
         System.out.println("\n=============================== DatabasePrepJob ================================\n");
 
         // Create the command line options to be parsed
-        final Options options = FrameworkDriver.constructGnuOptions();
-        final Option o1 = new Option("i", "inputDir", true, "The input directory");
-        o1.setRequired(true);
-        options.addOption(o1);
+        final Option o1 = new Option("o", "outputDir", true, "The output directory");
+//        o1.setRequired(true);
 
-        // Parse the arguments and make sure the required args are there
-        final CommandLine cmdLine;
-        try{
-            cmdLine = new GnuParser().parse(options, args);
-            if(!(cmdLine.hasOption("i") && cmdLine.hasOption("amino_default_config_path"))){
-                HelpFormatter help = new HelpFormatter();
-                help.printHelp("hadoop blah", options);
-                return -1;
-            }
-        } catch (Exception ex){
-            ex.printStackTrace();
-            return -1;
-        }
-
-        // Load up the default Amino configurations
+        initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1)));
         final Configuration conf = getConf();
-        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, cmdLine.getOptionValue("amino_default_config_path"));
-        AminoConfiguration.loadDefault(conf, "AminoDefaults", false);
 
-        final Job job = new Job(conf, "Amino BT meta importer");
+        final Job job = new Job(conf, "Amino Metadata importer");
         job.setJarByClass(this.getClass());
 
         // Get config values
@@ -166,7 +145,8 @@ public class DatabasePrepJob extends Configured implements Tool {
         final String user = conf.get(TableConstants.CFG_USER);
         final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes("UTF-8");
         final String metadataTable = conf.get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
-        final String metadataPaths = StringUtils.join(PathUtils.getJobMetadataPaths(conf, cmdLine.getOptionValue("i")), ',');
+        final String metadataPaths = StringUtils.join(PathUtils.getJobMetadataPaths(conf,
+                fromOptionOrConfig(Optional.of("o"), Optional.of(CONF_OUTPUT_DIR))), ',');
         System.out.println("Metadata paths: [" + metadataPaths + "].");
 
         // TODO - Verify that all of the params above were not null

@@ -87,8 +87,19 @@ public final class FrameworkDriver extends Configured implements Tool {
     }
 
     public static void main(String[] args) throws Exception {
-        final CommandLineParser cmdLineGnuParser = new GnuParser();
-        final CommandLine commandLine = cmdLineGnuParser.parse(constructGnuOptions(), args);
+        // Parse the arguments and make sure the required args are there
+        final CommandLine commandLine;
+        final Options options = constructGnuOptions();
+        try{
+            commandLine = new GnuParser().parse(options, args);
+        } catch (MissingOptionException ex){
+            HelpFormatter help = new HelpFormatter();
+            help.printHelp("hadoop jar <jarFile> " + FrameworkDriver.class.getCanonicalName(), options);
+            return;
+        } catch (Exception ex){
+            ex.printStackTrace();
+            return;
+        }
 
         final String userConfFilePath = commandLine.getOptionValue("amino_config_file_path", "");
         final String aminoDefaultConfigPath = commandLine.getOptionValue("amino_default_config_path");

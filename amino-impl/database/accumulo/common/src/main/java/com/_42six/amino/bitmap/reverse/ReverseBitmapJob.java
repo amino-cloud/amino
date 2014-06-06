@@ -1,28 +1,27 @@
 package com._42six.amino.bitmap.reverse;
 
-import com._42six.amino.api.framework.FrameworkDriver;
 import com._42six.amino.bitmap.BitmapConfigHelper;
-import com._42six.amino.common.AminoConfiguration;
+import com._42six.amino.bitmap.BitmapJob;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.util.PathUtils;
+import com.google.common.base.Optional;
+import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.ClientConfiguration;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.Option;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
-import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
 
-public class ReverseBitmapJob extends Configured implements Tool  
+public class ReverseBitmapJob extends BitmapJob
 {
     private static final String AMINO_NUM_REDUCERS = "amino.num.reducers";
 	private static final int DEFAULT_NUM_REDUCERS = 14;
@@ -49,29 +48,11 @@ public class ReverseBitmapJob extends Configured implements Tool
         System.out.println("\n================================ ReverseBitmapJob ================================\n");
 
         // Create the command line options to be parsed
-        final Options options = FrameworkDriver.constructGnuOptions();
-        final Option o1 = new Option("i", "inputDir", true, "The input directory");
-        o1.setRequired(true);
-        options.addOption(o1);
+        final Option o1 = new Option("o", "outputDir", true, "The output directory");
+//        o1.setRequired(true);
 
-        // Parse the arguments and make sure the required args are there
-        final CommandLine cmdLine;
-        try{
-            cmdLine = new GnuParser().parse(options, args);
-            if(!(cmdLine.hasOption("i") && cmdLine.hasOption("amino_default_config_path"))){
-                HelpFormatter help = new HelpFormatter();
-                help.printHelp("hadoop blah", options);
-                return -1;
-            }
-        } catch (Exception ex){
-            ex.printStackTrace();
-            return -1;
-        }
-
-        // Load up the default Amino configurations
+        initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1)));
         final Configuration conf = getConf();
-        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, cmdLine.getOptionValue("amino_default_config_path"));
-        AminoConfiguration.loadDefault(conf, "AminoDefaults", false);
 
         final String instanceName = conf.get(TableConstants.CFG_INSTANCE);
         final String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
@@ -86,10 +67,12 @@ public class ReverseBitmapJob extends Configured implements Tool
         job.setJarByClass(ReverseBitmapJob.class);
         job.setInputFormatClass(SequenceFileInputFormat.class);
 
-        String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, cmdLine.getOptionValue("i")), ',');
+        String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf,
+                fromOptionOrConfig(Optional.of("o"), Optional.of(CONF_OUTPUT_DIR))), ',');
         System.out.println("Input paths: [" + inputPaths + "].");
 
-        String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf, cmdLine.getOptionValue("i")), ',');
+        String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf,
+                fromOptionOrConfig(Optional.of("o"), Optional.of(CONF_OUTPUT_DIR))), ','); // TODO - Check why same as inputPaths
         System.out.println("Cache paths: [" + cachePaths + "].");
 
         PathUtils.setCachePath(job.getConfiguration(), cachePaths);

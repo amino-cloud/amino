@@ -1,24 +1,24 @@
 package com._42six.amino.bitmap;
 
-import com._42six.amino.api.framework.FrameworkDriver;
 import com._42six.amino.common.*;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.index.BitmapIndex;
 import com._42six.amino.common.service.datacache.BucketCache;
 import com._42six.amino.common.util.PathUtils;
+import com.google.common.base.Optional;
+import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.TextUtil;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.Option;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -28,7 +28,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
-import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.BufferedOutputStream;
@@ -36,7 +35,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
-public class BitLookupJob extends Configured implements Tool {
+public class BitLookupJob extends BitmapJob {
     private static final String AMINO_NUM_REDUCERS = "amino.num.reducers";
     private static final String AMINO_NUM_REDUCERS_BITMAP = "amino.num.reducers.job.bitmap";
     private static final int DEFAULT_NUM_REDUCERS = 14;
@@ -72,38 +71,20 @@ public class BitLookupJob extends Configured implements Tool {
         System.out.println("\n================================ BitLookup Job ================================\n");
 
         // Create the command line options to be parsed
-        final Options options = FrameworkDriver.constructGnuOptions();
-        final Option o1 = new Option("i", "inputDir", true, "The input directory");
+        final Option o1 = new Option("o", "outputDir", true, "The output directory");
         final Option o2 = new Option("w", "workingDir", true, "The working directory");
         final Option o3 = new Option("t", "numTablets", false, "The number of tablets in use");
-        o1.setRequired(true);
-        o2.setRequired(true);
-        options.addOption(o1).addOption(o2).addOption(o3);
+//        o1.setRequired(true);
+//        o2.setRequired(true);
 
-        // Parse the arguments and make sure the required args are there
-        final CommandLine cmdLine;
-        try{
-            cmdLine = new GnuParser().parse(options, args);
-            if(!(cmdLine.hasOption("i") && cmdLine.hasOption("w") && cmdLine.hasOption("amino_default_config_path"))){
-                HelpFormatter help = new HelpFormatter();
-                help.printHelp("hadoop blah", options);
-                return -1;
-            }
-        } catch (Exception ex){
-            ex.printStackTrace();
-            return -1;
-        }
-
-        // Load up the default Amino configurations
+        initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1, o2, o3)));
         final Configuration conf = getConf();
-        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, cmdLine.getOptionValue("amino_default_config_path"));
-        AminoConfiguration.loadDefault(conf, "AminoDefaults", false);
 
         if(!recreateTables(conf)){
             return 1;
         }
 
-        final String inputDir = cmdLine.getOptionValue("i");
+        final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(CONF_OUTPUT_DIR));
 
         final Job job = new Job(conf, "Amino feature index job");
         job.setJarByClass(BitLookupJob.class);
@@ -125,8 +106,8 @@ public class BitLookupJob extends Configured implements Tool {
         job.setOutputKeyClass(Key.class);
         job.setOutputValueClass(Value.class);
 
-        int numTablets = cmdLine.hasOption("t") ?  Integer.parseInt(cmdLine.getOptionValue("t")) : -1;
-        final String workingDirectory = cmdLine.getOptionValue("w");
+        int numTablets = Integer.parseInt(fromOptionOrConfig(Optional.of("t"), Optional.<String>absent(), "-1"));
+        final String workingDirectory = fromOptionOrConfig(Optional.of("w"), Optional.of(CONF_WORKING_DIR));
         JobUtilities.resetWorkingDirectory(this.getConf(), workingDirectory);
 
         return execute(job, inputDir, workingDirectory, numTablets);

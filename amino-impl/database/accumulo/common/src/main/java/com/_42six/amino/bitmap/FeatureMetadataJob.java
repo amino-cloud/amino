@@ -1,7 +1,5 @@
 package com._42six.amino.bitmap;
 
-import com._42six.amino.api.framework.FrameworkDriver;
-import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.DateFeatureMetadata;
 import com._42six.amino.common.FeatureFactType;
 import com._42six.amino.common.FeatureMetadata;
@@ -9,6 +7,7 @@ import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
 import com._42six.amino.common.translator.FeatureFactTranslatorInt;
+import com.google.common.base.Optional;
 import com.google.gson.Gson;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.Scanner;
@@ -23,25 +22,20 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.Pair;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
+import org.apache.commons.cli.Option;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
-import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-public final class FeatureMetadataJob extends Configured implements Tool {
+public final class FeatureMetadataJob extends BitmapJob {
 
 	private static final String MAX_NUMBER_OF_NOMINALS = "amino.num.nominals.max";
 	private static final int MAX_NUMBER_OF_NOMINALS_DEFAULT = 250;
@@ -920,27 +914,8 @@ public final class FeatureMetadataJob extends Configured implements Tool {
     public int run(String[] args) throws Exception {
         System.out.println("\n================================ FeatureMetadata Job ================================\n");
 
-        // Create the command line options to be parsed
-        final Options options = FrameworkDriver.constructGnuOptions();
-
-        // Parse the arguments and make sure the required args are there
-        final CommandLine cmdLine;
-        try{
-            cmdLine = new GnuParser().parse(options, args);
-            if(!(cmdLine.hasOption("amino_default_config_path"))){
-                HelpFormatter help = new HelpFormatter();
-                help.printHelp("hadoop blah", options);
-                return -1;
-            }
-        } catch (Exception ex){
-            ex.printStackTrace();
-            return -1;
-        }
-
-        // Load up the default Amino configurations
+        initializeConfigAndOptions(args, Optional.<HashSet<Option>>absent());
         final Configuration conf = getConf();
-        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, cmdLine.getOptionValue("amino_default_config_path"));
-        AminoConfiguration.loadDefault(conf, "AminoDefaults", false);
 
         final String instanceName = conf.get(TableConstants.CFG_INSTANCE);
         final String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);

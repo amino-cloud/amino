@@ -51,7 +51,7 @@ public class AminoConfiguration extends Configuration {
 		final Configuration otherConfig = new Configuration(false);
 		final FSDataInputStream fsdis = fs.open(defaultConfigFilePath);
 		otherConfig.addResource(fsdis);
-		
+
 		for(Entry<String, String> entry : otherConfig) {
 			if (overrideValues) {
 				conf.set(entry.getKey(), entry.getValue());
