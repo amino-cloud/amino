@@ -1,5 +1,6 @@
 package com._42six.amino.bitmap;
 
+import com._42six.amino.api.framework.FrameworkDriver;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.DateFeatureMetadata;
 import com._42six.amino.common.FeatureFactType;
@@ -22,7 +23,10 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.security.Authorizations;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.accumulo.core.util.Pair;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.hadoop.conf.Configuration;
@@ -916,15 +920,34 @@ public final class FeatureMetadataJob extends Configured implements Tool {
     public int run(String[] args) throws Exception {
         System.out.println("\n================================ FeatureMetadata Job ================================\n");
 
+        // Create the command line options to be parsed
+        final Options options = FrameworkDriver.constructGnuOptions();
+
+        // Parse the arguments and make sure the required args are there
+        final CommandLine cmdLine;
+        try{
+            cmdLine = new GnuParser().parse(options, args);
+            if(!(cmdLine.hasOption("amino_default_config_path"))){
+                HelpFormatter help = new HelpFormatter();
+                help.printHelp("hadoop blah", options);
+                return -1;
+            }
+        } catch (Exception ex){
+            ex.printStackTrace();
+            return -1;
+        }
+
+        // Load up the default Amino configurations
         final Configuration conf = getConf();
-        //AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-        String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
-        String user = conf.get(TableConstants.CFG_USER);
+        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, cmdLine.getOptionValue("amino_default_config_path"));
+        AminoConfiguration.loadDefault(conf, "AminoDefaults", false);
+
+        final String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        final String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
+        final String user = conf.get(TableConstants.CFG_USER);
         final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes();
         final String metadataTable = conf.get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX; // You want to make sure you use the temp here even if blastIndex is false
         final boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); // See above, you always want to use temp for this input even if false
-
 
         final Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
         final Connector conn = inst.getConnector(user, password);
@@ -979,20 +1002,6 @@ public final class FeatureMetadataJob extends Configured implements Tool {
 
 
 	public static void main(String[] args) throws Exception {
-        final Options gnuOptions = new Options();
-        final Option aminoDefaultConfigurationOption =
-                new Option("d", "amino_default_config_path", true, "The path where the amino default file lives.");
-        // aminoDefaultConfigurationOption.setRequired(true); // Not required if we are doing the args[0] thing
-        gnuOptions.addOption(aminoDefaultConfigurationOption);
-        final CommandLineParser cmdLineGnuParser = new GnuParser();
-        final CommandLine commandLine = cmdLineGnuParser.parse(gnuOptions, args);
-        final String aminoDefaultConfigPath = commandLine.getOptionValue("amino_default_config_path", args[0]);
-
-		final Configuration conf = new Configuration();
-		conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, aminoDefaultConfigPath);
-		AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-		
-		int res = ToolRunner.run(conf, new FeatureMetadataJob(), args);
-		System.exit(res);
+        System.exit(ToolRunner.run(new FeatureMetadataJob(), args));
 	}
 }

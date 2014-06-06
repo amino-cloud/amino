@@ -1,5 +1,6 @@
 package com._42six.amino.bitmap;
 
+import com._42six.amino.api.framework.FrameworkDriver;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.Metadata;
 import com._42six.amino.common.accumulo.*;
@@ -11,6 +12,7 @@ import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Mutation;
+import org.apache.commons.cli.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -130,8 +132,31 @@ public class DatabasePrepJob extends Configured implements Tool {
     public int run(String[] args) throws Exception {
         System.out.println("\n=============================== DatabasePrepJob ================================\n");
 
+        // Create the command line options to be parsed
+        final Options options = FrameworkDriver.constructGnuOptions();
+        final Option o1 = new Option("i", "inputDir", true, "The input directory");
+        o1.setRequired(true);
+        options.addOption(o1);
+
+        // Parse the arguments and make sure the required args are there
+        final CommandLine cmdLine;
+        try{
+            cmdLine = new GnuParser().parse(options, args);
+            if(!(cmdLine.hasOption("i") && cmdLine.hasOption("amino_default_config_path"))){
+                HelpFormatter help = new HelpFormatter();
+                help.printHelp("hadoop blah", options);
+                return -1;
+            }
+        } catch (Exception ex){
+            ex.printStackTrace();
+            return -1;
+        }
+
+        // Load up the default Amino configurations
         final Configuration conf = getConf();
-//        AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
+        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, cmdLine.getOptionValue("amino_default_config_path"));
+        AminoConfiguration.loadDefault(conf, "AminoDefaults", false);
+
         final Job job = new Job(conf, "Amino BT meta importer");
         job.setJarByClass(this.getClass());
 
@@ -141,7 +166,7 @@ public class DatabasePrepJob extends Configured implements Tool {
         final String user = conf.get(TableConstants.CFG_USER);
         final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes("UTF-8");
         final String metadataTable = conf.get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
-        final String metadataPaths = StringUtils.join(PathUtils.getJobMetadataPaths(conf, args[0]), ',');
+        final String metadataPaths = StringUtils.join(PathUtils.getJobMetadataPaths(conf, cmdLine.getOptionValue("i")), ',');
         System.out.println("Metadata paths: [" + metadataPaths + "].");
 
         // TODO - Verify that all of the params above were not null
@@ -176,11 +201,6 @@ public class DatabasePrepJob extends Configured implements Tool {
     }
 
     public static void main(String[] args) throws Exception {
-        final Configuration conf = new Configuration();
-        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, args[1]); // TODO: use flag instead of positional
-        AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-
-        int res = ToolRunner.run(conf, new DatabasePrepJob(), args);
-        System.exit(res);
+        System.exit(ToolRunner.run(new DatabasePrepJob(), args));
     }
 }

@@ -1,5 +1,6 @@
 package com._42six.amino.bitmap;
 
+import com._42six.amino.api.framework.FrameworkDriver;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.ByBucketKey;
 import com._42six.amino.common.JobUtilities;
@@ -12,6 +13,7 @@ import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.TextUtil;
+import org.apache.commons.cli.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -64,22 +66,47 @@ public class ByBucketJob extends Configured implements Tool {
     }
 
     public int run(String[] args) throws Exception {
-
         System.out.println("\n================================ ByBucket Job ================================\n");
-        final Configuration conf = getConf();
 
+        // Create the command line options to be parsed
+        final Options options = FrameworkDriver.constructGnuOptions();
+        final Option o1 = new Option("i", "inputDir", true, "The input directory");
+        final Option o2 = new Option("w", "workingDir", true, "The working directory");
+        final Option o3 = new Option("t", "numTablets", false, "The number of tablets in use");
+        o1.setRequired(true);
+        o2.setRequired(true);
+        options.addOption(o1).addOption(o2).addOption(o3);
+
+        // Parse the arguments and make sure the required args are there
+        final CommandLine cmdLine;
+        try{
+            cmdLine = new GnuParser().parse(options, args);
+            if(!(cmdLine.hasOption("i") && cmdLine.hasOption("w") && cmdLine.hasOption("amino_default_config_path"))){
+                HelpFormatter help = new HelpFormatter();
+                help.printHelp("hadoop blah", options);
+                return -1;
+            }
+        } catch (Exception ex){
+            ex.printStackTrace();
+            return -1;
+        }
+
+        // Load up the default Amino configurations
+        final Configuration conf = getConf();
+        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, cmdLine.getOptionValue("amino_default_config_path"));
+        AminoConfiguration.loadDefault(conf, "AminoDefaults", false);
 
         if(!recreateTables(conf)){
             return 1;
         }
 
-        final String inputDir = args[0]; // TODO: use configuration instead of positional argument
+        final String inputDir = cmdLine.getOptionValue("i");
 
         final Job job = new Job(conf, "Amino bucket index job");
         job.setJarByClass(ByBucketJob.class);
         job.setInputFormatClass(SequenceFileInputFormat.class);
 
-        final String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, inputDir), ','); // TODO: use configuration instead of positional argument
+        final String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, inputDir), ',');
         System.out.println("Input paths: [" + inputPaths + "].");
 
         final String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf, inputDir), ',');
@@ -96,13 +123,9 @@ public class ByBucketJob extends Configured implements Tool {
         job.setOutputKeyClass(Key.class);
         job.setOutputValueClass(Value.class);
 
-        final String workingDirectory = args[2]; // TODO: use configuration instead of positional argument
-//        JobUtilities.deleteDirectory(this.getConf(), workingDirectory);
+        int numTablets = cmdLine.hasOption("t") ?  Integer.parseInt(cmdLine.getOptionValue("t")) : -1;
+        final String workingDirectory = cmdLine.getOptionValue("w");
         JobUtilities.resetWorkingDirectory(this.getConf(), workingDirectory);
-        int numTablets = -1;
-        if (args.length > 3){
-            numTablets = Integer.parseInt(args[3]);
-        }
 
         return execute(job, workingDirectory, numTablets);
     }
@@ -234,12 +257,7 @@ public class ByBucketJob extends Configured implements Tool {
     }
 
     public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration();
-        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, args[1]); // TODO: use flag instead of positional
-        AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-
-        int res = ToolRunner.run(conf, new ByBucketJob(), args);
-        System.exit(res);
+        System.exit(ToolRunner.run(new ByBucketJob(), args));
     }
 
 }

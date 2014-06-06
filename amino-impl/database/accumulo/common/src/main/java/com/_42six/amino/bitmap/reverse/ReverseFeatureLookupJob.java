@@ -1,5 +1,6 @@
 package com._42six.amino.bitmap.reverse;
 
+import com._42six.amino.api.framework.FrameworkDriver;
 import com._42six.amino.bitmap.BitmapConfigHelper;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.JobUtilities;
@@ -13,6 +14,7 @@ import org.apache.accumulo.core.client.mapreduce.lib.partition.RangePartitioner;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.TextUtil;
+import org.apache.commons.cli.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -32,29 +34,45 @@ import java.util.TreeSet;
 
 public class ReverseFeatureLookupJob extends Configured implements Tool
 {
-    public static void main(String[] args) throws Exception {
-        Configuration conf = new Configuration();
-        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, args[1]); // TODO: use flag instead of positional
-        AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-
-        int res = ToolRunner.run(conf, new ReverseFeatureLookupJob(), args);
-        System.exit(res);
-    }
-
     @Override
     public int run(String[] args) throws Exception
     {
         System.out.println("\n================================ ReverseFeatureLookupJob ================================\n");
+        // Create the command line options to be parsed
+        final Options options = FrameworkDriver.constructGnuOptions();
+        final Option o1 = new Option("i", "input", true, "The input directory");
+        final Option o2 = new Option("w", "workingDir", true, "The working directory");
+        o1.setRequired(true);
+        o2.setRequired(true);
+        options.addOption(o1).addOption(o2);
+
+        // Parse the arguments and make sure the required args are there
+        final CommandLine cmdLine;
+        try{
+            cmdLine = new GnuParser().parse(options, args);
+            if(!(cmdLine.hasOption("i") && cmdLine.hasOption("w") && cmdLine.hasOption("amino_default_config_path"))){
+                HelpFormatter help = new HelpFormatter();
+                help.printHelp("hadoop blah", options);
+                return -1;
+            }
+        } catch (Exception ex){
+            ex.printStackTrace();
+            return -1;
+        }
+
+        // Load up the default Amino configurations
         final Configuration conf = getConf();
+        conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, cmdLine.getOptionValue("amino_default_config_path"));
+        AminoConfiguration.loadDefault(conf, "AminoDefaults", false);
 
         final Job job = new Job(conf, "Amino reverse_feature_lookup table job");
         job.setJarByClass(ReverseFeatureLookupJob.class);
         job.setInputFormatClass(SequenceFileInputFormat.class);
 
         // Parse the command line parameters
-        final String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, args[0]), ',');
-        final String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf, args[0]), ',');
-        final String workingDirectory = args[2]; // TODO: use configuration instead of positional argument
+        final String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, cmdLine.getOptionValue("i")), ',');
+        final String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf, cmdLine.getOptionValue("i")), ',');
+        final String workingDirectory = cmdLine.getOptionValue("w");
 
         System.out.println("Input paths: [" + inputPaths + "].");
         System.out.println("Cache paths: [" + cachePaths + "].");
@@ -78,13 +96,13 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
         job.setNumReduceTasks(numberOfShards);
 
         // Grab params for connecting to BigTable instance
-        String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
-        String user = conf.get(TableConstants.CFG_USER);
-        String password = conf.get(TableConstants.CFG_PASSWORD);
+        final String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+        final String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
+        final String user = conf.get(TableConstants.CFG_USER);
+        final String password = conf.get(TableConstants.CFG_PASSWORD);
         final String tableName = conf.get("amino.bitmap.featureLookupTable").replace("amino_", "amino_reverse_");
         final String tableContext = conf.get("amino.tableContext", "amino");
-        boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); // should always assume it's the first run unless specified
+        final boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); // should always assume it's the first run unless specified
 
         Connector connector = null;
         PrintStream splitsPrinter = null;
@@ -142,7 +160,7 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
         // Bulk import the results into the database
         if (connector != null && success)
         {
-            System.out.println("Importing job results to accumulo");
+            System.out.println("Importing job results to Accumulo");
             try
             {
                 final String importTable = (!blastIndex) ? tableName : tableName + IteratorUtils.TEMP_SUFFIX;
@@ -158,6 +176,10 @@ public class ReverseFeatureLookupJob extends Configured implements Tool
         }
 
         return result;
+    }
+
+    public static void main(String[] args) throws Exception {
+        System.exit(ToolRunner.run(new ReverseFeatureLookupJob(), args));
     }
 
 }
