@@ -86,7 +86,15 @@ public final class FrameworkDriver extends Configured implements Tool {
         return paths;
     }
 
-    public static void main(String[] args) throws Exception {
+    /**
+     * Load the Configuration file with the values from the command line and config files, and place stuff in the
+     * DistrubutedCacheService as needed
+     *
+     * @param conf The Configuration to populate
+     * @param args The command line arguments
+     * @throws Exception
+     */
+    public static void initalizeConf(Configuration conf, String[] args) throws Exception{
         // Parse the arguments and make sure the required args are there
         final CommandLine commandLine;
         final Options options = constructGnuOptions();
@@ -106,7 +114,6 @@ public final class FrameworkDriver extends Configured implements Tool {
 
         stopOnFirstPhase = commandLine.hasOption("stop");
 
-        final Configuration conf = new Configuration();
         conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, aminoDefaultConfigPath);
 
         // create a single DistributedCacheService so that multiple cache entries are deduped.
@@ -121,6 +128,7 @@ public final class FrameworkDriver extends Configured implements Tool {
         if (!StringUtils.isEmpty(userConfFilePath)) {
             for (String path : getUserConfigFiles(userConfFilePath)) {
                 Configuration userConf = new Configuration(false);
+                logger.info("Grabbing configuration information from: " + path);
                 userConf.addResource(new FileInputStream(path));
                 HadoopConfigurationUtils.mergeConfs(conf, userConf);
             }
@@ -133,6 +141,11 @@ public final class FrameworkDriver extends Configured implements Tool {
             conf.set((String) key, (String) propertyOverrides.get(key));
         }
         distributedCacheService.addFilesToDistributedCache(conf);
+    }
+
+    public static void main(String[] args) throws Exception {
+        final Configuration conf = new Configuration();
+        initalizeConf(conf, args);
 
         int res = ToolRunner.run(conf, new FrameworkDriver(), args);
         System.exit(res);
