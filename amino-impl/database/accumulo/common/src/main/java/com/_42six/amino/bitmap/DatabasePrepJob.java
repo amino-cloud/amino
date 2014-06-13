@@ -1,5 +1,6 @@
 package com._42six.amino.bitmap;
 
+import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.Metadata;
 import com._42six.amino.common.accumulo.*;
 import com._42six.amino.common.bigtable.TableConstants;
@@ -25,7 +26,7 @@ import java.io.IOException;
 
 /**
  * Job for importing the metadata information from the framework driver into the Accumulo metadata table. Also creates
- * any tables that might be missing
+ * any tables that might be missing.  This is the first job run.
  */
 public class DatabasePrepJob extends BitmapJob {
 
@@ -35,14 +36,14 @@ public class DatabasePrepJob extends BitmapJob {
         final String zooKeepers = conf.get("bigtable.zookeepers");
         final String user = conf.get("bigtable.username");
         final String password = conf.get("bigtable.password");
-        final String metaTable = conf.get("amino.metadataTable");
-        final String hypoTable = conf.get("amino.hypothesisTable");
-        final String resultTable = conf.get("amino.queryResultTable");
-        final String membershipTable = conf.get("amino.groupMembershipTable");
-        final String groupHypothesisLUTable = conf.get("amino.groupHypothesisLUT");
-        final String groupMetadataTable = conf.get("amino.groupMetadataTable");
-        final String tableContext = conf.get("amino.tableContext", "amino");
-        final boolean blastMeta = conf.getBoolean("amino.first.run", false);
+        final String metaTable = conf.get(AminoConfiguration.TABLE_METADATA);
+        final String hypoTable = conf.get(AminoConfiguration.TABLE_HYPOTHESIS);
+        final String resultTable = conf.get(AminoConfiguration.TABLE_RESULT);
+        final String membershipTable = conf.get(AminoConfiguration.TABLE_GROUP_MEMBERSHIP);
+        final String groupHypothesisLUTable = conf.get(AminoConfiguration.TABLE_GROUP_HYPOTHESIS_LOOKUP);
+        final String groupMetadataTable = conf.get(AminoConfiguration.TABLE_GROUP_METADATA);
+        final String tableContext = conf.get(AminoConfiguration.TABLE_CONTEXT, "amino");
+        final boolean blastMeta = conf.getBoolean(AminoConfiguration.FIRST_RUN, false);
 
         final TableOperations tableOps = IteratorUtils.connect(instanceName, zooKeepers, user, password).tableOperations();
 
@@ -56,8 +57,6 @@ public class DatabasePrepJob extends BitmapJob {
         return success;
     }
 
-
-
     public static class MetadataConsolidatorReducer
             extends Reducer<Text, Text, Text, Mutation> {
 
@@ -66,7 +65,7 @@ public class DatabasePrepJob extends BitmapJob {
 
         @Override
         protected void setup(Context context){
-            metadataTableText = new Text(context.getConfiguration().get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX);
+            metadataTableText = new Text(context.getConfiguration().get(AminoConfiguration.TABLE_METADATA) + AminoConfiguration.TEMP_SUFFIX);
         }
 
         private <T extends Metadata & BtMetadata> void writeMutations(Class<T> cls, Iterable<Text> jsonValues, Context context)
@@ -131,7 +130,6 @@ public class DatabasePrepJob extends BitmapJob {
 
         // Create the command line options to be parsed
         final Option o1 = new Option("o", "outputDir", true, "The output directory");
-//        o1.setRequired(true);
 
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1)));
         final Configuration conf = getConf();
@@ -144,9 +142,9 @@ public class DatabasePrepJob extends BitmapJob {
         final String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
         final String user = conf.get(TableConstants.CFG_USER);
         final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes("UTF-8");
-        final String metadataTable = conf.get("amino.metadataTable") + IteratorUtils.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
+        final String metadataTable = conf.get(AminoConfiguration.TABLE_METADATA) + AminoConfiguration.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
         final String metadataPaths = StringUtils.join(PathUtils.getJobMetadataPaths(conf,
-                fromOptionOrConfig(Optional.of("o"), Optional.of(CONF_OUTPUT_DIR))), ',');
+                fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR))), ',');
         System.out.println("Metadata paths: [" + metadataPaths + "].");
 
         // TODO - Verify that all of the params above were not null

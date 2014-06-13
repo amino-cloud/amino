@@ -2,7 +2,6 @@ package com._42six.amino.bitmap;
 
 import com._42six.amino.common.*;
 import com._42six.amino.common.accumulo.IteratorUtils;
-import com._42six.amino.common.bigtable.TableConstants;
 import com._42six.amino.common.index.BitmapIndex;
 import com._42six.amino.common.service.datacache.BucketCache;
 import com._42six.amino.common.util.PathUtils;
@@ -11,6 +10,7 @@ import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.mapreduce.AccumuloFileOutputFormat;
 import org.apache.accumulo.core.client.mapreduce.lib.partition.RangePartitioner;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.TextUtil;
@@ -37,34 +37,22 @@ import java.util.*;
 
 public class HypothesisJob extends BitmapJob
 {
-    private static final String AMINO_NUM_REDUCERS = "amino.num.reducers";
-    private static final String AMINO_NUM_TABLETS = "amino.bigtable.number.of.shards";
-    private static final String AMINO_NUM_TABLETS_HYPOTHESIS = "amino.bigtable.number.of.shards.hypothesis";
-	private static final int DEFAULT_NUM_REDUCERS = 14;
 
     public int execute(Job job, String inputDir, String workingDir, int numTabletsCommandLine) throws IOException, InterruptedException, ClassNotFoundException
 	{
 		final Configuration conf = job.getConfiguration();
-		//AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-        String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
-        String user = conf.get(TableConstants.CFG_USER);
-        String password = conf.get(TableConstants.CFG_PASSWORD);
-        final String tableName = conf.get("amino.bitmap.featureLookupTable");
-        final String temp = IteratorUtils.TEMP_SUFFIX;
-        final boolean blastIndex = conf.getBoolean("amino.bitmap.first.run", true); //should always assume it's the first run unless specified
-        final String tableContext = conf.get("amino.tableContext", "amino");
+        final String tableName = conf.get(AminoConfiguration.TABLE_FEATURE_LOOKUP);
         Connector connector = null;
         PrintStream out;
         boolean success = false;
         try
         {
         	final Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
-        	connector = inst.getConnector(user, password);
+        	connector = inst.getConnector(user, new PasswordToken(password));
         	
-        	int numReducers = conf.getInt(AMINO_NUM_REDUCERS, DEFAULT_NUM_REDUCERS);
-        	int numTablets = conf.getInt(AMINO_NUM_TABLETS, -1);
-        	int numTabletsHypothesis = conf.getInt(AMINO_NUM_TABLETS_HYPOTHESIS, -1);
+        	int numReducers = conf.getInt(AminoConfiguration.NUM_REDUCERS, AminoConfiguration.DEFAULT_NUM_REDUCERS);
+        	int numTablets = conf.getInt(AminoConfiguration.NUM_SHARDS, -1);
+        	int numTabletsHypothesis = conf.getInt(AminoConfiguration.NUM_SHARDS_HYPOTHESIS, -1);
         	
         	if (numTabletsCommandLine != -1) {
         		numReducers = numTabletsCommandLine;
@@ -74,12 +62,12 @@ public class HypothesisJob extends BitmapJob
         	else if (numTabletsHypothesis != -1) {
         		numReducers = numTabletsHypothesis;
         		System.out.println("Using number of reducers/tablets specified in the config property [" 
-        				+ AMINO_NUM_TABLETS_HYPOTHESIS + "] - [" + numReducers + "]");
+        				+ AminoConfiguration.NUM_SHARDS_HYPOTHESIS + "] - [" + numReducers + "]");
         	}
         	else if (numTablets != -1) {
         		numReducers = numTablets;
         		System.out.println("Using number of reducers/tablets specified in the config property [" 
-        				+ AMINO_NUM_TABLETS + "] - [" + numReducers + "]");
+        				+ AminoConfiguration.NUM_SHARDS + "] - [" + numReducers + "]");
         	}
         	else {
         		System.out.println("Number of hypothesis reducers/tablets not specified in config or " 
@@ -130,10 +118,7 @@ public class HypothesisJob extends BitmapJob
         	System.out.println("Importing job results to accumulo...");
         	try
         	{
-        		String tb = tableName + temp;
-        		if (!blastIndex){
-                    tb = tableName;
-                }
+                final String tb = (!blastIndex) ? tableName : tableName + AminoConfiguration.TEMP_SUFFIX;
                 JobUtilities.setGroupAndPermissions(conf, workingDir);
         		connector.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", false);
         		result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
@@ -155,7 +140,7 @@ public class HypothesisJob extends BitmapJob
 	// unless we run through all the files
 	private SortedSet<Text> buildSplitsFromSample(Configuration conf, String inputDir, int numReducers) throws IOException
 	{
-		final int numberOfHashes = conf.getInt("amino.bitmap.num-hashes", 1);
+		final int numberOfHashes = conf.getInt(AminoConfiguration.NUM_HASHES, 1);
 		final FileSystem fs = FileSystem.get(conf);
 		
 		final ArrayList<FileStatus> vettedStatus = IngestUtilities.grabAllVettedFileStati(conf, fs, inputDir);
@@ -210,21 +195,21 @@ public class HypothesisJob extends BitmapJob
     public int run(String[] args) throws Exception
     {
         System.out.println("\n================================ Hypothesis Job ================================\n");
+
         // Create the command line options to be parsed
         final Option o1 = new Option("o", "outputDir", true, "The output directory");
         final Option o2 = new Option("w", "workingDir", true, "The working directory");
         final Option o3 = new Option("t", "numTablets", false, "The number of tablets in use");
-//        o1.setRequired(true);
-//        o2.setRequired(true);
 
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1, o2, o3)));
         final Configuration conf = getConf();
+        loadConfigValues(conf);
 
         final Job job = new Job(conf, "Amino Hypothesis Feature Lookup Table job");
         job.setJarByClass(HypothesisJob.class);
 
         job.setInputFormatClass(SequenceFileInputFormat.class);
-        final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(CONF_OUTPUT_DIR));
+        final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
 
         final String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, inputDir), ',');
         System.out.println("Input paths: [" + inputPaths + "].");
@@ -243,7 +228,7 @@ public class HypothesisJob extends BitmapJob
         job.setOutputValueClass(Value.class);
 
         int numTablets = Integer.parseInt(fromOptionOrConfig(Optional.of("t"), Optional.<String>absent(), "-1"));
-        final String workingDirectory = fromOptionOrConfig(Optional.of("w"), Optional.of(CONF_WORKING_DIR));
+        final String workingDirectory = fromOptionOrConfig(Optional.of("w"), Optional.of(AminoConfiguration.WORKING_DIR));
         JobUtilities.resetWorkingDirectory(this.getConf(), workingDirectory);
 
         return execute(job, inputDir, workingDirectory, numTablets);

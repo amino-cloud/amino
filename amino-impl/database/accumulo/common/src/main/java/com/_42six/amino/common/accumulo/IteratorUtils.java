@@ -1,8 +1,10 @@
 package com._42six.amino.common.accumulo;
 
+import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.FeatureFactType;
 import org.apache.accumulo.core.client.*;
 import org.apache.accumulo.core.client.admin.TableOperations;
+import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
 import org.apache.accumulo.core.data.PartialKey;
 import org.apache.accumulo.core.data.Range;
@@ -14,11 +16,6 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class IteratorUtils {
-
-	public static int MAX_SPLITS = 1000;  // perhaps we should get this from config somehow?
-	// or maybe just set it to number of shards if we go that way.
-	public static final String TEMP_SUFFIX = "_temp";
-	public static final String OLD_SUFFIX = "old";
 
     public static Range exactRow(String rowId, String cf){
         final Key key = new Key(rowId, cf);
@@ -36,7 +33,7 @@ public class IteratorUtils {
         Connector connector;
 		try
 		{	
-			connector = instance.getConnector(user, password);
+			connector = instance.getConnector(user, new PasswordToken(password));
 		} catch (AccumuloException e) {
 			throw new IOException(e);
 		} catch(AccumuloSecurityException e) {
@@ -82,20 +79,15 @@ public class IteratorUtils {
 
 	private static String getTableName(String tableName, boolean markAsTemp)
 	{
-		if (markAsTemp) tableName = tableName + TEMP_SUFFIX;
+		if (markAsTemp) {
+            tableName = tableName + AminoConfiguration.TEMP_SUFFIX;
+        }
 		return tableName;
 	}
 
 	private static boolean isTableOperationNeeded(TableOperations tableOps, String tableName, boolean deleteIfExists)
 	{
-		if (!tableOps.exists(tableName) || (tableOps.exists(tableName) && deleteIfExists))
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+        return !tableOps.exists(tableName) || (tableOps.exists(tableName) && deleteIfExists);
 	}
 
 	private static boolean executeTableDeletion(TableOperations tableOps, String tableName)
@@ -134,6 +126,7 @@ public class IteratorUtils {
 				tableOps.addSplits(tableName, sortedSplits);
 			}
 
+            // TODO Check to see about putting the load balancer back in for 1.6
 //			tableOps.setProperty(tableName,
 //					org.apache.accumulo.core.conf.Property.TABLE_LOAD_BALANCER.getKey(),
 //					org.apache.accumulo.server.master.balancer.TableLoadBalancer.class.getName());
@@ -199,10 +192,8 @@ public class IteratorUtils {
 			try {
 				tableOps.setProperty(tableName, entry.getKey(), entry.getValue());
 			} catch (AccumuloException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (AccumuloSecurityException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}

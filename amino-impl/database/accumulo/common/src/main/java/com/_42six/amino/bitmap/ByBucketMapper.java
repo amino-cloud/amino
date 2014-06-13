@@ -33,8 +33,8 @@ public class ByBucketMapper extends Mapper<BucketStripped, AminoWritable, ByBuck
         bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, conf);
         dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, conf);
         visibilityCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Visibility, conf);
-        numberOfHashes = conf.getInt("amino.bitmap.num-hashes", 1);
-        numberOfShards = conf.getInt(BitmapConfigHelper.BITMAP_CONFIG_NUM_SHARDS, 10);
+        numberOfHashes = conf.getInt(AminoConfiguration.NUM_HASHES, 1);
+        numberOfShards = conf.getInt(AminoConfiguration.NUM_SHARDS, 10);
     }
 
     @Override

@@ -17,7 +17,7 @@ public class BitLookupMapper extends Mapper<BucketStripped, AminoWritable, BitLo
     @Override
 	protected void setup(Context context) throws IOException, InterruptedException {
     	super.setup(context);
-        numberOfHashes = context.getConfiguration().getInt("amino.bitmap.num-hashes", 1);
+        numberOfHashes = context.getConfiguration().getInt(AminoConfiguration.NUM_HASHES, 1);
     	bucketCache = new BucketCache(context.getConfiguration());
     }
 

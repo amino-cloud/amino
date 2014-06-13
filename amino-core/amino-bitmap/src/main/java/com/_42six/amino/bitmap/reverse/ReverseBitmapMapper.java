@@ -1,6 +1,6 @@
 package com._42six.amino.bitmap.reverse;
 
-import com._42six.amino.bitmap.BitmapConfigHelper;
+import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.AminoWritable;
 import com._42six.amino.common.Bucket;
 import com._42six.amino.common.BucketStripped;
@@ -47,8 +47,8 @@ public class ReverseBitmapMapper extends Mapper<BucketStripped, AminoWritable, R
         bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, configuration);
         dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, configuration);
         visibilityCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Visibility, configuration);
-		numberOfShards = context.getConfiguration().getInt(BitmapConfigHelper.BITMAP_CONFIG_NUM_SHARDS, 10);
-	    numberOfHashes = context.getConfiguration().getInt("amino.bitmap.num-hashes", 1);
+		numberOfShards = context.getConfiguration().getInt(AminoConfiguration.NUM_SHARDS, 10);
+	    numberOfHashes = context.getConfiguration().getInt(AminoConfiguration.NUM_HASHES, 1);
     }
 
 	@Override

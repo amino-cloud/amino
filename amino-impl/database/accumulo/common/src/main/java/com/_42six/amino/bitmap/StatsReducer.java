@@ -1,6 +1,6 @@
 package com._42six.amino.bitmap;
 
-import com._42six.amino.common.accumulo.IteratorUtils;
+import com._42six.amino.common.AminoConfiguration;
 import org.apache.accumulo.core.data.Mutation;
 import org.apache.accumulo.core.security.ColumnVisibility;
 import org.apache.hadoop.io.Text;
@@ -15,13 +15,13 @@ public class StatsReducer extends Reducer<StatsKey, Text, Text, Mutation>
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
 		super.setup(context);
-		blastIndex = context.getConfiguration().getBoolean("amino.bitmap.first.run", true);
+		blastIndex = context.getConfiguration().getBoolean(AminoConfiguration.FIRST_RUN, true);
 	}
 	
 	@Override
 	protected void reduce(StatsKey key, Iterable<Text> values, Context context) throws IOException, InterruptedException 
 	{
-		String table = context.getConfiguration().get(BitmapConfigHelper.AMINO_BITMAP_INDEX_TABLE);
+		String table = context.getConfiguration().get(AminoConfiguration.TABLE_INDEX);
 		
 		String first = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
 	    String last = "                                  ";
@@ -55,7 +55,7 @@ public class StatsReducer extends Reducer<StatsKey, Text, Text, Mutation>
 
 		if (blastIndex)
 		{
-			context.write(new Text(table + IteratorUtils.TEMP_SUFFIX), m);
+			context.write(new Text(table + AminoConfiguration.TEMP_SUFFIX), m);
 		}
 		else
 		{

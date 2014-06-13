@@ -1,6 +1,6 @@
 package com._42six.amino.bitmap.reverse;
 
-import com._42six.amino.bitmap.BitmapConfigHelper;
+import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.AminoWritable;
 import com._42six.amino.common.Bucket;
 import com._42six.amino.common.BucketStripped;
@@ -28,8 +28,8 @@ public class ReverseFeatureLookupMapper extends Mapper<BucketStripped, AminoWrit
         final Configuration conf = context.getConfiguration();
         bucketCache = new BucketCache(conf);
 
-        numberOfShards = context.getConfiguration().getInt(BitmapConfigHelper.BITMAP_CONFIG_NUM_SHARDS, 10);
-        numberOfHashes = context.getConfiguration().getInt("amino.bitmap.num-hashes", 1);
+        numberOfShards = context.getConfiguration().getInt(AminoConfiguration.NUM_SHARDS, 10);
+        numberOfHashes = context.getConfiguration().getInt(AminoConfiguration.NUM_HASHES, 1);
     }
 
     @Override

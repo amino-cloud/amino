@@ -43,7 +43,7 @@ public class NumberLoader implements DataLoader {
     public void initializeFormat(Job job) throws IOException {
         final Configuration conf = job.getConfiguration();
 
-        AminoConfiguration.loadDefault(conf, NumberLoader.class.getSimpleName(), true);
+        AminoConfiguration.loadAndMerge(conf, NumberLoader.class.getSimpleName(), true);
         dataLoc = conf.get("data.location");
         FileInputFormat.setInputPaths(job, dataLoc);
         number2Max = conf.getInt("number2-max", 500);

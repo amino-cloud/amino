@@ -1,6 +1,6 @@
 package com._42six.amino.bitmap.reverse;
 
-import com._42six.amino.common.accumulo.IteratorUtils;
+import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.bitmap.AminoBitmap;
 import com._42six.amino.common.bitmap.BitmapUtils;
 import com._42six.amino.common.service.datacache.SortedIndexCache;
@@ -27,8 +27,8 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
     protected void setup(Context context) throws IOException, InterruptedException
     {
         final Configuration configuration = context.getConfiguration();
-        String tableName = configuration.get("amino.bitmap.bucketTable");
-        tableName = tableName.replace("amino_", "amino_reverse_") + IteratorUtils.TEMP_SUFFIX;
+        String tableName = configuration.get(AminoConfiguration.TABLE_BUCKET);
+        tableName = tableName.replace("amino_", "amino_reverse_") + AminoConfiguration.TEMP_SUFFIX;
         RB_BUCKET_TABLE = new Text(tableName);
         bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, configuration);
         dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, configuration);

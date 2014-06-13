@@ -2,12 +2,17 @@ package com._42six.amino.bitmap;
 
 import com._42six.amino.api.framework.FrameworkDriver;
 import com._42six.amino.common.AminoConfiguration;
+import com._42six.amino.common.accumulo.IteratorUtils;
+import com._42six.amino.common.bigtable.TableConstants;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
+import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.commons.cli.*;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.util.Tool;
 
+import java.io.IOException;
 import java.util.HashSet;
 
 /**
@@ -17,9 +22,43 @@ public abstract class BitmapJob extends Configured implements Tool {
     protected CommandLine commandLine;
     protected Options options = FrameworkDriver.constructGnuOptions();
 
-    public static final String CONF_OUTPUT_DIR = "amino.output"; // TODO Roll this into a central configuration class
-    public static final String CONF_WORKING_DIR = "amino.working"; // TODO Roll this into a central configuration class
-    public static final String CONF_CACHE_DIR = "amino.cache"; // TODO Roll this into a central configuration class
+    protected String instanceName;
+    protected String zooKeepers;
+    protected String user;
+    protected String password;
+    protected boolean blastIndex = true; // should always assume it's the first run unless specified
+    protected String tableContext = "amino";
+
+    /**
+     * Load up the basic configuration values from the Configuration
+     *
+     * @param conf The Configuration to get the values from
+     */
+    protected void loadConfigValues(final Configuration conf){
+        this.instanceName = Preconditions.checkNotNull(conf.get(TableConstants.CFG_INSTANCE));
+        this.zooKeepers = Preconditions.checkNotNull(conf.get(TableConstants.CFG_ZOOKEEPERS));
+        this.user = Preconditions.checkNotNull(conf.get(TableConstants.CFG_USER));
+        this.password = Preconditions.checkNotNull(conf.get(TableConstants.CFG_PASSWORD));
+        this.blastIndex = conf.getBoolean(AminoConfiguration.FIRST_RUN, true); // should always assume it's the first run unless specified
+        this.tableContext = conf.get(AminoConfiguration.TABLE_CONTEXT, "amino");
+    }
+
+    protected boolean recreateTable(String tableName) throws IOException {
+        Preconditions.checkNotNull(instanceName,  "loadConfigs() was not called");
+
+        final TableOperations tableOps = IteratorUtils.connect(instanceName, zooKeepers, user, password).tableOperations();
+
+        return IteratorUtils.createTable(tableOps, tableName, tableContext, blastIndex, blastIndex);
+    }
+
+    protected boolean recreateTable(String tableName, int numShards) throws IOException {
+        Preconditions.checkNotNull(instanceName,  "loadConfigs() was not called");
+
+        final TableOperations tableOps = IteratorUtils.connect(instanceName, zooKeepers, user, password).tableOperations();
+
+        return IteratorUtils.createTable(tableOps, tableName, tableContext, numShards, blastIndex, blastIndex);
+    }
+
 
     /**
      * Checks the Configuration and command line parameters for a value.  It first checks the command line to see if the
@@ -98,6 +137,6 @@ public abstract class BitmapJob extends Configured implements Tool {
         // Load up the default Amino configurations
         final Configuration conf = getConf();
         conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, commandLine.getOptionValue("amino_default_config_path"));
-        AminoConfiguration.loadDefault(conf, "AminoDefaults", false);
+        AminoConfiguration.loadAndMergeWithDefault(conf, false);
     }
 }

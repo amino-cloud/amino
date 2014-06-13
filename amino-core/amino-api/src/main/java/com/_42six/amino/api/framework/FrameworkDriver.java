@@ -121,7 +121,7 @@ public final class FrameworkDriver extends Configured implements Tool {
         final DistributedCacheService distributedCacheService = new DistributedCacheService();
 
         // 1. load AminoDefaults
-        AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
+        AminoConfiguration.loadAndMergeWithDefault(conf, true);
         distributedCacheService.addFilesToDistributedCache(conf);
 
         // 2. load user config files, allowing them to overwrite

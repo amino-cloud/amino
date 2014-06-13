@@ -27,7 +27,7 @@ public class HypothesisMapper extends Mapper<BucketStripped, AminoWritable, Text
     {
         final Bucket bucket = bucketCache.getBucket(bucketStripped);
 
-        final int numberOfHashes = context.getConfiguration().getInt("amino.bitmap.num-hashes", 1);
+        final int numberOfHashes = context.getConfiguration().getInt(AminoConfiguration.NUM_HASHES, 1);
 
         final Feature feature = aw.getFeature();
         final FeatureFact featureFact = aw.getFeatureFact();
