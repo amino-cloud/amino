@@ -16,7 +16,22 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <slf4j.version>1.7.7</slf4j.version>
+        <release.repository>https://oss.sonatype.org/service/local/staging/deploy/maven2/</release.repository>
+        <snapshot.repository>https://oss.sonatype.org/content/repositories/snapshots/</snapshot.repository>
     </properties>
+
+     <distributionManagement>
+         <repository>
+            <id>central</id>
+            <name>Central Repoistory For Maven Artifacts</name>
+            <url>${release.repository}</url>
+        </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>snapshots</name>
+            <url>${snapshot.repository}</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <dependencyManagement>
         <dependencies>
