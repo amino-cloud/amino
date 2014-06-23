@@ -4,7 +4,6 @@ import com._42six.amino.common.*;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.index.BitmapIndex;
 import com._42six.amino.common.service.datacache.BucketCache;
-import com._42six.amino.common.util.PathUtils;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.*;
@@ -16,7 +15,6 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.TextUtil;
 import org.apache.commons.cli.Option;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -27,7 +25,6 @@ import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.BufferedOutputStream;
@@ -87,8 +84,9 @@ public class HypothesisJob extends BitmapJob
         	out.close();
 
         	success = IteratorUtils.createTable(connector.tableOperations(), tableName, tableContext, splits, blastIndex, blastIndex);
-        	
-        	job.setOutputFormatClass(AccumuloFileOutputFormat.class);
+
+
+            job.setOutputFormatClass(AccumuloFileOutputFormat.class);
             AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDir + "/files"));
         	job.setPartitionerClass(RangePartitioner.class);
         	job.setSortComparatorClass(HypothesisKeyComparator.class); //This will ensure the values come in sorted so we don't have to do that TreeMap...
@@ -204,21 +202,12 @@ public class HypothesisJob extends BitmapJob
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1, o2, o3)));
         final Configuration conf = getConf();
         loadConfigValues(conf);
+        final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
 
         final Job job = new Job(conf, "Amino Hypothesis Feature Lookup Table job");
         job.setJarByClass(HypothesisJob.class);
 
-        job.setInputFormatClass(SequenceFileInputFormat.class);
-        final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
-
-        final String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, inputDir), ',');
-        System.out.println("Input paths: [" + inputPaths + "].");
-
-        final String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf, inputDir), ','); // TODO - why is this the same as the inputDir
-        System.out.println("Cache paths: [" + cachePaths + "].");
-
-        PathUtils.setCachePath(job.getConfiguration(), cachePaths);
-        SequenceFileInputFormat.setInputPaths(job, inputPaths);
+        initializeJob(job);
 
         job.setMapperClass(HypothesisMapper.class);
         job.setMapOutputKeyClass(Text.class);

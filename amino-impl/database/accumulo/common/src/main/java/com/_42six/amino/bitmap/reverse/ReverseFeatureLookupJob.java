@@ -4,7 +4,6 @@ import com._42six.amino.bitmap.BitmapJob;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.JobUtilities;
 import com._42six.amino.common.accumulo.IteratorUtils;
-import com._42six.amino.common.util.PathUtils;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.*;
@@ -17,13 +16,11 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.TextUtil;
 import org.apache.commons.cli.Option;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.BufferedOutputStream;
@@ -49,21 +46,10 @@ public class ReverseFeatureLookupJob extends BitmapJob
 
         final Job job = new Job(conf, "Amino reverse_feature_lookup table job");
         job.setJarByClass(ReverseFeatureLookupJob.class);
-        job.setInputFormatClass(SequenceFileInputFormat.class);
-
-        // Parse the command line parameters
-        final String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf,
-                fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR))), ',');
-        final String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf,
-                fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR))), ','); // TODO Check why same inputPaths
         final String workingDirectory = fromOptionOrConfig(Optional.of("w"), Optional.of(AminoConfiguration.WORKING_DIR));
-
-        System.out.println("Input paths: [" + inputPaths + "].");
-        System.out.println("Cache paths: [" + cachePaths + "].");
-
         JobUtilities.resetWorkingDirectory(this.getConf(), workingDirectory);
-        PathUtils.setCachePath(job.getConfiguration(), cachePaths);
-        SequenceFileInputFormat.setInputPaths(job, inputPaths);
+
+        initializeJob(job);
 
         // Configure the mapper
         job.setMapperClass(ReverseFeatureLookupMapper.class);
@@ -109,6 +95,7 @@ public class ReverseFeatureLookupJob extends BitmapJob
             splitsPrinter.close();
 
             success = IteratorUtils.createTable(connector.tableOperations(), tableName, tableContext, splits, blastIndex, blastIndex);
+
 
             job.setOutputFormatClass(AccumuloFileOutputFormat.class);
             AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDirectory + "/files"));

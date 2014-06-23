@@ -1,18 +1,15 @@
 package com._42six.amino.bitmap;
 
 import com._42six.amino.common.AminoConfiguration;
-import com._42six.amino.common.util.PathUtils;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.ClientConfiguration;
 import org.apache.accumulo.core.client.mapreduce.AccumuloOutputFormat;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.commons.cli.Option;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.ToolRunner;
 
 public class StatsJob extends BitmapJob {
@@ -29,19 +26,7 @@ public class StatsJob extends BitmapJob {
 
         Job job = new Job(conf, "Amino stats job");
         job.setJarByClass(StatsJob.class);
-        
-        job.setInputFormatClass(SequenceFileInputFormat.class);
-
-        String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf,
-                fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR))), ',');
-        System.out.println("Input paths: [" + inputPaths + "].");
-        
-        String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf,
-                fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR))), ','); // TODO - Check why same inputPaths
-        System.out.println("Cache paths: [" + cachePaths + "].");
-        
-        PathUtils.setCachePath(job.getConfiguration(), cachePaths);
-        SequenceFileInputFormat.setInputPaths(job, inputPaths);
+        initializeJob(job);
         
         job.setMapperClass(StatsMapper.class);
         job.setMapOutputKeyClass(StatsKey.class);
@@ -56,9 +41,9 @@ public class StatsJob extends BitmapJob {
         else {
         	job.setNumReduceTasks(conf.getInt(AminoConfiguration.NUM_REDUCERS, AminoConfiguration.DEFAULT_NUM_REDUCERS));
         }
-        
-        job.setOutputFormatClass(AccumuloOutputFormat.class);
 
+
+        job.setOutputFormatClass(AccumuloOutputFormat.class);
         AccumuloOutputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zooKeepers));
         AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password.getBytes("UTF-8")));
         AccumuloOutputFormat.setCreateTables(job, true);

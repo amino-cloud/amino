@@ -4,12 +4,16 @@ import com._42six.amino.api.framework.FrameworkDriver;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.bigtable.TableConstants;
+import com._42six.amino.common.util.PathUtils;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import org.apache.accumulo.core.client.admin.TableOperations;
 import org.apache.commons.cli.*;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.Tool;
 
 import java.io.IOException;
@@ -139,4 +143,25 @@ public abstract class BitmapJob extends Configured implements Tool {
         conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, commandLine.getOptionValue("amino_default_config_path"));
         AminoConfiguration.loadAndMergeWithDefault(conf, false);
     }
+
+    /**
+     * Initializes all of the common Job parameters
+     *
+     * @param job The Job to configure
+     */
+    protected void initializeJob(Job job) throws IOException {
+        final Configuration conf = getConf();
+        final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
+        final String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, inputDir), ',');
+        final String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf, inputDir), ','); // TODO - why is this the same as the inputDir
+
+        System.out.println("Input paths: [" + inputPaths + "].");
+        System.out.println("Cache paths: [" + cachePaths + "].");
+
+        PathUtils.setCachePath(job.getConfiguration(), cachePaths);
+        SequenceFileInputFormat.setInputPaths(job, inputPaths);
+
+        job.setInputFormatClass(SequenceFileInputFormat.class);
+    }
+
 }

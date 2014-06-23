@@ -7,6 +7,7 @@ import org.apache.accumulo.core.client.IteratorSetting;
 import org.apache.accumulo.core.client.mapreduce.AccumuloInputFormat;
 import org.apache.accumulo.core.client.security.tokens.PasswordToken;
 import org.apache.accumulo.core.data.Key;
+import org.apache.accumulo.core.data.Range;
 import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.iterators.user.RegExFilter;
 import org.apache.accumulo.core.iterators.user.WholeRowIterator;
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,7 +39,8 @@ public abstract class AccumuloDataLoader implements DataLoader {
     public static final String CFG_PASSWORD = "dataloader.password";
     public static final String CFG_AUTHS = "dataloader.authorizations";
 
-    public static final String CFG_ROW_IDS = "loader.rowIds";
+    public static final String CFG_ROW_IDS = "dataloader.rowIds";
+    public static final String CFG_ROW_REGEX = "dataloader.regex";
 
     /**
      * All of the buckets that this DataLoader knows about
@@ -63,13 +66,14 @@ public abstract class AccumuloDataLoader implements DataLoader {
     @Override
     public void initializeFormat(Job job) throws IOException {
         final Configuration conf = job.getConfiguration();
-        String instanceName = conf.get(CFG_INSTANCE);
-        String zookeeperInfo = conf.get(CFG_ZOOKEEPERS);
-        String tableName = conf.get(CFG_TABLE);
-        String userName = conf.get(CFG_USERNAME);
-        String password = conf.get(CFG_PASSWORD);
-        String authorizations = conf.get(CFG_AUTHS);
-        String rowIds = conf.get(CFG_ROW_IDS, "");
+        final String instanceName = conf.get(CFG_INSTANCE);
+        final String zookeeperInfo = conf.get(CFG_ZOOKEEPERS);
+        final String tableName = conf.get(CFG_TABLE);
+        final String userName = conf.get(CFG_USERNAME);
+        final String password = conf.get(CFG_PASSWORD);
+        final String authorizations = conf.get(CFG_AUTHS);
+        final String rowIds = conf.get(CFG_ROW_IDS, "");
+        final String rowRegex = conf.get(CFG_ROW_REGEX, null);
 
         logger.info("Grabbing data from table: " + tableName);
 
@@ -84,18 +88,34 @@ public abstract class AccumuloDataLoader implements DataLoader {
 
             AccumuloInputFormat.setInputTableName(job, tableName);
             AccumuloInputFormat.setScanAuthorizations(job, new Authorizations(authorizations.getBytes()));
-
-
-            // Name is needed for ACCUMULO-1267
-            final IteratorSetting regexSetting = new IteratorSetting(20, "Warehaus Row Regex", RegExFilter.class);
-            RegExFilter.setRegexs(regexSetting, rowIds, null, null, null, false);
-            AccumuloInputFormat.addIterator(job, regexSetting);
             AccumuloInputFormat.addIterator(job, new IteratorSetting(30, WholeRowIterator.class));
 
+            // If a row regex is set, use that to determine which rows to fetch.  If it's not, use the comma seperated
+            // list of rowIDs instead
+            if(rowRegex != null){
+                logger.info("Using rowId regex: " + rowRegex);
+                // Name is needed for ACCUMULO-1267
+                final IteratorSetting regexSetting = new IteratorSetting(20, "Warehaus Row Regex", RegExFilter.class);
+                RegExFilter.setRegexs(regexSetting, rowIds, null, null, null, false);
+                AccumuloInputFormat.addIterator(job, regexSetting);
+            } else {
+                final List<Range> ranges = new ArrayList<Range>();
+
+                // If the rowIds was empty (or not provided at all) then fetch all of the rows
+                if(rowIds.isEmpty()){
+                    logger.info("No specific RowID requested.  Fetching all rows.");
+                    ranges.add(new Range());
+                } else{
+                    for(String rowId : rowIds.split(",")){
+                        ranges.add(new Range(rowId));
+                        logger.info("Fetching RowID: " + rowId);
+                    }
+                }
+                AccumuloInputFormat.setRanges(job, ranges);
+            }
         } catch (IllegalStateException e){
             logger.warn("Attempting to initalizeFormat when it's already been initalized");
         }
-        logger.info("Fetching rows: " + rowIds);
     }
 
     @Override

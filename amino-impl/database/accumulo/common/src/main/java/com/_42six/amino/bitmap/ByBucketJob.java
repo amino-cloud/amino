@@ -4,7 +4,6 @@ import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.ByBucketKey;
 import com._42six.amino.common.JobUtilities;
 import com._42six.amino.common.accumulo.IteratorUtils;
-import com._42six.amino.common.util.PathUtils;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.*;
@@ -15,13 +14,11 @@ import org.apache.accumulo.core.data.Value;
 import org.apache.accumulo.core.util.TextUtil;
 import org.apache.commons.cli.Option;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.BufferedOutputStream;
@@ -51,20 +48,10 @@ public class ByBucketJob extends BitmapJob {
             return 1;
         }
 
-        final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
-
         final Job job = new Job(conf, "Amino bucket index job");
         job.setJarByClass(ByBucketJob.class);
-        job.setInputFormatClass(SequenceFileInputFormat.class);
+        initializeJob(job);
 
-        final String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, inputDir), ',');
-        final String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf, inputDir), ',');
-
-        System.out.println("Input paths: [" + inputPaths + "].");
-        System.out.println("Cache paths: [" + cachePaths + "].");
-
-        PathUtils.setCachePath(job.getConfiguration(), cachePaths);
-        SequenceFileInputFormat.setInputPaths(job, inputPaths);
         job.setMapperClass(ByBucketMapper.class);
         job.setMapOutputKeyClass(ByBucketKey.class);
         job.setMapOutputValueClass(BitmapValue.class);
@@ -144,8 +131,8 @@ public class ByBucketJob extends BitmapJob {
 
             success = IteratorUtils.createTable(c.tableOperations(), tableName, tableContext, splits, blastIndex, blastIndex);
 
-            job.setOutputFormatClass(AccumuloFileOutputFormat.class);
 
+            job.setOutputFormatClass(AccumuloFileOutputFormat.class);
             AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDir + "/files"));
 
             //job.setPartitionerClass(ByBucketPartitioner.class); // TODO Fix bug in Partitioner
