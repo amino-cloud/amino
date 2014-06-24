@@ -1,0 +1,26 @@
+HDFS_ROOT_DIR=/amino
+HDFS_NUMBERS_DIR=$HDFS_ROOT_DIR/numbers
+HDFS_ITER_DIR=$HDFS_ROOT_DIR/iterators
+
+AMINO="$(git rev-parse --show-toplevel)"
+DEST=$AMINO/job
+NUMBERS=$DEST/numbers
+DIR_LIB=$NUMBERS/lib
+NUMBERS_JOB_JAR="$DIR_LIB/lib/number-*-SNAPSHOT-job.jar"
+AMINO_JOB_JAR="$DIR_LIB/amino-accumulo-common-*-SNAPSHOT-job.jar"
+
+
+DIR_ITERS=$DEST/iterators
+HDFS_DIR_OUT=$HDFS_NUMBERS_DIR/out
+HDFS_DIR_IN=$HDFS_NUMBERS_DIR/in
+HDFS_DIR_CONF=$HDFS_NUMBERS_DIR/config
+HDFS_DIR_WORKING=$HDFS_NUMBERS_DIR/working
+
+
+AMINO_ROOT_PACKAGE=com._42six.amino
+AMINO_BITMAP_PACKAGE=$AMINO_ROOT_PACKAGE.bitmap
+
+
+##to use paste this into your script
+#SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+#source $SCRIPT_DIR/config
