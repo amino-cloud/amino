@@ -4,6 +4,25 @@ source $SCRIPT_DIR/config
 
 export HADOOP_BIN=${HADOOP_BIN:-$HADOOP_HOME/bin/hadoop}
 
+
+HELP_TEXT="Usage: $0 [--start-at JOB_NAME || --run-only JOB_NAME]\n
+  JOB_NAME can be one of:\n
+    NUMBERS_JOB\n
+    DB_PREP_JOB\n
+    BYBUCKET_JOB\n
+    BITLOOKUP_JOB\n
+    STATS_JOB\n
+    HYPOTHESIS_JOB\n
+    REVERSE_BITMAP_JOB\n
+    REVERSE_FEATURE_LOOKUP_JOB\n
+    FEATURE_METADATA_JOB\n
+\n
+  If you use --start-at it will run every job after the job name specified, including the job name specified.\n
+  If you use --run-only it will only run the job that you specified.\n
+  If you specify no arguments it will run all of the jobs including the NUMBERS_JOB\n
+"
+
+
 NUMBERS_JOB=1
 DB_PREP_JOB=2
 BYBUCKET_JOB=3
@@ -45,7 +64,12 @@ if [ $# -gt 1 ]; then
 	RUN_ONLY=$2
         printf -v $RUN_ONLY "1"
     else
-       echo "No Arguments"
+       echo "Running all jobs"
+    fi
+elif [ $# -eq 1 ]; then
+    if [ "$1" = '--help' ] || [ "$1" = "--usage" ]; then
+      echo -e $HELP_TEXT
+      exit
     fi
 fi
 
