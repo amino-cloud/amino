@@ -1,8 +1,8 @@
 #!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $SCRIPT_DIR/config
+set -x
 
-export HADOOP_BIN=${HADOOP_BIN:-$HADOOP_HOME/bin/hadoop}
 
 
 HELP_TEXT="Usage: $0 [--start-at JOB_NAME || --run-only JOB_NAME]\n
@@ -41,6 +41,7 @@ if [ $# -gt 1 ]; then
         if ! [[ ${!START_AT} =~ $re ]] ; then
            echo "error: Unknown JOB name $START_AT" >&2; exit 1
         fi
+        set +e
         NUMBERS_JOB=$(expr $NUMBERS_JOB - ${!START_AT} + 1)
         DB_PREP_JOB=$(expr $DB_PREP_JOB - ${!START_AT} + 1)
         BYBUCKET_JOB=$(expr $BYBUCKET_JOB - ${!START_AT} + 1)
@@ -50,8 +51,10 @@ if [ $# -gt 1 ]; then
         REVERSE_BITMAP_JOB=$(expr $REVERSE_BITMAP_JOB - ${!START_AT} + 1)
         REVERSE_FEATURE_LOOKUP_JOB=$(expr $REVERSE_FEATURE_LOOKUP_JOB - ${!START_AT} + 1)
         FEATURE_METADATA_JOB=$(expr $FEATURE_METADATA_JOB - ${!START_AT} + 1)
+        set -e
     elif [ "$1" = '--run-only' ]
     then
+        set +e
         NUMBERS_JOB=0
         DB_PREP_JOB=0
         BYBUCKET_JOB=0
@@ -62,6 +65,7 @@ if [ $# -gt 1 ]; then
         REVERSE_FEATURE_LOOKUP_JOB=0
         FEATURE_METADATA_JOB=0
 	RUN_ONLY=$2
+        set -e
         printf -v $RUN_ONLY "1"
     else
        echo "Running all jobs"
@@ -74,11 +78,11 @@ elif [ $# -eq 1 ]; then
 fi
 
 ([ $NUMBERS_JOB -lt 1 ] || $HADOOP_BIN jar $NUMBERS_JOB_JAR $AMINO_ROOT_PACKAGE.api.framework.FrameworkDriver --amino_default_config_path $HDFS_DIR_CONF) &&
-([ $DB_PREP_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.DatabasePrepJob $HDFS_DIR_OUT $HDFS_DIR_CONF) &&
-([ $BYBUCKET_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.ByBucketJob $HDFS_DIR_OUT $HDFS_DIR_CONF $HDFS_DIR_WORKING) &&
-([ $BITLOOKUP_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.BitLookupJob $HDFS_DIR_OUT $HDFS_DIR_CONF $HDFS_DIR_WORKING) &&
-([ $STATS_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.StatsJob $HDFS_DIR_OUT $HDFS_DIR_CONF) &&
-([ $HYPOTHESIS_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.HypothesisJob $HDFS_DIR_OUT $HDFS_DIR_CONF $HDFS_DIR_WORKING) &&
-([ $REVERSE_BITMAP_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.reverse.ReverseBitmapJob $HDFS_DIR_OUT $HDFS_DIR_CONF) &&
-([ $REVERSE_FEATURE_LOOKUP_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.reverse.ReverseFeatureLookupJob $HDFS_DIR_OUT $HDFS_DIR_CONF $HDFS_DIR_WORKING) &&
-([ $FEATURE_METADATA_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.FeatureMetadataJob $HDFS_DIR_CONF)
+([ $DB_PREP_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.DatabasePrepJob --amino_default_config_path $HDFS_DIR_CONF) &&
+([ $BYBUCKET_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.ByBucketJob --amino_default_config_path $HDFS_DIR_CONF) &&
+([ $BITLOOKUP_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.BitLookupJob --amino_default_config_path $HDFS_DIR_CONF) &&
+([ $STATS_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.StatsJob --amino_default_config_path $HDFS_DIR_CONF) &&
+([ $HYPOTHESIS_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.HypothesisJob --amino_default_config_path $HDFS_DIR_CONF) &&
+([ $REVERSE_BITMAP_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.reverse.ReverseBitmapJob --amino_default_config_path $HDFS_DIR_CONF) &&
+([ $REVERSE_FEATURE_LOOKUP_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.reverse.ReverseFeatureLookupJob --amino_default_config_path $HDFS_DIR_CONF) &&
+([ $FEATURE_METADATA_JOB -lt 1 ] || $HADOOP_BIN jar $AMINO_JOB_JAR $AMINO_BITMAP_PACKAGE.FeatureMetadataJob --amino_default_config_path $HDFS_DIR_CONF)

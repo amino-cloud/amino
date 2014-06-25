@@ -1,24 +1,41 @@
-HDFS_ROOT_DIR=/amino
-HDFS_NUMBERS_DIR=$HDFS_ROOT_DIR/numbers
-HDFS_ITER_DIR=$HDFS_ROOT_DIR/iterators
-
-AMINO="$(git rev-parse --show-toplevel)"
-DEST=$AMINO/job
-NUMBERS=$DEST/numbers
-DIR_LIB=$NUMBERS/lib
-NUMBERS_JOB_JAR="$DIR_LIB/lib/number-*-SNAPSHOT-job.jar"
-AMINO_JOB_JAR="$DIR_LIB/amino-accumulo-common-*-SNAPSHOT-job.jar"
+set -u
+set -e
+export ZOOKEEPER_HOST="localhost:2181"
+export BIGTABLE_INSTANCE="ezbake"
+export BIGTABLE_USERNAME="root"
+export BIGTABLE_PASSWORD="secret"
+export HDFS_GROUP_NAME="users"
 
 
-DIR_ITERS=$DEST/iterators
-HDFS_DIR_OUT=$HDFS_NUMBERS_DIR/out
-HDFS_DIR_IN=$HDFS_NUMBERS_DIR/in
-HDFS_DIR_CONF=$HDFS_NUMBERS_DIR/config
-HDFS_DIR_WORKING=$HDFS_NUMBERS_DIR/working
+export FULLY_QUALIFIED_HDFS_ROOT=hdfs://localhost:8020
+export HDFS_ROOT_DIR=/amino
+export HDFS_NUMBERS_DIR=$HDFS_ROOT_DIR/numbers
+export HDFS_ITER_DIR=$HDFS_ROOT_DIR/iterators
+
+export AMINO="$(git rev-parse --show-toplevel)"
+export DEST=$AMINO/job
+export NUMBERS=$DEST/numbers
+export DIR_LIB=$NUMBERS/lib
+export NUMBERS_JOB_JAR="$DIR_LIB/number-*-SNAPSHOT-job.jar"
+export AMINO_JOB_JAR="$DIR_LIB/amino-accumulo-common-*-SNAPSHOT-job.jar"
+
+
+export DIR_CONF=$NUMBERS/config
+export DIR_ITERS=$DEST/iterators
+export HDFS_DIR_OUT=$HDFS_NUMBERS_DIR/out
+export HDFS_DIR_IN=$HDFS_NUMBERS_DIR/in
+export HDFS_DIR_CONF=$HDFS_NUMBERS_DIR/config
+export HDFS_DIR_WORKING=$HDFS_NUMBERS_DIR/working
 
 
 AMINO_ROOT_PACKAGE=com._42six.amino
 AMINO_BITMAP_PACKAGE=$AMINO_ROOT_PACKAGE.bitmap
+
+HADOOP_BIN=${HADOOP_BIN:-$HADOOP_HOME/bin/hadoop}
+ACCUMULO_BIN=${ACCUMULO_BIN:-$ACCUMULO_HOME/bin/accumulo}
+
+ERB_BIN=${ERB_BIN:-$(which erb)}
+
 
 
 ##to use paste this into your script
