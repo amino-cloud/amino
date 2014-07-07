@@ -4,6 +4,7 @@ import com._42six.amino.common.*;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.index.BitmapIndex;
 import com._42six.amino.common.service.datacache.BucketCache;
+import com._42six.amino.common.util.PathUtils;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.*;
@@ -203,6 +204,7 @@ public class HypothesisJob extends BitmapJob
         final Configuration conf = getConf();
         loadConfigValues(conf);
         final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
+        PathUtils.pathsExists(inputDir, conf);
 
         final Job job = new Job(conf, "Amino Hypothesis Feature Lookup Table job");
         job.setJarByClass(HypothesisJob.class);

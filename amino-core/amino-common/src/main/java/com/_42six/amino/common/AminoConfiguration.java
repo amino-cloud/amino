@@ -5,9 +5,12 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.util.StringUtils;
 
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class AminoConfiguration extends Configuration {
 
@@ -30,6 +33,8 @@ public class AminoConfiguration extends Configuration {
     public static final String NUM_REDUCERS_BITMAP = "amino.num.reducers.job.bitmap";
     public static final String NUM_REDUCERS_STATS = "amino.num.reducers.job.stats";
 
+    public static final String CREATE_IF_NOT_EXIST = "amino.hdfs.createIfNotExist";
+    public static final String BASE_DIR = "amino.hdfs.basedir";
     public static final String OUTPUT_DIR = "amino.output";
     public static final String WORKING_DIR = "amino.working";
     public static final String CACHE_DIR = "amino.cache";
@@ -52,31 +57,32 @@ public class AminoConfiguration extends Configuration {
     public static final String TABLE_GROUP_METADATA = "amino.groupMetadataTable";
     public static final String TABLE_METADATA = "amino.metadataTable";
 
+    /**
+     * Creates the configuration values for each of the base directories, if they exist in the Configuration
+     *
+     * @param conf The Hadoop Configuration with a comma separated list of base directories to process
+     */
+    public static void createDirConfs(Configuration conf){
+        if(conf.get(AminoConfiguration.BASE_DIR) != null){
+            final String baseDir = Preconditions.checkNotNull(conf.get(AminoConfiguration.BASE_DIR),
+                    "The basedir is missing from the Amino Configurations");
+            final String baseJob = new Path(baseDir, "job").getName();
 
-//    private String defaultDirectory;
+            final Set<String> working = new HashSet<>();
+            final Set<String> output = new HashSet<>();
+            final Set<String> cache = new HashSet<>();
 
-//    public AminoConfiguration() {
-//        this(DEFAULT_CONFIGURATION_PATH_KEY);
-//    }
-//
-//    public AminoConfiguration(String defaultDirectory){
-//        this(defaultDirectory, false);
-//    }
-//
-//    public AminoConfiguration(String defaultDirectory, boolean loadAminoDefaults) {
-//        this.defaultDirectory = defaultDirectory;
-//        this.set(DEFAULT_CONFIGURATION_PATH_KEY, defaultDirectory);
-//
-//        if(loadAminoDefaults){
-//            try {
-//                AminoConfiguration.loadAndMergeWithDefault(this, true);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//                throw new RuntimeException(e); // TODO - This prob isn't the best
-//            }
-//        }
-//    }
+            for(String path : conf.get(AminoConfiguration.BASE_DIR).split(",")){
+                working.add(baseDir + "/working");
+                output.add(baseDir + "/out");
+                cache.add(baseDir + "/cache");
+            }
 
+            conf.set(AminoConfiguration.WORKING_DIR, StringUtils.join(",", working));
+            conf.set(AminoConfiguration.OUTPUT_DIR, StringUtils.join(",", output));
+            conf.set(AminoConfiguration.CACHE_DIR, StringUtils.join(",", cache));
+        }
+    }
 
     public static void loadAndMergeWithDefault(Configuration conf, boolean overrideValues) throws IOException {
         loadAndMerge(conf, DEFAULT_CONFIG_CLASS_NAME, overrideValues);

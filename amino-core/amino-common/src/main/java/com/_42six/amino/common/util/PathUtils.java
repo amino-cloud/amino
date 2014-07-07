@@ -1,14 +1,15 @@
 package com._42six.amino.common.util;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
+import com._42six.amino.common.AminoConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 public class PathUtils {
 	
@@ -16,7 +17,43 @@ public class PathUtils {
 	private static final String JOB_METADATA_FOLDER = "cache";
 	private static final String CACHE_PATH_PROPERTY = "amino.job.cache.path";
 	private static final String JOB_CACHE_METADATA_FOLDER = "metadata";
-	
+
+    /**
+     * Checks to see if the path exists on HDFS.  If it does not, and the create flag is set to true in the configuration,
+     * it will attempt to create the Path.  If not, it will throw an Exception that the path doesn't exist.
+     *
+     * @param paths Comma separated list of Path to check the existence of
+     * @param conf The Hadoop Configuration
+     * @throws IOException Problem creating the path or path doesn't exist
+     */
+    public static void pathsExists(String paths, Configuration conf) throws IOException {
+        final boolean create = conf.getBoolean(AminoConfiguration.CREATE_IF_NOT_EXIST, false);
+        pathsExists(paths, conf, create);
+    }
+
+    /**
+     * Checks to see if the path exists on HDFS.  If it does not, and the create flag is set to true, it will attempt to
+     * create the Path.  If not, it will throw an Exception that the path doesn't exist.
+     *
+     * @param paths Comma separated list of Path to check the existence of
+     * @param conf The Hadoop Configuration
+     * @param createIfNotExist Whether or not to try and create the Path if it doesn't already exist
+     * @throws IOException Problem creating the path or path doesn't exist
+     */
+    public static void pathsExists(String paths, Configuration conf, boolean createIfNotExist) throws IOException {
+        final FileSystem fs = FileSystem.get(conf);
+        for(String path : paths.split(",")){
+            final Path p = new Path(path);
+            if(!fs.exists(p)){
+                if(createIfNotExist){
+                    fs.mkdirs(p);
+                } else {
+                    throw new IOException("Path '" + path + "' does not exist");
+                }
+            }
+        }
+    }
+
 	public static String getJobDataPath(String rootPath) {
 		return rootPath.endsWith("/") ? rootPath + JOB_DATA_FOLDER : rootPath + "/" + JOB_DATA_FOLDER;
 	}
@@ -30,7 +67,7 @@ public class PathUtils {
 		if (rootPath.endsWith("*")) {
 			Set<String> pathSet = new HashSet<String>();
 			
-			//go through sub directories and add the job data directories
+			// go through sub directories and add the job data directories
 			FileSystem fs = FileSystem.get(conf);
 			for (FileStatus status : fs.listStatus(new Path(rootPath.substring(0, rootPath.length() - 1)))) {
 				if (!fs.isFile(status.getPath())) {
@@ -61,7 +98,7 @@ public class PathUtils {
 		if (rootPath.endsWith("*")) {
 			Set<String> pathSet = new HashSet<String>();
 			
-			//go through sub directories and add the job data directories
+			// go through sub directories and add the job data directories
 			FileSystem fs = FileSystem.get(conf);
 			for (FileStatus status : fs.listStatus(new Path(rootPath.substring(0, rootPath.length() - 1)))) {
 				if (!fs.isFile(status.getPath())) {

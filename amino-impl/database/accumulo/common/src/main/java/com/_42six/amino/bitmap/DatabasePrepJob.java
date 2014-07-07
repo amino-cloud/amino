@@ -145,6 +145,8 @@ public class DatabasePrepJob extends BitmapJob {
         final String metadataTable = conf.get(AminoConfiguration.TABLE_METADATA) + AminoConfiguration.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
         final String metadataPaths = StringUtils.join(PathUtils.getJobMetadataPaths(conf,
                 fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR))), ',');
+
+        PathUtils.pathsExists(metadataPaths, conf);
         System.out.println("Metadata paths: [" + metadataPaths + "].");
 
         // TODO - Verify that all of the params above were not null

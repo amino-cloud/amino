@@ -96,17 +96,12 @@ public class ReverseFeatureLookupJob extends BitmapJob
 
             success = IteratorUtils.createTable(connector.tableOperations(), tableName, tableContext, splits, blastIndex, blastIndex);
 
-
             job.setOutputFormatClass(AccumuloFileOutputFormat.class);
             AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDirectory + "/files"));
             job.setPartitionerClass(KeyRangePartitioner.class);
             RangePartitioner.setSplitFile(job, workingDirectory + "/splits.txt");
         }
-        catch (AccumuloException e)
-        {
-            e.printStackTrace();
-        }
-        catch (AccumuloSecurityException e)
+        catch (AccumuloException | AccumuloSecurityException e)
         {
             e.printStackTrace();
         }

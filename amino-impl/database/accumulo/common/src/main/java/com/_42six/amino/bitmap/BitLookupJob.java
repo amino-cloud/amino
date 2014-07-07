@@ -4,6 +4,7 @@ import com._42six.amino.common.*;
 import com._42six.amino.common.accumulo.IteratorUtils;
 import com._42six.amino.common.index.BitmapIndex;
 import com._42six.amino.common.service.datacache.BucketCache;
+import com._42six.amino.common.util.PathUtils;
 import com.google.common.base.Optional;
 import com.google.common.collect.Sets;
 import org.apache.accumulo.core.client.*;
@@ -49,6 +50,7 @@ public class BitLookupJob extends BitmapJob {
         }
 
         final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
+        PathUtils.pathsExists(inputDir, conf);
 
         final Job job = new Job(conf, "Amino feature index job");
         job.setJarByClass(BitLookupJob.class);
@@ -132,18 +134,13 @@ public class BitLookupJob extends BitmapJob {
 
             success = IteratorUtils.createTable(c.tableOperations(), tableName, tableContext, splits, blastIndex, blastIndex);
 
-
             job.setOutputFormatClass(AccumuloFileOutputFormat.class);
             AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDir + "/files"));
             // job.setPartitionerClass(RangePartitioner.class);
             // job.setSortComparatorClass(FeatureKeyComparator.class); // This will ensure the values come in sorted so we don't have to do that TreeMap...
             // RangePartitioner.setSplitFile(job, splitfile);
         }
-        catch (AccumuloException e)
-        {
-            e.printStackTrace();
-        }
-        catch (AccumuloSecurityException e)
+        catch (AccumuloException | AccumuloSecurityException e)
         {
             e.printStackTrace();
         }

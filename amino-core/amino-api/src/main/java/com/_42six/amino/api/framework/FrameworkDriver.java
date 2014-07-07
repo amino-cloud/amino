@@ -11,10 +11,13 @@ import com._42six.amino.common.util.PathUtils;
 import com._42six.amino.data.*;
 import com._42six.amino.data.impl.EnrichmentDataLoader;
 import com._42six.amino.data.utilities.CacheBuilder;
+import com.google.common.base.Preconditions;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -46,6 +49,15 @@ public final class FrameworkDriver extends Configured implements Tool {
 
     private String enrichmentOutput = "";
     private static boolean stopOnFirstPhase = false;
+
+    public static final String STATUS_FILE = "status.pid";
+
+    public static enum JobStatus{
+        RUNNING,
+        FAILED,
+        COMPLETE,
+        QUEUED // Not currently used
+    }
 
     static class XMLFileNameFilter implements FilenameFilter {
         public boolean accept(File directory, String filename) {
@@ -151,6 +163,19 @@ public final class FrameworkDriver extends Configured implements Tool {
         System.exit(res);
     }
 
+    private void updateStatus(JobStatus status) throws IOException {
+        final Configuration conf = getConf();
+        final String baseDir = conf.get(AminoConfiguration.BASE_DIR, null);
+        Preconditions.checkNotNull(baseDir, "basedir could not be found in the Amino configuration");
+        final Path pidFile = new Path(baseDir, STATUS_FILE);
+        final FileSystem fs = FileSystem.get(conf);
+
+        // Create the file if it doesn't exist and overwrite whatever might have been in it
+        try(FSDataOutputStream os = fs.create(pidFile, true)){
+            os.writeUTF(status.toString());
+        }
+    }
+
     public int run(String[] args) throws Exception {
         ServiceLoader<? extends AminoJob> jobs = ServiceLoader.load(AminoJob.class);
         if (!jobs.iterator().hasNext()) {
@@ -164,6 +189,8 @@ public final class FrameworkDriver extends Configured implements Tool {
         // AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
         // boolean complete = createTables(conf);
         boolean complete = true;
+
+        updateStatus(JobStatus.RUNNING);
 
         //boolean complete = true;
         for (AminoJob aj : jobs) {
@@ -196,6 +223,8 @@ public final class FrameworkDriver extends Configured implements Tool {
                 }
             }
         }
+
+        updateStatus(complete ? JobStatus.COMPLETE : JobStatus.FAILED);
 
         return complete ? 0 : 1;
     }

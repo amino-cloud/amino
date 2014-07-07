@@ -142,6 +142,7 @@ public abstract class BitmapJob extends Configured implements Tool {
         final Configuration conf = getConf();
         conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, commandLine.getOptionValue("amino_default_config_path"));
         AminoConfiguration.loadAndMergeWithDefault(conf, false);
+        AminoConfiguration.createDirConfs(conf);
     }
 
     /**
@@ -151,15 +152,16 @@ public abstract class BitmapJob extends Configured implements Tool {
      */
     protected void initializeJob(Job job) throws IOException {
         final Configuration conf = getConf();
-        final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
-        final String inputPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, inputDir), ',');
-        final String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf, inputDir), ','); // TODO - why is this the same as the inputDir
+        final String baseDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
+        PathUtils.pathsExists(baseDir, conf);
+        final String dataPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, baseDir), ',');
+        final String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf, baseDir), ',');
 
-        System.out.println("Input paths: [" + inputPaths + "].");
+        System.out.println("Data paths: [" + dataPaths + "].");
         System.out.println("Cache paths: [" + cachePaths + "].");
 
         PathUtils.setCachePath(job.getConfiguration(), cachePaths);
-        SequenceFileInputFormat.setInputPaths(job, inputPaths);
+        SequenceFileInputFormat.setInputPaths(job, dataPaths);
 
         job.setInputFormatClass(SequenceFileInputFormat.class);
     }
