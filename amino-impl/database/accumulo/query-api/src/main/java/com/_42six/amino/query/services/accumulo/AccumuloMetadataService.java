@@ -361,6 +361,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 
 	public Hypothesis createHypothesis(Hypothesis hypothesis, String userId, String[] visibility) throws Exception {
 		hypothesis.created = System.currentTimeMillis();
+        hypothesis.updated = hypothesis.created;
 		return persistHypothesis(hypothesis, userId);
 	}
 

@@ -22,12 +22,6 @@
                 <version>1.6.0</version>
                 <scope>provided</scope>
             </dependency>
-            <dependency>
-                <groupId>org.apache.accumulo</groupId>
-                <artifactId>accumulo-server</artifactId>
-                <version>1.5.1</version>
-                <scope>provided</scope>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 

@@ -55,12 +55,6 @@
             <artifactId>accumulo-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.accumulo</groupId>
-            <artifactId>accumulo-server-base</artifactId>
-            <version>1.6.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
