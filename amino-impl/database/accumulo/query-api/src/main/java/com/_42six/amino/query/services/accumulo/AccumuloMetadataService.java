@@ -52,6 +52,11 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		this.persistenceService = persistenceService;
 	}
 
+    public AccumuloMetadataService(AccumuloPersistenceService persistenceService, AccumuloGroupService groupService) {
+        this.persistenceService = persistenceService;
+        this.groupService = groupService;
+    }
+
     /**
      * Adds the suffix to all of the tables
      * @param suffix The suffix to append to the tables
