@@ -1,25 +1,28 @@
 package com._42six.amino.bitmap;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Set;
-
+import com._42six.amino.common.util.PathUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com._42six.amino.common.util.PathUtils;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Set;
 
 public class IngestUtilities 
 {
+    private static final Logger logger = LoggerFactory.getLogger(IngestUtilities.class);
+
 	public static ArrayList<FileStatus> grabAllVettedFileStati(Configuration conf, FileSystem fs, String inputDir) throws IOException
 	{
 		//if this is a directory has multiple data paths, choose the subfolder with the largest size
 		FileStatus[] stati = null;
-		Set<String> pathSet = PathUtils.getJobDataPaths(conf, inputDir);
+		Set<String> pathSet = PathUtils.getMultipleJobDataPaths(conf, inputDir);
 		if (pathSet.size() == 1) {
-			stati = fs.listStatus(new Path(pathSet.toArray(new String[0])[0]));
+			stati = fs.listStatus(new Path(pathSet.toArray(new String[1])[0]));
 		}
 		else {
 			Path largestFolder = null;
@@ -39,13 +42,13 @@ public class IngestUtilities
 				}
 			}
 			if (largestFolder == null) {
-				System.out.println("No folders found in input directory [" 
+				logger.info("No folders found in input directory ["
 						+ inputDir + "], so using root directory for sample.");
 				String realPath = inputDir.substring(0, inputDir.length() - 1);
 				stati = fs.listStatus(new Path(realPath));
 			}
 			else {
-				System.out.println("Using directory [" + largestFolder
+				logger.info("Using directory [" + largestFolder
 						+ "] for sample because it has the largest size [" + largestSize + "].");
 				stati = fs.listStatus(largestFolder);
 			}

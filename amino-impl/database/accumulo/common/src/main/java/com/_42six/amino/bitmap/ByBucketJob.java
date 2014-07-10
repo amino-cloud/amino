@@ -131,7 +131,6 @@ public class ByBucketJob extends BitmapJob {
 
             success = IteratorUtils.createTable(c.tableOperations(), tableName, tableContext, splits, blastIndex, blastIndex);
 
-
             job.setOutputFormatClass(AccumuloFileOutputFormat.class);
             AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDir + "/files"));
 

@@ -6,13 +6,18 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
 public class PathUtils {
-	
+
+    private static final Logger logger = LoggerFactory.getLogger(PathUtils.class);
+
+    private static final String JOB_WORKING_FOLDER = "working";
 	private static final String JOB_DATA_FOLDER = "data";
 	private static final String JOB_METADATA_FOLDER = "cache";
 	private static final String CACHE_PATH_PROPERTY = "amino.job.cache.path";
@@ -54,6 +59,10 @@ public class PathUtils {
         }
     }
 
+    public static String getJobWorkingPath(String rootPath) {
+        return rootPath.endsWith("/") ? rootPath + JOB_WORKING_FOLDER : rootPath + "/" + JOB_WORKING_FOLDER;
+    }
+
 	public static String getJobDataPath(String rootPath) {
 		return rootPath.endsWith("/") ? rootPath + JOB_DATA_FOLDER : rootPath + "/" + JOB_DATA_FOLDER;
 	}
@@ -61,7 +70,24 @@ public class PathUtils {
 	public static String getJobCachePath(String rootPath) {
 		return rootPath.endsWith("/") ? rootPath + JOB_METADATA_FOLDER : rootPath + "/" + JOB_METADATA_FOLDER;
 	}
-	
+
+    /**
+     * Grabs all of the data paths from multiple base paths.
+     *
+     * @param conf The {@link org.apache.hadoop.conf.Configuration} of the job
+     * @param basePaths A ',' separated string of the project base baths to traverse through
+     * @return {@link java.util.Set} of all of the data directories
+     * @throws IOException
+     * @see com._42six.amino.common.util.PathUtils#getJobDataPaths(org.apache.hadoop.conf.Configuration, String)
+     */
+    public static Set<String> getMultipleJobDataPaths(final Configuration conf, final String basePaths) throws IOException {
+        final Set<String> dataPaths = new HashSet<>();
+        for(String path : basePaths.split(",")){
+            dataPaths.addAll(getJobDataPaths(conf, path));
+        }
+        return dataPaths;
+    }
+
 	@SuppressWarnings("serial")
 	public static Set<String> getJobDataPaths(Configuration conf, final String rootPath) throws IOException {
 		if (rootPath.endsWith("*")) {
@@ -92,10 +118,28 @@ public class PathUtils {
 			return new HashSet<String>() {{ add(getJobDataPath(rootPath)); }};
 		}
 	}
-	
+
+    /**
+     * Grabs all of the cache paths from multiple base paths.
+     *
+     * @param conf The {@link org.apache.hadoop.conf.Configuration} of the job
+     * @param basePaths A ',' separated string of the project base baths to traverse through
+     * @return {@link java.util.Set} of all of the cache directories
+     * @throws IOException
+     * @see com._42six.amino.common.util.PathUtils#getJobCachePaths(org.apache.hadoop.conf.Configuration, String)
+     */
+    public static Set<String> getMultipleJobCachePaths(final Configuration conf, final String basePaths) throws IOException {
+        final Set<String> cachePaths = new HashSet<>();
+        for(String path : basePaths.split(",")){
+            cachePaths.addAll(getJobCachePaths(conf, path));
+        }
+        return cachePaths;
+    }
+
 	@SuppressWarnings("serial")
 	public static Set<String> getJobCachePaths(Configuration conf, final String rootPath) throws IOException {
-		if (rootPath.endsWith("*")) {
+		logger.info("Getting Job Cache path for root path <" + rootPath + ">");
+        if (rootPath.endsWith("*")) {
 			Set<String> pathSet = new HashSet<String>();
 			
 			// go through sub directories and add the job data directories
@@ -123,7 +167,36 @@ public class PathUtils {
 			return new HashSet<String>() {{ add(getJobCachePath(rootPath)); }};
 		}
 	}
-	
+
+
+
+    /**
+     * Grabs all of the metadata output directories from multiple base paths.
+     *
+     * @param conf The {@link org.apache.hadoop.conf.Configuration} of the job
+     * @param basePaths A ',' separated string of the project base baths to traverse through
+     * @return {@link java.util.Set} of all of the metadata directories
+     * @throws IOException
+     * @see com._42six.amino.common.util.PathUtils#getJobMetadataPaths(org.apache.hadoop.conf.Configuration, String)
+     */
+    public static Set<String> getMultipleJobMetadataPaths(final Configuration conf, final String basePaths) throws IOException {
+        logger.info("Getting base paths from: " + basePaths);
+        final Set<String> metadataPaths = new HashSet<>();
+        for(String path : basePaths.split(",")){
+            metadataPaths.addAll(getJobMetadataPaths(conf, path));
+        }
+        return metadataPaths;
+    }
+
+    /**
+     * Traverses through the rootPath looking for the metadata output directories of previous job runs and returns
+     * them as a set
+     *
+     * @param conf The {@link org.apache.hadoop.conf.Configuration} of the job
+     * @param rootPath The base path to start the traversal from
+     * @return {@link java.util.Set} of all the metadata directories in the tree
+     * @throws IOException
+     */
 	public static Set<String> getJobMetadataPaths(Configuration conf, final String rootPath) throws IOException {
 		Set<String> cachePaths = getJobCachePaths(conf, rootPath);
 		

@@ -124,7 +124,6 @@ public abstract class AccumuloDataLoader implements DataLoader {
         Value value;
         try {
             if (!this.recordReader.nextKeyValue()) {
-                logger.warn("ACCUMULO_DATA_LOADER: no nextKeyValue");
                 return null;
             }
 

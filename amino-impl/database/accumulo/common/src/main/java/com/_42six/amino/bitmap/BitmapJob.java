@@ -15,6 +15,8 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.util.Tool;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -23,6 +25,9 @@ import java.util.HashSet;
  * Base class for all of the Jobs related to indexing of the Amino bitmaps
  */
 public abstract class BitmapJob extends Configured implements Tool {
+
+    private static final Logger logger = LoggerFactory.getLogger(BitmapJob.class);
+
     protected CommandLine commandLine;
     protected Options options = FrameworkDriver.constructGnuOptions();
 
@@ -80,6 +85,7 @@ public abstract class BitmapJob extends Configured implements Tool {
         if(optionKey.isPresent()){
             retValue = commandLine.getOptionValue(optionKey.get());
             if(retValue != null){
+                logger.info("Getting option '" + optionKey.get() + "' : " + retValue);
                 return retValue;
             }
         }
@@ -87,6 +93,7 @@ public abstract class BitmapJob extends Configured implements Tool {
         // Next check to see if the value was in the config
         if(configKey.isPresent()){
             retValue = getConf().get(configKey.get());
+            logger.info("Getting value from configuration key '" + configKey.get() + "' : " + retValue);
         }
 
         return (retValue == null) ? defaultValue : retValue;
@@ -154,8 +161,8 @@ public abstract class BitmapJob extends Configured implements Tool {
         final Configuration conf = getConf();
         final String baseDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
         PathUtils.pathsExists(baseDir, conf);
-        final String dataPaths = StringUtils.join(PathUtils.getJobDataPaths(conf, baseDir), ',');
-        final String cachePaths = StringUtils.join(PathUtils.getJobCachePaths(conf, baseDir), ',');
+        final String dataPaths = StringUtils.join(PathUtils.getMultipleJobDataPaths(conf, baseDir), ',');
+        final String cachePaths = StringUtils.join(PathUtils.getMultipleJobCachePaths(conf, baseDir), ',');
 
         System.out.println("Data paths: [" + dataPaths + "].");
         System.out.println("Cache paths: [" + cachePaths + "].");

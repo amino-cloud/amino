@@ -1,5 +1,6 @@
 package com._42six.amino.common;
 
+import com._42six.amino.common.util.PathUtils;
 import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -63,25 +64,24 @@ public class AminoConfiguration extends Configuration {
      * @param conf The Hadoop Configuration with a comma separated list of base directories to process
      */
     public static void createDirConfs(Configuration conf){
-        if(conf.get(AminoConfiguration.BASE_DIR) != null){
-            final String baseDir = Preconditions.checkNotNull(conf.get(AminoConfiguration.BASE_DIR),
-                    "The basedir is missing from the Amino Configurations");
-            final String baseJob = new Path(baseDir, "job").getName();
 
-            final Set<String> working = new HashSet<>();
-            final Set<String> output = new HashSet<>();
-            final Set<String> cache = new HashSet<>();
+        // Set the directories to look for output information
+        final String baseDirs = Preconditions.checkNotNull(conf.get(AminoConfiguration.OUTPUT_DIR),
+                "The output base directories were missing from the Amino Configuration");
 
-            for(String path : conf.get(AminoConfiguration.BASE_DIR).split(",")){
-                working.add(baseDir + "/working");
-                output.add(baseDir + "/out");
-                cache.add(baseDir + "/cache");
-            }
-
-            conf.set(AminoConfiguration.WORKING_DIR, StringUtils.join(",", working));
-            conf.set(AminoConfiguration.OUTPUT_DIR, StringUtils.join(",", output));
-            conf.set(AminoConfiguration.CACHE_DIR, StringUtils.join(",", cache));
+        final Set<String> outputPaths = new HashSet<>();
+        for(String path : baseDirs.split(",")){
+            outputPaths.add(path + "/out");
         }
+
+        conf.set(AminoConfiguration.OUTPUT_DIR, StringUtils.join(",", outputPaths));
+
+        // Set where to put the cache and working dirs for the job
+        final String basePath = Preconditions.checkNotNull(conf.get(AminoConfiguration.BASE_DIR),
+                "The base directory of the job is missing from the Amino Configuration");
+
+        conf.set(AminoConfiguration.WORKING_DIR, PathUtils.getJobWorkingPath(basePath));
+        conf.set(AminoConfiguration.CACHE_DIR, PathUtils.getJobCachePath(basePath));
     }
 
     public static void loadAndMergeWithDefault(Configuration conf, boolean overrideValues) throws IOException {
