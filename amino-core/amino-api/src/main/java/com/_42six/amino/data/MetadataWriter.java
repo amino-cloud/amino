@@ -11,12 +11,16 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.io.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
 
 public class MetadataWriter {
+
+    private static final Logger logger = LoggerFactory.getLogger(MetadataWriter.class);
 
     private final Configuration conf;
     private final String version;
@@ -70,7 +74,7 @@ public class MetadataWriter {
      * @throws IOException
      */
     public void write() throws IOException {
-        final String outputDir = conf.get("amino.output") + "/cache/metadata";
+        final String outputDir = conf.get(AminoConfiguration.OUTPUT_DIR) + "/cache/metadata";
         final FileSystem fs = FileSystem.get(URI.create(outputDir), conf);
         final Path seqFile = new Path(outputDir + "/" + UUID.randomUUID().toString() + ".seq");
         SequenceFile.Writer writer = null;
@@ -78,6 +82,7 @@ public class MetadataWriter {
         if (!featureList.isEmpty()) {
             try {
                 writer = SequenceFile.createWriter(fs, conf, seqFile, Text.class, Text.class);
+                logger.info("Writing out metadata seq file: " + seqFile.getName());
 
                 // Add features
                 for (FeatureHolder holder : featureList.values()) {
@@ -142,20 +147,20 @@ public class MetadataWriter {
         final String hrVisibility = bucket.getBucketHRVisibility().toString();
 	    final String bucketName = bucket.getBucketName().toString();
 	    final String bucketId = Integer.toString(BitmapIndex.getBucketNameIndex(source, bucketName));
+	    final String datasourceId = bucket.getBucketDataSource().toString();
 
         bucketList.put(bucketName,
                 new BucketHolder(source, BucketMetadata.fromBucket(bucket), visibility, hrVisibility));
 
-	    FeatureMetadata featureMeta = FeatureMetadata.fromFeature(feature, fact);
+	    FeatureMetadata featureMeta = FeatureMetadata.fromFeature(feature, fact, datasourceId);
         featureList.put(feature.getName() + feature.getNamespace(),
                 new FeatureHolder(source, featureMeta, visibility, hrVisibility));
 
 	    // check if the datasource already exists and if so update the featureIds and bucketIds
-	    final String datasourceId = bucket.getBucketDataSource().toString();
 	    if(datasources.containsKey(datasourceId)){
-		    final DatasourceMetadata d = datasources.get(datasourceId);
-		    d.featureIds.add(featureMeta.id);
-		    d.bucketIds.add(bucketId);
+		    final DatasourceMetadata datasourceMetadata = datasources.get(datasourceId);
+            datasourceMetadata.featureIds.add(featureMeta.id);
+            datasourceMetadata.bucketIds.add(bucketId);
 	    } else {
 		    final Set<String> bucketIds = new HashSet<String>();
 		    final Set<String> featureIds = new HashSet<String>();

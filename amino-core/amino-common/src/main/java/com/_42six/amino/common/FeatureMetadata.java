@@ -1,5 +1,6 @@
 package com._42six.amino.common;
 
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -176,7 +177,7 @@ public class FeatureMetadata extends Metadata{
         return meta;
     }
     
-    public static FeatureMetadata fromFeature(Feature feature, FeatureFact fact) {
+    public static FeatureMetadata fromFeature(Feature feature, FeatureFact fact, String datasourceId) {
         final FeatureMetadata meta = new FeatureMetadata();
 
         meta.id = String.valueOf(feature.hashCode());
@@ -184,6 +185,7 @@ public class FeatureMetadata extends Metadata{
         meta.description = feature.getDescription();
         meta.namespace = feature.getNamespace();
         meta.type = fact.getType().name();
+        meta.datasources = Sets.newHashSet(datasourceId);
         
         return meta;
     }
