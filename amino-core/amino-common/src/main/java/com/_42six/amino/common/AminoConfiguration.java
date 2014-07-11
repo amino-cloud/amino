@@ -6,12 +6,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.util.StringUtils;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class AminoConfiguration extends Configuration {
 
@@ -36,6 +33,7 @@ public class AminoConfiguration extends Configuration {
 
     public static final String CREATE_IF_NOT_EXIST = "amino.hdfs.createIfNotExist";
     public static final String BASE_DIR = "amino.hdfs.basedir";
+    public static final String ANALYTICS_DIR = "amino.hdfs.analyticsDir";
     public static final String OUTPUT_DIR = "amino.output";
     public static final String WORKING_DIR = "amino.working";
     public static final String CACHE_DIR = "amino.cache";
@@ -64,22 +62,9 @@ public class AminoConfiguration extends Configuration {
      * @param conf The Hadoop Configuration with a comma separated list of base directories to process
      */
     public static void createDirConfs(Configuration conf){
-
-        // Set the directories to look for output information
-        final String baseDirs = Preconditions.checkNotNull(conf.get(AminoConfiguration.OUTPUT_DIR),
-                "The output base directories were missing from the Amino Configuration");
-
-        final Set<String> outputPaths = new HashSet<>();
-        for(String path : baseDirs.split(",")){
-            outputPaths.add(path + "/out");
-        }
-
-        conf.set(AminoConfiguration.OUTPUT_DIR, StringUtils.join(",", outputPaths));
-
         // Set where to put the cache and working dirs for the job
         final String basePath = Preconditions.checkNotNull(conf.get(AminoConfiguration.BASE_DIR),
                 "The base directory of the job is missing from the Amino Configuration");
-
         conf.set(AminoConfiguration.WORKING_DIR, PathUtils.getJobWorkingPath(basePath));
         conf.set(AminoConfiguration.CACHE_DIR, PathUtils.getJobCachePath(basePath));
     }

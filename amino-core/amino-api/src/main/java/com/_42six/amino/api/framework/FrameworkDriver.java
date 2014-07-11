@@ -52,6 +52,10 @@ public final class FrameworkDriver extends Configured implements Tool {
 
     public static final String STATUS_FILE = "status.pid";
 
+    /**
+     * Used to mark the current status of the job.  Currently it is written to HDFS in STATUS_FILE, but might be a good idea
+     * to write it to Zookeeper in the future.
+     */
     public static enum JobStatus{
         RUNNING,
         FAILED,

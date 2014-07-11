@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+
 public class PathUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(PathUtils.class);
@@ -22,6 +23,19 @@ public class PathUtils {
 	private static final String JOB_METADATA_FOLDER = "cache";
 	private static final String CACHE_PATH_PROPERTY = "amino.job.cache.path";
 	private static final String JOB_CACHE_METADATA_FOLDER = "metadata";
+
+    /**
+     * Takes the comma seperated list of base paths and returns the output directory of each path
+     * @param paths A comma separated list of paths to search through
+     * @return a {@link java.util.Set} of output paths from Analytic jobs
+     */
+    public static Set<String> getOutputDirs(String paths){
+        final Set<String> outputPaths = new HashSet<>();
+        for(String path : paths.split(",")){
+            outputPaths.add(concat(path, "out"));
+        }
+        return outputPaths;
+    }
 
     /**
      * Checks to see if the path exists on HDFS.  If it does not, and the create flag is set to true in the configuration,
@@ -59,16 +73,29 @@ public class PathUtils {
         }
     }
 
+    /**
+     * Simple method to concatenate a directory onto a base path.  Use this instead of
+     * {@link org.apache.commons.io.FilenameUtils#concat(String, String)} as that will automatically call
+     * {@link org.apache.commons.io.FilenameUtils#normalize(String)}, which for HDFS URI's will strip out one of the
+     * /'s in hdfs:// making it an invalid URI.
+     * @param base The base part of the URI
+     * @param end The part to concatenate
+     * @return The combination of the base and end, with a / in the middle if need be
+     */
+    public static String concat(String base, String end){
+        return base.endsWith("/") ? base + end : base + "/" + end;
+    }
+
     public static String getJobWorkingPath(String rootPath) {
-        return rootPath.endsWith("/") ? rootPath + JOB_WORKING_FOLDER : rootPath + "/" + JOB_WORKING_FOLDER;
+        return concat(rootPath, JOB_WORKING_FOLDER);
     }
 
 	public static String getJobDataPath(String rootPath) {
-		return rootPath.endsWith("/") ? rootPath + JOB_DATA_FOLDER : rootPath + "/" + JOB_DATA_FOLDER;
+        return concat(rootPath, JOB_DATA_FOLDER);
 	}
 	
 	public static String getJobCachePath(String rootPath) {
-		return rootPath.endsWith("/") ? rootPath + JOB_METADATA_FOLDER : rootPath + "/" + JOB_METADATA_FOLDER;
+        return concat(rootPath, JOB_METADATA_FOLDER); // TODO - why isn't this CACHE_METADATA
 	}
 
     /**
@@ -168,8 +195,6 @@ public class PathUtils {
 		}
 	}
 
-
-
     /**
      * Grabs all of the metadata output directories from multiple base paths.
      *
@@ -198,12 +223,12 @@ public class PathUtils {
      * @throws IOException
      */
 	public static Set<String> getJobMetadataPaths(Configuration conf, final String rootPath) throws IOException {
-		Set<String> cachePaths = getJobCachePaths(conf, rootPath);
-		
-		FileSystem fs = FileSystem.get(conf);
-		Set<String> metadataPaths = new HashSet<String>();
+		final Set<String> cachePaths = getJobCachePaths(conf, rootPath);
+		final FileSystem fs = FileSystem.get(conf);
+		final Set<String> metadataPaths = new HashSet<>();
+
 		for (String cachePath : cachePaths) {
-			Path metadataFolder = new Path(cachePath + "/" + JOB_CACHE_METADATA_FOLDER);
+			final Path metadataFolder = new Path(concat(cachePath, JOB_CACHE_METADATA_FOLDER));
 			if (!fs.exists(metadataFolder)) {
 				throw new IOException("Missing metadata directory [" + metadataFolder 
 						+ "] in directory [" + cachePath + "]");
