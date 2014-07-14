@@ -167,17 +167,47 @@ public final class FrameworkDriver extends Configured implements Tool {
         System.exit(res);
     }
 
-    private void updateStatus(JobStatus status) throws IOException {
+    /**
+     * Updates the status PID file for the job.
+     *
+     * @param conf The {@link org.apache.hadoop.conf.Configuration} for the map reduce job
+     * @param status The {@link com._42six.amino.api.framework.FrameworkDriver.JobStatus} to change to
+     * @param pidDir The {@link org.apache.hadoop.fs.Path} to the PID file
+     * @throws IOException
+     */
+    public static void updateStatus(Configuration conf, JobStatus status, Path pidDir) throws IOException {
+        final Path pidFile = new Path(pidDir, STATUS_FILE);
+
+        // Create the file if it doesn't exist and overwrite whatever might have been in it
+        try(FileSystem fs = FileSystem.get(conf); FSDataOutputStream os = fs.create(pidFile, true) ){
+            os.writeUTF(status.toString());
+        }
+    }
+
+    /**
+     * Updates the status PID file for the job.
+     *
+     * @param status The {@link com._42six.amino.api.framework.FrameworkDriver.JobStatus} to change to
+     * @param pidDir The {@link org.apache.hadoop.fs.Path} to the PID file
+     * @throws IOException
+     */
+    public void updateStatus(JobStatus status, Path pidDir) throws IOException{
+        final Configuration conf = getConf();
+        FrameworkDriver.updateStatus(conf, status, pidDir);
+    }
+
+    /**
+     * Updates the status PID file for the currently running job.  Uses the currently configured BASE_DIR as the
+     * location of the PID file.
+     *
+     * @param status The {@link com._42six.amino.api.framework.FrameworkDriver.JobStatus} to change to
+     * @throws IOException
+     */
+    public void updateStatus(JobStatus status) throws IOException {
         final Configuration conf = getConf();
         final String baseDir = conf.get(AminoConfiguration.BASE_DIR, null);
         Preconditions.checkNotNull(baseDir, "basedir could not be found in the Amino configuration");
-        final Path pidFile = new Path(baseDir, STATUS_FILE);
-        final FileSystem fs = FileSystem.get(conf);
-
-        // Create the file if it doesn't exist and overwrite whatever might have been in it
-        try(FSDataOutputStream os = fs.create(pidFile, true)){
-            os.writeUTF(status.toString());
-        }
+        updateStatus(status, new Path(baseDir));
     }
 
     public int run(String[] args) throws Exception {
