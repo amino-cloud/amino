@@ -74,6 +74,7 @@ public final class FrameworkDriver extends Configured implements Tool {
         Option aminoDefaultConfigurationOption = new Option("d", "amino_default_config_path", true, "The path where the amino default file lives.");
         aminoDefaultConfigurationOption.setRequired(true);
         gnuOptions.addOption(aminoDefaultConfigurationOption);
+        gnuOptions.addOption("b", "base_dir", true, "The base directory of the running job");
         gnuOptions.addOption("c", "amino_config_file_path", true, "A CSV of filenames or paths which will be acted like a classpath setting up configurations!");
         gnuOptions.addOption("stop", "stop_on_first_phase", false, "Stop after the first phase of an AminoEnrichmentJob");
 
@@ -127,8 +128,14 @@ public final class FrameworkDriver extends Configured implements Tool {
 
         final String userConfFilePath = commandLine.getOptionValue("amino_config_file_path", "");
         final String aminoDefaultConfigPath = commandLine.getOptionValue("amino_default_config_path");
+        final String baseDir = commandLine.getOptionValue("base_dir");
 
         stopOnFirstPhase = commandLine.hasOption("stop");
+
+        // Set the base dir config value if it was provided.
+        if(StringUtils.isNotEmpty(baseDir)){
+            conf.set(AminoConfiguration.BASE_DIR, baseDir);
+        }
 
         conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, aminoDefaultConfigPath);
 

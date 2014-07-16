@@ -64,7 +64,7 @@ public class AminoConfiguration extends Configuration {
     public static void createDirConfs(Configuration conf){
         // Set where to put the cache and working dirs for the job
         final String basePath = Preconditions.checkNotNull(conf.get(AminoConfiguration.BASE_DIR),
-                "The base directory of the job is missing from the Amino Configuration");
+                "'" + AminoConfiguration.BASE_DIR + "' is missing from the configuration files");
         conf.set(AminoConfiguration.WORKING_DIR, PathUtils.getJobWorkingPath(basePath));
         conf.set(AminoConfiguration.CACHE_DIR, PathUtils.getJobCachePath(basePath));
     }
@@ -101,26 +101,25 @@ public class AminoConfiguration extends Configuration {
 		}
 
 		final FileSystem fs = FileSystem.get(conf);
-		final Path defaultConfigFilePath = new Path(String.format("%s/%s.xml", defaultConfigurationPath, className));
+        final Path defaultConfigFilePath = new Path(String.format("%s/%s.xml", defaultConfigurationPath, className));
 
-		if (!fs.exists(defaultConfigFilePath)) {
-			throw new IOException("File " + defaultConfigFilePath.toString()
-					+ " does not exist!");
-		}
-		
-		final Configuration otherConfig = new Configuration(false);
-		final FSDataInputStream fsdis = fs.open(defaultConfigFilePath);
-		otherConfig.addResource(fsdis);
+        if (!fs.exists(defaultConfigFilePath)) {
+            throw new IOException("File " + defaultConfigFilePath.toString()
+                    + " does not exist!");
+        }
 
-		for(Entry<String, String> entry : otherConfig) {
-			if (overrideValues) {
-				conf.set(entry.getKey(), entry.getValue());
-			}
-			else {
-				conf.setIfUnset(entry.getKey(), entry.getValue());
-			}
-		}
-		
-		fsdis.close();
+        final Configuration otherConfig = new Configuration(false);
+        try(FSDataInputStream fsdis = fs.open(defaultConfigFilePath)) {
+            otherConfig.addResource(fsdis);
+
+            for (Entry<String, String> entry : otherConfig) {
+                if (overrideValues) {
+                    conf.set(entry.getKey(), entry.getValue());
+                } else {
+                    conf.setIfUnset(entry.getKey(), entry.getValue());
+                }
+            }
+        }
+
 	}
 }

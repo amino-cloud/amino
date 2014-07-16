@@ -147,6 +147,9 @@ public abstract class BitmapJob extends Configured implements Tool {
 
         // Load up the default Amino configurations
         final Configuration conf = getConf();
+        if(commandLine.hasOption("base_dir")){
+            conf.set(AminoConfiguration.BASE_DIR, commandLine.getOptionValue("base_dir"));
+        }
         conf.set(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY, commandLine.getOptionValue("amino_default_config_path"));
         AminoConfiguration.loadAndMergeWithDefault(conf, false);
         AminoConfiguration.createDirConfs(conf);
@@ -159,10 +162,10 @@ public abstract class BitmapJob extends Configured implements Tool {
      */
     protected void initializeJob(Job job) throws IOException {
         final Configuration conf = getConf();
-        final String baseDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
-        PathUtils.pathsExists(baseDir, conf);
-        final String dataPaths = StringUtils.join(PathUtils.getMultipleJobDataPaths(conf, baseDir), ',');
-        final String cachePaths = StringUtils.join(PathUtils.getMultipleJobCachePaths(conf, baseDir), ',');
+        final String outputBaseDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
+        PathUtils.pathsExists(outputBaseDir, conf);
+        final String dataPaths = StringUtils.join(PathUtils.getMultipleJobDataPaths(conf, outputBaseDir), ',');
+        final String cachePaths = StringUtils.join(PathUtils.getMultipleJobCachePaths(conf, outputBaseDir), ',');
 
         System.out.println("Data paths: [" + dataPaths + "].");
         System.out.println("Cache paths: [" + cachePaths + "].");
