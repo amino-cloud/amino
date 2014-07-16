@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.MoreExecutors;
  * ExecutionService that limits both the number of concurrently running tasks  
  * and the amount of tasks per user. 
  */
+@SuppressWarnings("UnusedDeclaration")
 public class TimedUserExecutionService {
 	
 	// ************************************************************************
@@ -36,7 +37,7 @@ public class TimedUserExecutionService {
 	//private static final Logger log = Logger.getLogger(TimedUserExecutionService.class);
 	
 	protected ListeningExecutorService service;
-	protected Map<String, AtomicInteger> currentUsageTable; 
+	protected final Map<String, AtomicInteger> currentUsageTable;
 	protected 	ThreadPoolExecutor executor;
 	
 	// Properties of the ThreadPoolExecutor
@@ -233,7 +234,6 @@ public class TimedUserExecutionService {
 		Preconditions.checkNotNull(user, "Must provider user for queue");
 		
 		ListenableFuture<T> futureTask;
-		T result = null;
 		
 		// Attempt to add a task to the queue
 		synchronized (currentUsageTable) {
@@ -252,7 +252,7 @@ public class TimedUserExecutionService {
 				
 		// Schedule the call the run
 		try{
-			futureTask = getService().submit(task);				
+			futureTask = getService().submit(task);
 		} catch(RejectedExecutionException  e){
 			decrementUserCount(user);
 			throw new RejectedExecutionException("Maximum number of concurrent queries reached", e);
@@ -262,6 +262,7 @@ public class TimedUserExecutionService {
 		Futures.addCallback(futureTask, new UserFutureCallback<T>(user));
 
 		// Get the result
+		T result;
 		long time;
 		TimeUnit timeUnit;
 		try{
