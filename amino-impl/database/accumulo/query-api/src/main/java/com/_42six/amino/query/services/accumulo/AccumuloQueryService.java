@@ -54,6 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Amino Team
  *
  */
+@SuppressWarnings({"UnusedDeclaration", "Convert2Diamond"})
 public class AccumuloQueryService implements AminoQueryService {
 	
 	private static final Logger log = Logger.getLogger(AccumuloQueryService.class);
@@ -116,6 +117,21 @@ public class AccumuloQueryService implements AminoQueryService {
         this.metadataService = metadataService;
         this.translator = new FeatureFactTranslatorImpl();
         this.visibilityTranslator = new DefaultVisibilityTranslator();
+    }
+
+    /**
+     * Constructs a new AccumuloQueryService using the provided services for underlying data.
+     * @param persistenceService        Service for persisting the data
+     * @param metadataService  Service for querying metadata information
+     * @param userExecutionService the execution service to run the user queries on
+     */
+    public AccumuloQueryService(AccumuloPersistenceService persistenceService, AccumuloMetadataService metadataService,
+                                TimedUserExecutionService userExecutionService) {
+        this.persistenceService = persistenceService;
+        this.metadataService = metadataService;
+        this.translator = new FeatureFactTranslatorImpl();
+        this.visibilityTranslator = new DefaultVisibilityTranslator();
+        this.timedUserExecutionService = userExecutionService;
     }
 
     public void setReverseItrMemThreshold(String threshold){
@@ -684,7 +700,7 @@ public class AccumuloQueryService implements AminoQueryService {
 				final String salt = it.getKey().getColumnQualifier().toString();
 				
 				// Find all of the [featureID/salt/buckets] that we are interested in and make note of which bucketValues are interested in them
-				while(bitmapIterator.hasNext()) {										
+				while(bitmapIterator.hasNext()) {
 					// Abort if we were interrupted
 					if(!keepRunning.get()){
 						return null;
@@ -1442,7 +1458,12 @@ public class AccumuloQueryService implements AminoQueryService {
         }
 
         // Audit the query
-        final String bucketName = metadataService.getBucket(hypothesis.bucketid, auths).name;
+        Preconditions.checkNotNull("Some how metadataService become null", metadataService);
+        Preconditions.checkNotNull("Some how hypothesis is null", hypothesis);
+        BucketMetadata bucket = metadataService.getBucket(hypothesis.bucketid, auths);
+        Preconditions.checkNotNull(bucket, "No bucket with owner '%s', hypothesis id '%s' and id '%s' could be found",
+                owner, hypothesis.id, hypothesis.bucketid);
+        final String bucketName = bucket.name;
         final AminoAuditRequest auditReq = new AminoAuditRequest();
         auditReq.setDn(userId);
         auditReq.setJustification(justification);
