@@ -6,11 +6,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map.Entry;
 
 public class AminoConfiguration extends Configuration {
+
+    private static final Logger logger = LoggerFactory.getLogger(AminoConfiguration.class);
 
     public static final String TEMP_SUFFIX = "_temp";
     public static final String OLD_SUFFIX = "old";  // TODO - is this used?
@@ -62,9 +66,17 @@ public class AminoConfiguration extends Configuration {
      * @param conf The Hadoop Configuration with a comma separated list of base directories to process
      */
     public static void createDirConfs(Configuration conf){
-        // Set where to put the cache and working dirs for the job
         final String basePath = Preconditions.checkNotNull(conf.get(AminoConfiguration.BASE_DIR),
                 "'" + AminoConfiguration.BASE_DIR + "' is missing from the configuration files");
+
+        if(conf.get(AminoConfiguration.OUTPUT_DIR) == null){
+            final String outDir = PathUtils.concat(basePath, "out");
+            logger.info("'" + AminoConfiguration.OUTPUT_DIR + "' was not set in the configuration." +
+            " Setting to the default of <" + outDir);
+            conf.set(AminoConfiguration.OUTPUT_DIR, outDir);
+        }
+
+        // Set where to put the cache and working dirs for the job
         conf.set(AminoConfiguration.WORKING_DIR, PathUtils.getJobWorkingPath(basePath));
         conf.set(AminoConfiguration.CACHE_DIR, PathUtils.getJobCachePath(basePath));
     }

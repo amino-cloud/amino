@@ -134,6 +134,10 @@ public class DatabasePrepJob extends BitmapJob {
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1)));
         final Configuration conf = getConf();
 
+        if(commandLine.hasOption("o")){
+            conf.set(AminoConfiguration.OUTPUT_DIR, commandLine.getOptionValue("o"));
+        }
+
         final Job job = new Job(conf, "Amino Metadata importer");
         job.setJarByClass(this.getClass());
 
@@ -144,7 +148,7 @@ public class DatabasePrepJob extends BitmapJob {
         final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes("UTF-8");
         final String metadataTable = conf.get(AminoConfiguration.TABLE_METADATA) + AminoConfiguration.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
         final String metadataPaths = StringUtils.join(PathUtils.getMultipleJobMetadataPaths(conf,
-                fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR))), ',');
+                conf.get(AminoConfiguration.OUTPUT_DIR)), ',');
 
         System.out.println("Metadata paths: [" + metadataPaths + "].");
         PathUtils.pathsExists(metadataPaths, conf);

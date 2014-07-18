@@ -46,8 +46,6 @@ public class SortedIndexCache  {
             try{
                 reader = new MapFile.Reader(FileSystem.get(conf), cachePath + subFolder, conf);
                 readFromDisk(reader);
-            } catch (FileNotFoundException e) {
-                System.out.println("WARNING: The cachePath '" + cachePath + "' does not exist");
             } finally {
                 if(reader != null){
                     IOUtils.closeStream(reader);
