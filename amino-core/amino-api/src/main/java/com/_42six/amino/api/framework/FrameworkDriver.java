@@ -375,9 +375,16 @@ public final class FrameworkDriver extends Configured implements Tool {
 
             AminoOutputFormat.setAminoConfigPath(job, job.getConfiguration().get(AminoConfiguration.DEFAULT_CONFIGURATION_PATH_KEY));
 
-            String output = conf.get("amino.output");
-            System.out.println("Output will be written to: " + PathUtils.getJobDataPath(output));
-            AminoOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
+            String output = conf.get(AminoConfiguration.OUTPUT_DIR);
+            if(output == null){
+                System.out.println("'" + AminoConfiguration.OUTPUT_DIR + "' was not set, using the default of <" +
+                conf.get(AminoConfiguration.BASE_DIR) + "/out>");
+                output = PathUtils.concat(conf.get(AminoConfiguration.BASE_DIR), "out");
+            }
+
+            final String outputPaths = PathUtils.getJobDataPath(output);
+            System.out.println("Output will be written to: " + outputPaths);
+            AminoOutputFormat.setOutputPath(job, new Path(outputPaths));
             JobUtilities.deleteDirectory(conf, output);
 
             CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(conf), aj, output, conf);

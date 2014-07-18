@@ -1,6 +1,7 @@
 package com._42six.amino.common.util;
 
 import com._42six.amino.common.AminoConfiguration;
+import com.google.common.base.Preconditions;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -25,11 +26,12 @@ public class PathUtils {
 	private static final String JOB_CACHE_METADATA_FOLDER = "metadata";
 
     /**
-     * Takes the comma seperated list of base paths and returns the output directory of each path
+     * Takes the comma separated list of base paths and returns the output directory of each path
      * @param paths A comma separated list of paths to search through
      * @return a {@link java.util.Set} of output paths from Analytic jobs
      */
     public static Set<String> getOutputDirs(String paths){
+        Preconditions.checkNotNull(paths, "path to get output dirs from was NULL");
         final Set<String> outputPaths = new HashSet<>();
         for(String path : paths.split(",")){
             outputPaths.add(concat(path, "out"));
@@ -83,6 +85,8 @@ public class PathUtils {
      * @return The combination of the base and end, with a / in the middle if need be
      */
     public static String concat(String base, String end){
+        Preconditions.checkNotNull(base, "base path to concatenate with is NULL");
+        Preconditions.checkNotNull(end, "part to concatenate with is NULL");
         return base.endsWith("/") ? base + end : base + "/" + end;
     }
 
