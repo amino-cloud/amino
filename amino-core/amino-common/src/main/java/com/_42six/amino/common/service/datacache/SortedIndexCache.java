@@ -12,7 +12,6 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.Text;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -42,14 +41,20 @@ public class SortedIndexCache  {
     public SortedIndexCache(String subFolder, Configuration conf) throws IOException {
         this(subFolder);
         for (String cachePath : PathUtils.getCachePaths(conf)) {
-            MapFile.Reader reader = null;
-            try{
-                reader = new MapFile.Reader(FileSystem.get(conf), cachePath + subFolder, conf);
-                readFromDisk(reader);
-            } finally {
-                if(reader != null){
-                    IOUtils.closeStream(reader);
+            final FileSystem fs = FileSystem.get(conf);
+            final String cacheFolder = PathUtils.concat(cachePath, subFolder);
+            if(fs.exists(new Path(cacheFolder))){
+                MapFile.Reader reader = null;
+                try {
+                    reader = new MapFile.Reader(FileSystem.get(conf), cacheFolder, conf);
+                    readFromDisk(reader);
+                } finally {
+                    if(reader != null){
+                        IOUtils.closeStream(reader);
+                    }
                 }
+            } else {
+                fs.mkdirs(new Path(cacheFolder));
             }
         }
     }
@@ -105,7 +110,7 @@ public class SortedIndexCache  {
      * @param writeToDistributedCache Whether or not to write to the DistributedCache
      */
     public void persist(Configuration conf, boolean writeToDistributedCache) throws IOException {
-        final String cachePath = PathUtils.getCachePath(conf) + subFolder;
+        final String cachePath = PathUtils.concat(PathUtils.getCachePath(conf), subFolder);
         final FileSystem fs = FileSystem.get(conf);
 
         System.out.println("Writing cache data to: " + cachePath);
@@ -114,12 +119,11 @@ public class SortedIndexCache  {
         // TODO come back to this and make sure right
         if (writeToDistributedCache) {
             for (FileStatus status : fs.listStatus(new Path(cachePath))) {
-                if (!status.isDir()) {
+                if (!status.isDirectory()) {
                     DistributedCache.addCacheFile(status.getPath().toUri(), conf);
                 }
             }
         }
-
     }
 
     /**

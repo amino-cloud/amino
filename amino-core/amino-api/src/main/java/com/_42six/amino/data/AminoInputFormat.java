@@ -25,9 +25,9 @@ public class AminoInputFormat extends InputFormat<MapWritable, MapWritable> {
             InputSplit inputSplit, TaskAttemptContext context)
             throws IOException, InterruptedException {
         try {
-            Configuration conf = context.getConfiguration();
-            DataLoader dl = AminoDataUtils.getDataLoader(conf);
-            Job myJob = new Job(conf);
+            final Configuration conf = context.getConfiguration();
+            final DataLoader dl = AminoDataUtils.getDataLoader(conf);
+            final Job myJob = new Job(conf);
             dl.initializeFormat(myJob);
             /* Since we create a new job to initialize the input format, and the
 			   constructor of the Job class does a deep copy of the
@@ -39,11 +39,7 @@ public class AminoInputFormat extends InputFormat<MapWritable, MapWritable> {
             HadoopConfigurationUtils.mergeConfs(conf, myJob.getConfiguration());
             //return new AminoRecordReader(dl.getInputFormat(), inputSplit, context);
             return new AminoRecordReader(inputSplit, context);
-        } catch (InstantiationException e) {
-            throw new IOException(e);
-        } catch (ClassNotFoundException e) {
-            throw new IOException(e);
-        } catch (IllegalAccessException e) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             throw new IOException(e);
         }
     }
@@ -53,18 +49,16 @@ public class AminoInputFormat extends InputFormat<MapWritable, MapWritable> {
     public List<InputSplit> getSplits(JobContext jobContext)
             throws IOException, InterruptedException {
         try {
-            DataLoader loader = AminoDataUtils.getDataLoader(jobContext.getConfiguration());
-            Job myJob = new Job(jobContext.getConfiguration());
+            final Configuration conf = jobContext.getConfiguration();
+            final DataLoader loader = AminoDataUtils.getDataLoader(conf);
+            final Job myJob = new Job(conf);
+
             loader.initializeFormat(myJob);
             @SuppressWarnings("rawtypes")
             InputFormat inputFormat = loader.getInputFormat();
 
             return inputFormat.getSplits(myJob);
-        } catch (ClassNotFoundException e) {
-            throw new IOException(e);
-        } catch (InstantiationException e) {
-            throw new IOException(e);
-        } catch (IllegalAccessException e) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             throw new IOException(e);
         }
     }
