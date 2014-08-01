@@ -52,7 +52,7 @@ public class BitLookupJob extends BitmapJob {
         final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
         PathUtils.pathsExists(inputDir, conf);
 
-        final Job job = new Job(conf, "Amino feature index job");
+        final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino feature index job"));
         job.setJarByClass(BitLookupJob.class);
         initializeJob(job);
 

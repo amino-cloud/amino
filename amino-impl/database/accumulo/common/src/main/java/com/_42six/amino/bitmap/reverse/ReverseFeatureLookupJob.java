@@ -44,7 +44,7 @@ public class ReverseFeatureLookupJob extends BitmapJob
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1, o2)));
         final Configuration conf = getConf();
 
-        final Job job = new Job(conf, "Amino reverse_feature_lookup table job");
+        final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino reverse_feature_lookup table job"));
         job.setJarByClass(ReverseFeatureLookupJob.class);
         final String workingDirectory = fromOptionOrConfig(Optional.of("w"), Optional.of(AminoConfiguration.WORKING_DIR));
         JobUtilities.resetWorkingDirectory(this.getConf(), workingDirectory);

@@ -24,7 +24,7 @@ public class StatsJob extends BitmapJob {
         final Configuration conf = getConf();
         loadConfigValues(conf);
 
-        Job job = new Job(conf, "Amino stats job");
+        Job job = new Job(conf, conf.get("mapreduce.job.name","Amino stats job"));
         job.setJarByClass(StatsJob.class);
         initializeJob(job);
         

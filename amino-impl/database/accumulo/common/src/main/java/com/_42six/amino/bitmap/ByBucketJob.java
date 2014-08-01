@@ -48,7 +48,7 @@ public class ByBucketJob extends BitmapJob {
             return 1;
         }
 
-        final Job job = new Job(conf, "Amino bucket index job");
+        final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino bucket index job"));
         job.setJarByClass(ByBucketJob.class);
         initializeJob(job);
 

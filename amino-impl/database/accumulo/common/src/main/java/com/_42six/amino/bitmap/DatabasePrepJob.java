@@ -138,7 +138,8 @@ public class DatabasePrepJob extends BitmapJob {
             conf.set(AminoConfiguration.OUTPUT_DIR, commandLine.getOptionValue("o"));
         }
 
-        final Job job = new Job(conf, "Amino Metadata importer");
+
+        final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino Metadata importer"));
         job.setJarByClass(this.getClass());
 
         // Get config values

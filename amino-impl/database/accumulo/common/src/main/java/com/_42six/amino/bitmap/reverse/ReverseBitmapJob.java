@@ -35,7 +35,7 @@ public class ReverseBitmapJob extends BitmapJob
             return 1;
         }
 
-        final Job job = new Job(conf, "Amino reverse bitmap index job");
+        final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino reverse bitmap index job"));
         job.setJarByClass(ReverseBitmapJob.class);
         initializeJob(job);
 

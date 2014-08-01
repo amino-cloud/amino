@@ -689,9 +689,7 @@ public final class FeatureMetadataJob extends BitmapJob {
 			try {
 				conn = inst.getConnector(user, new PasswordToken(password));
 				auths = conn.securityOperations().getUserAuthorizations(user);
-			} catch (AccumuloException ex) {
-				throw new IOException(ex);
-			} catch (AccumuloSecurityException ex) {
+			} catch (AccumuloException | AccumuloSecurityException ex) {
 				throw new IOException(ex);
 			}
 
@@ -784,11 +782,9 @@ public final class FeatureMetadataJob extends BitmapJob {
 			writer.addMutation(shardCountMutation);
 
 			writer.flush();
-		} catch (TableNotFoundException e) {
+		} catch (TableNotFoundException | MutationsRejectedException e) {
 			throw new IOException(e);
-		} catch (MutationsRejectedException e) {
-			throw new IOException(e);
-		} finally {
+		}  finally {
 			if(writer != null) {
 				try {
 					writer.close();
@@ -920,7 +916,7 @@ public final class FeatureMetadataJob extends BitmapJob {
         final Connector conn = inst.getConnector(user, new PasswordToken(password));
         final Authorizations auths = conn.securityOperations().getUserAuthorizations(user);
 
-        final Job job = new Job(conf, "Amino feature metadata job");
+        final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino feature metadata job"));
         job.setJarByClass(this.getClass());
 
         // Configure Mapper

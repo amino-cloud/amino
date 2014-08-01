@@ -206,7 +206,7 @@ public class HypothesisJob extends BitmapJob
         final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
         PathUtils.pathsExists(inputDir, conf);
 
-        final Job job = new Job(conf, "Amino Hypothesis Feature Lookup Table job");
+        final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino Hypothesis Feature Lookup Table job"));
         job.setJarByClass(HypothesisJob.class);
 
         initializeJob(job);
