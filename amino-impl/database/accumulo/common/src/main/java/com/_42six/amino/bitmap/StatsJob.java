@@ -16,13 +16,13 @@ public class StatsJob extends BitmapJob {
 
 	@Override
 	public int run(String[] args) throws Exception {
-        System.out.println("\n================================ Stats Job ================================\n");
 
         // Create the command line options to be parsed
         final Option o1 = new Option("o", "outputDir", true, "The output directory");
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1)));
         final Configuration conf = getConf();
         loadConfigValues(conf);
+        System.out.println("\n========================" + conf.get("mapreduce.job.name","Stats Job") +"======================\n");
 
         Job job = new Job(conf, conf.get("mapreduce.job.name","Amino stats job"));
         job.setJarByClass(StatsJob.class);

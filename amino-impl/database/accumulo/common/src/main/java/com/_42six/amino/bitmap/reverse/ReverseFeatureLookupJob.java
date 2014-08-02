@@ -36,13 +36,13 @@ public class ReverseFeatureLookupJob extends BitmapJob
     @Override
     public int run(String[] args) throws Exception
     {
-        System.out.println("\n================================ ReverseFeatureLookupJob ================================\n");
         // Create the command line options to be parsed
         final Option o1 = new Option("o", "outputDir", true, "The output directory");
         final Option o2 = new Option("w", "workingDir", true, "The working directory");
 
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1, o2)));
         final Configuration conf = getConf();
+        System.out.println("\n======================="+ conf.get("mapreduce.job.name","ReverseFeatureLookup Job") +"=====================\n");
 
         final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino reverse_feature_lookup table job"));
         job.setJarByClass(ReverseFeatureLookupJob.class);

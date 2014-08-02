@@ -19,14 +19,13 @@ public class ReverseBitmapJob extends BitmapJob
 	@Override
 	public int run(String[] args) throws Exception 
 	{
-        System.out.println("\n================================ ReverseBitmapJob ================================\n");
-
         // Create the command line options to be parsed
         final Option o1 = new Option("o", "outputDir", true, "The output directory");
 
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1)));
         final Configuration conf = getConf();
         loadConfigValues(conf);
+        System.out.println("\n========================"+ conf.get("mapreduce.job.name","ReverseBitmap Job") +"=======================\n");
         String tableName = Preconditions.checkNotNull(conf.get(AminoConfiguration.TABLE_BUCKET), "bucketTable config value missing");
         tableName = tableName.replace("amino_", "amino_reverse_");
         final int numShards = conf.getInt(AminoConfiguration.NUM_SHARDS, 10);

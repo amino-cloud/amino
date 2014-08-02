@@ -904,11 +904,11 @@ public final class FeatureMetadataJob extends BitmapJob {
 	}
 
     public int run(String[] args) throws Exception {
-        System.out.println("\n================================ FeatureMetadata Job ================================\n");
 
         initializeConfigAndOptions(args, Optional.<HashSet<Option>>absent());
         final Configuration conf = getConf();
         loadConfigValues(conf);
+        System.out.println("\n=====================" + conf.get("mapreduce.job.name","FeatureMetadata Job") +"=======================\n");
 
         final String metadataTable = conf.get(AminoConfiguration.TABLE_METADATA) + AminoConfiguration.TEMP_SUFFIX; // You want to make sure you use the temp here even if blastIndex is false
 

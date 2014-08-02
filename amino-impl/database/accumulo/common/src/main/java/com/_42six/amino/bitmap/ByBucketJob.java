@@ -22,7 +22,6 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.ToolRunner;
 
 import java.io.BufferedOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -33,7 +32,6 @@ import java.util.TreeSet;
 public class ByBucketJob extends BitmapJob {
 
     public int run(String[] args) throws Exception {
-        System.out.println("\n================================ ByBucket Job ================================\n");
 
         // Create the command line options to be parsed
         final Option o1 = new Option("o", "outputDir", true, "The output directory");
@@ -43,6 +41,7 @@ public class ByBucketJob extends BitmapJob {
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1, o2, o3)));
         final Configuration conf = getConf();
         loadConfigValues(conf);
+        System.out.println("\n=======================" + conf.get("mapreduce.job.name","ByBucket Job") +"======================\n");
 
         if(!recreateTable(conf.get(AminoConfiguration.TABLE_BUCKET), conf.getInt(AminoConfiguration.NUM_SHARDS, 10))){
             return 1;
@@ -67,15 +66,15 @@ public class ByBucketJob extends BitmapJob {
         return execute(job, workingDirectory, numTablets);
     }
 
-    public int execute(Job job, String workingDir, int numTabletsCommandLine) throws IOException, InterruptedException, ClassNotFoundException
+    public int execute(Job job, String workingDir, int numTabletsCommandLine) throws Exception
     {
         final Configuration conf = job.getConfiguration();
         final String tableName = conf.get(AminoConfiguration.TABLE_BUCKET);
         final String splitFile = workingDir + "/bucketSplits.txt";
 
-        Connector c = null;
+        Connector c;
 
-        boolean success = false;
+        boolean success;
         try
         {
             final Instance inst = new ZooKeeperInstance(instanceName, zooKeepers);
@@ -138,13 +137,10 @@ public class ByBucketJob extends BitmapJob {
             //ByBucketPartitioner.setSplitFile(job, splitFile);
             //job.setSortComparatorClass(BucketKeyComparator.class); // This will ensure the values come in sorted so we don't have to do that TreeMap...
         }
-        catch (AccumuloException e)
+        catch (AccumuloException | AccumuloSecurityException e)
         {
             e.printStackTrace();
-        }
-        catch (AccumuloSecurityException e)
-        {
-            e.printStackTrace();
+            return -1;
         }
 
         int result = 0;
@@ -156,7 +152,7 @@ public class ByBucketJob extends BitmapJob {
         if (result != 0) {
             System.out.println("ByBucketJob MapReduce job failed. Job results will not be imported into Accumulo.");
         }
-        else if (c != null && success) {
+        else if (success) {
             System.out.println("Importing job results to Accumulo....");
             try
             {

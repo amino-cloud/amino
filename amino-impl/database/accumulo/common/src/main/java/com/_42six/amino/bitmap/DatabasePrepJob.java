@@ -126,13 +126,13 @@ public class DatabasePrepJob extends BitmapJob {
     }
 
     public int run(String[] args) throws Exception {
-        System.out.println("\n=============================== DatabasePrepJob ================================\n");
 
         // Create the command line options to be parsed
         final Option o1 = new Option("o", "outputDir", true, "The output directory");
 
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1)));
         final Configuration conf = getConf();
+        System.out.println("\n====================="+ conf.get("mapreduce.job.name","DatabasePrepJob") +"====================\n");
 
         if(commandLine.hasOption("o")){
             conf.set(AminoConfiguration.OUTPUT_DIR, commandLine.getOptionValue("o"));

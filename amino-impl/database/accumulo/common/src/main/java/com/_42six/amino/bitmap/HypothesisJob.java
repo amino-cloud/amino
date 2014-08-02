@@ -193,7 +193,6 @@ public class HypothesisJob extends BitmapJob
     @Override
     public int run(String[] args) throws Exception
     {
-        System.out.println("\n================================ Hypothesis Job ================================\n");
 
         // Create the command line options to be parsed
         final Option o1 = new Option("o", "outputDir", true, "The output directory");
@@ -205,6 +204,8 @@ public class HypothesisJob extends BitmapJob
         loadConfigValues(conf);
         final String inputDir = fromOptionOrConfig(Optional.of("o"), Optional.of(AminoConfiguration.OUTPUT_DIR));
         PathUtils.pathsExists(inputDir, conf);
+
+        System.out.println("\n======================" + conf.get("mapreduce.job.name","Hypothesis Job") + "==========================\n");
 
         final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino Hypothesis Feature Lookup Table job"));
         job.setJarByClass(HypothesisJob.class);

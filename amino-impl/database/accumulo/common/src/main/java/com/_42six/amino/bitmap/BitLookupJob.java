@@ -34,7 +34,6 @@ import java.util.*;
 
 public class BitLookupJob extends BitmapJob {
     public int run(String[] args) throws Exception {
-        System.out.println("\n================================ BitLookup Job ================================\n");
 
         // Create the command line options to be parsed
         final Option o1 = new Option("o", "outputDir", true, "The output directory");
@@ -44,6 +43,7 @@ public class BitLookupJob extends BitmapJob {
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1, o2, o3)));
         final Configuration conf = getConf();
         loadConfigValues(conf);
+        System.out.println("\n========================"+ conf.get("mapreduce.job.name","BitLookup Job") +"======================\n");
 
         if(!recreateTable(conf.get(AminoConfiguration.TABLE_INDEX))){
             return 1;
