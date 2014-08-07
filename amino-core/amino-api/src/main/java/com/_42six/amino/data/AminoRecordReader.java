@@ -25,7 +25,7 @@ public class AminoRecordReader extends RecordReader<MapWritable, MapWritable> {
 
     public AminoRecordReader(InputSplit split, TaskAttemptContext context) throws InstantiationException {
         try {
-            this.dataLoader = AminoDataUtils.getDataLoader(context.getConfiguration());
+            this.dataLoader = AminoDataUtils.createDataLoader(context.getConfiguration());
             this.initialize(split, context);
         } catch (Exception e) {
             throw new InstantiationException(e.getMessage());
@@ -66,14 +66,13 @@ public class AminoRecordReader extends RecordReader<MapWritable, MapWritable> {
 
         // initialize the underlying record reader
         if (this.recordReader == null) {
-            //this.recordReader = this.inputFormat.createRecordReader(inputSplit, taskAttemptContext);
             this.recordReader = this.dataLoader.getInputFormat().createRecordReader(inputSplit, taskAttemptContext);
             this.recordReader.initialize(inputSplit, taskAttemptContext);
             this.dataLoader.setRecordReader(recordReader);
         }
 
         // read the available buckets from the bucket cache
-        BucketCache bucketCache = new BucketCache(taskAttemptContext.getConfiguration());
+        final BucketCache bucketCache = new BucketCache(taskAttemptContext.getConfiguration());
         this.key = bucketCache.toMapWritableKey();
         this.key.put(new Text(DATA_SOURCE_NAME_KEY), new Text(this.dataLoader.getDataSourceName()));
     }

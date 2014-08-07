@@ -79,7 +79,7 @@ public class AminoMultiInputFormat extends AminoInputFormat
 	
 	private void setAppropriateLoader(Configuration conf, InputSplit inputSplit, TaskAttemptContext context) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IOException 
 	{
-		DataLoader dl = AminoDataUtils.getDataLoader(conf);
+		DataLoader dl = AminoDataUtils.createDataLoader(conf);
 		
 		Job myJob = new Job(new Configuration(conf));
 		dl.initializeFormat(myJob); //gets the context stuff in the dataloader
@@ -125,7 +125,7 @@ public class AminoMultiInputFormat extends AminoInputFormat
 	//This is the old way with one enricher...
 //	private void setAppropriateLoader(Configuration conf, InputSplit inputSplit, TaskAttemptContext context) throws ClassNotFoundException, InstantiationException, IllegalAccessException
 //	{
-//		DataLoader dl = AminoDataUtils.getDataLoader(conf);
+//		DataLoader dl = AminoDataUtils.createDataLoader(conf);
 //		AminoRecordReader test = null;
 //		try
 //		{
@@ -189,7 +189,7 @@ public class AminoMultiInputFormat extends AminoInputFormat
 	public List<InputSplit> getSplits(JobContext jobContext) throws IOException, InterruptedException 
 	{
 		try {
-			DataLoader loader = AminoDataUtils.getDataLoader(jobContext.getConfiguration());
+			DataLoader loader = AminoDataUtils.createDataLoader(jobContext.getConfiguration());
 //			joinLoader = AminoDataUtils.getJoinDataLoader(jobContext.getConfiguration());
 			
 			Configuration conf = jobContext.getConfiguration();

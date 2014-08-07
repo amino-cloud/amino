@@ -351,7 +351,7 @@ public final class FrameworkDriver extends Configured implements Tool {
             SequenceFileOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
             JobUtilities.deleteDirectory(conf, output);
 
-            CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(conf), aj, output, conf);
+            CacheBuilder.buildCaches(AminoDataUtils.createDataLoader(conf), aj, output, conf);
 
             return returnType;
 
@@ -387,7 +387,7 @@ public final class FrameworkDriver extends Configured implements Tool {
             AminoOutputFormat.setOutputPath(job, new Path(outputPaths));
             JobUtilities.deleteDirectory(conf, output);
 
-            CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(conf), aj, output, conf);
+            CacheBuilder.buildCaches(AminoDataUtils.createDataLoader(conf), aj, output, conf);
             return JOB_TYPE_NORMAL;
         }
     }
@@ -471,7 +471,7 @@ public final class FrameworkDriver extends Configured implements Tool {
         System.out.println("Output will be written to: " + PathUtils.getJobDataPath(output));
         AminoOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
         JobUtilities.deleteDirectory(job.getConfiguration(), output);
-        CacheBuilder.buildCaches(AminoDataUtils.getDataLoader(job.getConfiguration()), aej, output, job.getConfiguration());
+        CacheBuilder.buildCaches(AminoDataUtils.createDataLoader(job.getConfiguration()), aej, output, job.getConfiguration());
 
         return job.waitForCompletion(true);
     }
