@@ -90,7 +90,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
             AccumuloInputFormat.setScanAuthorizations(job, new Authorizations(authorizations.getBytes()));
             AccumuloInputFormat.addIterator(job, new IteratorSetting(30, WholeRowIterator.class));
 
-            // If a row regex is set, use that to determine which rows to fetch.  If it's not, use the comma seperated
+            // If a row regex is set, use that to determine which rows to fetch.  If it's not, use the comma separated
             // list of rowIDs instead
             if(rowRegex != null){
                 logger.info("Using rowId regex: " + rowRegex);

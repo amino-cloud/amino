@@ -13,13 +13,11 @@ public class AminoMultiInputFormat extends AminoInputFormat
 	
 	//public static void setJoinDataLoader(Configuration conf, DataLoader loader)
 	public static void setJoinDataLoaders(Configuration conf, Iterable<Class<? extends DataLoader>> loaders)
-			throws IOException {
-		//AminoDataUtils.setJoinLoader(conf, loader);
+			throws IOException
+    {
 		try {
 			AminoDataUtils.setJoinDataLoaders(conf, loaders);
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
+		} catch (InstantiationException  | IllegalAccessException e) {
 			e.printStackTrace();
 		}
 	}
@@ -171,63 +169,41 @@ public class AminoMultiInputFormat extends AminoInputFormat
 	{
 		try
 		{
-			Configuration conf = context.getConfiguration();
-			setAppropriateLoader(conf, inputSplit, context);
-			return super.createRecordReader(inputSplit, context);
-			
-		} catch (InstantiationException e) {
-			throw new IOException(e);
-		} catch (ClassNotFoundException e) {
-			throw new IOException(e);
-		} catch (IllegalAccessException e) {
-			throw new IOException(e);
-		}
+			setAppropriateLoader(context.getConfiguration(), inputSplit, context);
+		} catch (InstantiationException | ClassNotFoundException | IllegalAccessException e) {
+            throw new IOException(e);
+        }
+		return super.createRecordReader(inputSplit, context);
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<InputSplit> getSplits(JobContext jobContext) throws IOException, InterruptedException 
 	{
+        List<InputSplit> retVal;
 		try {
-			DataLoader loader = AminoDataUtils.createDataLoader(jobContext.getConfiguration());
-//			joinLoader = AminoDataUtils.getJoinDataLoader(jobContext.getConfiguration());
-			
-			Configuration conf = jobContext.getConfiguration();
-			Job myJob = new Job(new Configuration(conf));
+			final DataLoader loader = AminoDataUtils.createDataLoader(jobContext.getConfiguration());
+			final Configuration conf = jobContext.getConfiguration();
+			final Job myJob = new Job(new Configuration(conf));
 			loader.initializeFormat(myJob);
 
-			List<InputSplit> retVal = loader.getInputFormat().getSplits(myJob);
+			retVal = loader.getInputFormat().getSplits(myJob);
 
-//			myJob = new Job(jobContext.getConfiguration());
-//			//Need this because loadDefault doesn't override properties from the previous data loader, so if both loaders use the same property for the data location, it will use the old location
-//			AminoConfiguration.overrideDefault(jobContext.getConfiguration(), joinLoader.getClass().getSimpleName());
-//			joinLoader.initializeFormat(myJob);
-//			retVal.addAll(joinLoader.getInputFormat().getSplits(new JobContext(myJob.getConfiguration(), myJob.getJobID())));
-			
-			Iterable<DataLoader> erichers = AminoDataUtils.getJoinDataLoaders(conf);
-			for (DataLoader edl : erichers)
+			final Iterable<DataLoader> enrichers = AminoDataUtils.getJoinDataLoaders(conf);
+			for (DataLoader enrichDataLoader : enrichers)
 			{
-				retVal = addInputToContext(retVal, edl, jobContext);
+				retVal = addInputToContext(retVal, enrichDataLoader, jobContext);
 			}
-			
-			return retVal;
-			
-		} catch (ClassNotFoundException e) {
-			throw new IOException(e);
-		} catch (InstantiationException e) {
-			throw new IOException(e);
-		} catch (IllegalAccessException e) {
+		} catch (InstantiationException | ClassNotFoundException | IllegalAccessException e) {
 			throw new IOException(e);
 		}
+		return retVal;
 	}
 	
 	@SuppressWarnings("unchecked")
 	private List<InputSplit> addInputToContext(List<InputSplit> retVal, DataLoader joinLoader, JobContext jobContext) throws IOException, InterruptedException
 	{
-		Job myJob = new Job(new Configuration(jobContext.getConfiguration()));
-
-		//No need for this...happens in initializeFormat
-		//AminoConfiguration.loadDefault(myJob.getConfiguration(), joinLoader.getClass().getSimpleName());
+		final Job myJob = new Job(new Configuration(jobContext.getConfiguration()));
 		joinLoader.initializeFormat(myJob);
 		retVal.addAll(joinLoader.getInputFormat().getSplits(myJob));
 
