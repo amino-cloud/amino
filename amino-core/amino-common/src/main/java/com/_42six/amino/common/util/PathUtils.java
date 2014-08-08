@@ -212,7 +212,11 @@ public class PathUtils {
         logger.info("Getting base paths from: " + basePaths);
         final Set<String> metadataPaths = new HashSet<>();
         for(String path : basePaths.split(",")){
-            metadataPaths.addAll(getJobMetadataPaths(conf, path));
+            try {
+                metadataPaths.addAll(getJobMetadataPaths(conf, path));
+            } catch (IOException ex){
+                logger.warn("Problem opening path. Skipping. " + ex.getMessage());
+            }
         }
         return metadataPaths;
     }
