@@ -218,54 +218,60 @@ public final class FrameworkDriver extends Configured implements Tool {
     }
 
     public int run(String[] args) throws Exception {
-        ServiceLoader<? extends AminoJob> jobs = ServiceLoader.load(AminoJob.class);
-        if (!jobs.iterator().hasNext()) {
-            jobs = ServiceLoader.load(AminoEnrichmentJob.class);
-        }
-        if (!jobs.iterator().hasNext()) {
-            jobs = ServiceLoader.load(AminoReuseEnrichmentJob.class);
-        }
-
-        Configuration conf = getConf();
-        // AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
-        // boolean complete = createTables(conf);
+        updateStatus(JobStatus.RUNNING);
         boolean complete = true;
 
-        updateStatus(JobStatus.RUNNING);
+        try {
+            ServiceLoader<? extends AminoJob> jobs = ServiceLoader.load(AminoJob.class);
+            if (!jobs.iterator().hasNext()) {
+                jobs = ServiceLoader.load(AminoEnrichmentJob.class);
+            }
+            if (!jobs.iterator().hasNext()) {
+                jobs = ServiceLoader.load(AminoReuseEnrichmentJob.class);
+            }
 
-        //boolean complete = true;
-        for (AminoJob aj : jobs) {
-            aj.setConfig(conf);
-            logger.info("Running Job -> " + aj.getJobName());
-            if (complete) {
-                Job job = new Job(conf, aj.getJobName());
-                job.setJarByClass(aj.getClass());
+            Configuration conf = getConf();
+            // AminoConfiguration.loadDefault(conf, "AminoDefaults", true);
+            // boolean complete = createTables(conf);
 
-                // Add the class to the conf it can be grabbed in the Reduce phase
-                AminoDriverUtils.setAminoJob(job.getConfiguration(), aj.getClass());
+            for (AminoJob aj : jobs) {
+                aj.setConfig(conf);
+                logger.info("Running Job -> " + aj.getJobName());
+                if (complete) {
+                    Job job = new Job(conf, aj.getJobName());
+                    job.setJarByClass(aj.getClass());
 
-                int jobType = setJobParameters(job, aj);
+                    // Add the class to the conf it can be grabbed in the Reduce phase
+                    AminoDriverUtils.setAminoJob(job.getConfiguration(), aj.getClass());
 
-                // Call job configuration for special properties
-                jobConfiguration(job);
+                    int jobType = setJobParameters(job, aj);
 
-                complete = job.waitForCompletion(true);
+                    // Call job configuration for special properties
+                    jobConfiguration(job);
 
-                if (jobType == JOB_TYPE_ENRICHMENT || jobType == JOB_TYPE_REUSE_ENRICHMENT) {
-                    if (!stopOnFirstPhase) {
-                        stopOnFirstPhase = conf.getBoolean("stop.on.first.phase", stopOnFirstPhase);
-                    }
-                    if (complete && !stopOnFirstPhase) {
-                        complete = runSecondPhaseEnrichmentJob((AminoEnrichmentJob) aj, conf, jobType);
-                        if (jobType == JOB_TYPE_REUSE_ENRICHMENT) ((AminoReuseEnrichmentJob) aj).directoryCleanup(conf);
-                    } else if (!complete) {
-                        System.err.println("Job failed, unable to run second enrichment step");
+                    complete = job.waitForCompletion(true);
+
+                    if (jobType == JOB_TYPE_ENRICHMENT || jobType == JOB_TYPE_REUSE_ENRICHMENT) {
+                        if (!stopOnFirstPhase) {
+                            stopOnFirstPhase = conf.getBoolean("stop.on.first.phase", stopOnFirstPhase);
+                        }
+                        if (complete && !stopOnFirstPhase) {
+                            complete = runSecondPhaseEnrichmentJob((AminoEnrichmentJob) aj, conf, jobType);
+                            if (jobType == JOB_TYPE_REUSE_ENRICHMENT)
+                                ((AminoReuseEnrichmentJob) aj).directoryCleanup(conf);
+                        } else if (!complete) {
+                            System.err.println("Job failed, unable to run second enrichment step");
+                        }
                     }
                 }
             }
-        }
 
-        updateStatus(complete ? JobStatus.COMPLETE : JobStatus.FAILED);
+            updateStatus(complete ? JobStatus.COMPLETE : JobStatus.FAILED);
+        } catch (Exception ex){
+            logger.error("Failure trying to run framework driver.  Setting PID to failed.", ex);
+            updateStatus(JobStatus.FAILED);
+            throw ex;
+        }
 
         return complete ? 0 : 1;
     }
@@ -356,7 +362,7 @@ public final class FrameworkDriver extends Configured implements Tool {
             return returnType;
 
         } else {
-            System.out.println("\n==================== Running Amino Job =================\n");
+            System.out.println("\n==================== Running Amino Job: "+ aj.getJobName()+"=================\n");
 
             // Our Framework mapper and reducer
             job.setMapperClass(FrameworkMapper.class);
