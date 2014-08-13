@@ -20,6 +20,9 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.mapreduce.Counter;
+import org.apache.hadoop.mapreduce.CounterGroup;
+import org.apache.hadoop.mapreduce.Counters;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.util.Tool;
@@ -261,6 +264,21 @@ public final class FrameworkDriver extends Configured implements Tool {
                                 ((AminoReuseEnrichmentJob) aj).directoryCleanup(conf);
                         } else if (!complete) {
                             System.err.println("Job failed, unable to run second enrichment step");
+                        }
+                    } else {
+                        final Counters counters = job.getCounters();
+                        final CounterGroup taskCounter = counters.getGroup("org.apache.hadoop.mapreduce.TaskCounter");
+                        Counter c = taskCounter.findCounter("MAP_INPUT_RECORDS", false);
+                        if(c == null || c.getValue() == 0){
+                            logger.error("There were no records for the mapper to process");
+                            complete = false;
+                            break;
+                        }
+                        c = taskCounter.findCounter("MAP_OUTPUT_RECORDS", false);
+                        if(c == null || c.getValue() == 0){
+                            logger.error("The mapper produced no records to process");
+                            complete = false;
+                            break;
                         }
                     }
                 }

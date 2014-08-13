@@ -1,16 +1,16 @@
 package com._42six.amino.api.util;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import com._42six.amino.api.job.AminoConfiguredReducer;
 import com._42six.amino.api.model.Row;
 import com._42six.amino.common.AminoWritable;
 import com._42six.amino.common.Feature;
 import com._42six.amino.common.NominalFeatureFact;
 import com._42six.amino.common.RatioFeatureFact;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * TODO: Add more reducer utils
@@ -22,10 +22,11 @@ public class ReducerUtils extends AminoConfiguredReducer {
 		if (valueToRound == 0) {
 			return 0;
 		}
-	    double multipicationFactor = Math.pow(10, numberOfDecimalPlaces);
-	    double interestedInZeroDPs = valueToRound * multipicationFactor;
-	    return Math.round(interestedInZeroDPs) / multipicationFactor;
+	    double multiplicationFactor = Math.pow(10, numberOfDecimalPlaces);
+	    double interestedInZeroDPs = valueToRound * multiplicationFactor;
+	    return Math.round(interestedInZeroDPs) / multiplicationFactor;
 	}
+
 	public static long round(double a) {
 		return (long)Math.floor(a + 0.5d);
 	}
@@ -63,9 +64,9 @@ public class ReducerUtils extends AminoConfiguredReducer {
 	public static int getUniqueValuesInFieldCount(Collection<Row> rows, String fieldName) {
 		return (getUniqueValuesInField(rows, fieldName)).size();
 	}
-	
+
 	public static Set<String> getUniqueValuesInField(Collection<Row> rows, String fieldName) {
-		HashSet<String> set = new HashSet<String>();
+		final HashSet<String> set = new HashSet<>();
 		if (rows != null) {
 			for (Row row : rows) {
 				String value = row.get(fieldName);
@@ -76,17 +77,19 @@ public class ReducerUtils extends AminoConfiguredReducer {
 		}
 		return set;
 	}
-	
+
 	public static Set<String> getUniqueValuesInCSVFields(Collection<Row> rows, String fieldName) {
-		HashSet<String> set = new HashSet<String>();
+		final HashSet<String> set = new HashSet<>();
 		if (rows != null) {
 			for (Row row : rows) {
 				String value = row.get(fieldName);
 				if (value != null) {
 					String[] values = value.split(",");
-					for(String singleVal : values)
-						if((singleVal = singleVal.trim()) != "")
-							set.add(singleVal);
+					for(String singleVal : values) {
+                        if (!(singleVal = singleVal.trim()).equals("")) {
+                            set.add(singleVal);
+                        }
+                    }
 				}
 			}
 		}
@@ -101,16 +104,14 @@ public class ReducerUtils extends AminoConfiguredReducer {
 		double y2 = Math.toRadians(lon2);
 
 		double sec1 = Math.sin(x1)*Math.sin(x2);
-		double dl=Math.abs(y1-y2);
+		double dl = Math.abs(y1-y2);
 		double sec2 = Math.cos(x1)* Math.cos(x2);
 		
 		// sec1, sec2, dl are in degree, need to convert to radians
-		double centralAngle = Math.acos(sec1+sec2*Math.cos(dl));
+		double centralAngle = Math.acos(sec1 + sec2 * Math.cos(dl));
 		
 		// Radius of Earth: 6378.1 kilometers
-		double distance =  centralAngle * 6378.1;
-
-		return distance;
+		return centralAngle * 6378.1;
 	}
 	
 	public static void main(String[] args) {
