@@ -5,7 +5,6 @@ import com._42six.amino.common.index.BitmapIndex;
 import com._42six.amino.common.service.datacache.BucketCache;
 import com._42six.amino.common.service.datacache.SortedIndexCache;
 import com._42six.amino.common.service.datacache.SortedIndexCacheFactory;
-import com.google.common.base.Preconditions;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -46,9 +45,18 @@ public class ByBucketMapper extends Mapper<BucketStripped, AminoWritable, ByBuck
 
             bucket = bucketCache.getBucket(bucketStripped);
             final int binNumber = BitmapIndex.getBucketValueIndex(bucketStripped) % numberOfShards;
-            final int bucketNameIndex = Preconditions.checkNotNull(bucketNameCache.getIndexForValue(bucket.getBucketName()));
-            final int datasourceNameIndex = Preconditions.checkNotNull(dataSourceCache.getIndexForValue(bucket.getBucketDataSource()));
-            final int visibilityIndex = Preconditions.checkNotNull(visibilityCache.getIndexForValue(bucket.getBucketVisibility()));
+            final int bucketNameIndex = bucketNameCache.getIndexForValue(bucket.getBucketName());
+            if(bucketNameIndex < 0){
+                throw new IOException("Could not find index in cache for bucket value: " + bucket.getBucketName());
+            }
+            final int datasourceNameIndex = dataSourceCache.getIndexForValue(bucket.getBucketDataSource());
+            if(datasourceNameIndex < 0){
+                throw new IOException("Could not find index in cache for datasource: " + bucket.getBucketDataSource());
+            }
+            final int visibilityIndex = visibilityCache.getIndexForValue(bucket.getBucketVisibility());
+            if(visibilityIndex < 0){
+                throw new IOException("Could not find index in cache for visibility: " + bucket.getBucketVisibility());
+            }
             byBucketKey = new ByBucketKey(bucket.getBucketValue(), binNumber, bucketNameIndex, datasourceNameIndex, visibilityIndex);
         }
 
