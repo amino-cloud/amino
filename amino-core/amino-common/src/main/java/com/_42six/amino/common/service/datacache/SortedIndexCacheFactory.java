@@ -18,35 +18,25 @@ public class SortedIndexCacheFactory {
     /**
      * Produces the SortedIndexCache for the particular type
      * @param type The data type of the cache to instantiate
-     * @return The appropriate cache for the type of data requested
-     */
-    public static SortedIndexCache getCache(CacheTypes type){
-        switch (type){
-            case BucketName:
-                return new SortedIndexCache("/bucketNames");
-            case Datasource:
-                return new SortedIndexCache("/dataSources");
-            case Visibility:
-                return new SortedIndexCache("/visibilities");
-        }
-        throw new NotImplementedException("Cache type " + type + " is not implemented yet");
-    }
-
-    /**
-     * Produces the SortedIndexCache for the particular type
-     * @param type The data type of the cache to instantiate
      * @param conf The Hadoop Configuration
      * @return The appropriate cache for the type of data requested
      */
     public static SortedIndexCache getCache(CacheTypes type, Configuration conf) throws IOException {
+        final SortedIndexCache retVal;
         switch (type){
             case BucketName:
-                return new SortedIndexCache("/bucketNames", conf);
+                retVal = new SortedIndexCache("/bucketNames", conf);
+                break;
             case Datasource:
-                return new SortedIndexCache("/dataSources", conf);
+                retVal = new SortedIndexCache("/dataSources", conf);
+                break;
             case Visibility:
-                return new SortedIndexCache("/visibilities", conf);
+                retVal = new SortedIndexCache("/visibilities", conf);
+                break;
+            default:
+                throw new NotImplementedException("Cache type " + type + " is not implemented yet");
         }
-        throw new NotImplementedException("Cache type " + type + " is not implemented yet");
+        retVal.loadFromStorage();
+        return retVal;
     }
 }

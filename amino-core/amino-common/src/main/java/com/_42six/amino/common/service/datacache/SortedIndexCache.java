@@ -2,15 +2,20 @@ package com._42six.amino.common.service.datacache;
 
 import com._42six.amino.common.util.PathUtils;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import org.apache.curator.framework.CuratorFramework;
+import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
+import org.apache.curator.framework.recipes.shared.SharedCount;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,128 +31,109 @@ import java.util.*;
  */
 public class SortedIndexCache  {
 
-    /** The map indexed map of values */
-    protected Map<IntWritable, String> dataMap = new HashMap<IntWritable, String>();
-    protected String subFolder;
+    private static final Logger logger = LoggerFactory.getLogger(SortedIndexCache.class);
+    private static final String LOCK_PATH = "/ezbatch/amino/LUTLock";
 
-    public SortedIndexCache(String subFolder) {
-        String sub = Preconditions.checkNotNull(subFolder);
-        if(!sub.startsWith("/")){
-            sub = "/" + sub;
-        }
-        this.subFolder = sub;
-    }
+    /** The map indexed map of values */
+    protected ImmutableMap<IntWritable, String> dataMap;
+    protected SortedSet<String> valuesToStore = new TreeSet<>();
+    protected String subFolder;
+    protected Configuration conf;
+
+    private InterProcessMutex lock;
 
     public SortedIndexCache(String subFolder, Configuration conf) throws IOException {
-        this(subFolder);
-        for (String cachePath : PathUtils.getCachePaths(conf)) {
-            final FileSystem fs = FileSystem.get(conf);
-            final String cacheFolder = PathUtils.concat(cachePath, subFolder);
-            if(fs.exists(new Path(cacheFolder))){
-                MapFile.Reader reader = null;
-                try {
-                    reader = new MapFile.Reader(FileSystem.get(conf), cacheFolder, conf);
-                    readFromDisk(reader);
-                } finally {
-                    if(reader != null){
-                        IOUtils.closeStream(reader);
-                    }
-                }
-            } else {
-                fs.mkdirs(new Path(cacheFolder));
-            }
+        Preconditions.checkNotNull(subFolder);
+        Preconditions.checkNotNull(conf);
+        if(!subFolder.startsWith("/")){
+            subFolder = "/" + subFolder;
         }
+        this.subFolder = subFolder;
+        this.conf = conf;
     }
 
-    /**
-     * Method to read in the values from the HDFS mapfile.  Should be as simple as:
-     * final IntWritable key = new IntWritable();
-     * final T value = new T();
-     * while(reader.next(key, value)){
-     * dataMap.put(new IntWritable(key.get()), new T(value));
-     * }
-     *
-     * @param reader The MapFile.Reader to read values from
-     */
-    protected void readFromDisk(MapFile.Reader reader) throws IOException {
+    public void loadFromStorage() throws IOException {
+        final HashMap<IntWritable, String> mapFromDisk = new HashMap<>();
         final IntWritable key = new IntWritable();
         final Text value = new Text();
-        while(reader.next(key, value)){
-            dataMap.put(new IntWritable(key.get()), value.toString());
-        }
-    }
 
-    /**
-     * Persist the map to HDFS.
-     *
-     * @param conf The Configuration
-     */
-    protected void writeToDisk(Configuration conf) throws IOException {
-        final FileSystem fs = FileSystem.get(conf);
-        MapFile.Writer writer = null;
-
-        try {
-            writer = new MapFile.Writer(conf, fs, PathUtils.getCachePath(conf) + subFolder, IntWritable.class, Text.class);
-
-            final Text value = new Text();
-            for(Map.Entry<IntWritable, String> entry : dataMap.entrySet()){
-                value.set(entry.getValue());
-                writer.append(entry.getKey(), value);
-            }
-        }
-        finally {
-            if (writer != null) {
-                IOUtils.closeStream(writer);
-            }
-        }
-    }
-
-    /**
-     * Serialize the values out to HDFS.  NOTE! There is currently no synchronization method so make sure that you only
-     * have one person writing to the cache and don't try to read while it's possible that the cache is being updated
-     *
-     * @param conf The job Configuration
-     * @param writeToDistributedCache Whether or not to write to the DistributedCache
-     */
-    public void persist(Configuration conf, boolean writeToDistributedCache) throws IOException {
-        final String cachePath = PathUtils.concat(PathUtils.getCachePath(conf), subFolder);
-        final FileSystem fs = FileSystem.get(conf);
-
-        System.out.println("Writing cache data to: " + cachePath);
-        writeToDisk(conf);
-
-        // TODO come back to this and make sure right
-        if (writeToDistributedCache) {
-            for (FileStatus status : fs.listStatus(new Path(cachePath))) {
-                if (!status.isDirectory()) {
-                    DistributedCache.addCacheFile(status.getPath().toUri(), conf);
+        try(FileSystem fs = FileSystem.get(conf)){
+            for(String cachePath : PathUtils.getCachePaths(conf)) {
+                final String cacheFolder = PathUtils.concat(cachePath, subFolder);
+                if(fs.exists(new Path(cacheFolder))){
+                    try(MapFile.Reader reader = new MapFile.Reader(FileSystem.get(conf), cacheFolder, conf)) {
+                        while(reader.next(key, value)){
+                            final IntWritable mfdKey = new IntWritable(key.get());
+                            if(mapFromDisk.containsKey(mfdKey)){
+                                logger.error("Index collision.  Attempting to load {}:{} but there is already the value {}:{}",
+                                        key.toString(), value.toString(), key.toString(), mapFromDisk.get(mfdKey));
+                                throw new IOException("Index collision");
+                            }
+                            mapFromDisk.put(mfdKey, value.toString());
+                        }
+                    }
+                } else {
+                    fs.mkdirs(new Path(cacheFolder));
                 }
             }
         }
+
+        // We don't want the user to be able to change the map as it will change the order of items causing things pointing
+        // to this cache to be invalid
+        dataMap = ImmutableMap.copyOf(mapFromDisk);
     }
 
     /**
-     * Creates the map from the Set of items.  This will sort the items and then create an incremented index value for
-     * each item in the collection
-     * @param items The values to be placed in the map
+     * Fetches a unique index key from Zookeeper to help deconflict when we combine caches from different jobs together
+     * @return The unique index key
      */
-    public void setValues(Set<String> items){
-        final TreeSet<String> sortedItems = new TreeSet<String>(items);
-        setSortedValues(sortedItems);
+    private int fetchUniqueKey(SharedCount counter) throws Exception {
+        int retVal;
+        int newCount;
+        boolean updated = false;
+        do{
+            retVal = counter.getCount();
+            newCount = retVal + 1;
+            updated = counter.trySetCount(newCount);
+        } while(!updated);
+        return retVal;
     }
 
     /**
-     * Adds the sorted values to the map.  An incremented index value will be created for each value
-     * @param items
+     * Serialize the values out to HDFS.  This will fetch unique IDs from the global cache index to assure combining
+     * cache lookups won't be messed up
      */
-    public void setSortedValues(SortedSet<String> items){
-        dataMap = new HashMap<IntWritable, String>(items.size());
+    public void persist() throws Exception {
+        final String cachePath = PathUtils.concat(PathUtils.getCachePath(conf), subFolder);
+        logger.info("Writing cache data to: " + cachePath);
+        final String connectString = conf.get("dataloader.zookeepers"); // TODO UNDO MAGIC STRING
+        Preconditions.checkNotNull(connectString, "Could not find Zookeepers in the config");
+        final CuratorFramework client = CuratorFrameworkFactory.newClient(connectString, new ExponentialBackoffRetry(1000, 3));
+        final SharedCount counter = new SharedCount(client, LOCK_PATH, 0);
+        counter.start();
 
-        int i = 0;
-        for(String item : items){
-            dataMap.put(new IntWritable(i), item);
-            i++;
+        try(FileSystem fs = FileSystem.get(conf)){
+            try(MapFile.Writer writer = new MapFile.Writer(conf, fs, PathUtils.getCachePath(conf) + subFolder, IntWritable.class, Text.class)) {
+                final Text value = new Text();
+                final IntWritable key = new IntWritable();
+                for(String v : valuesToStore){
+                    key.set(fetchUniqueKey(counter));
+                    value.set(v);
+                    logger.debug("Storing {} : {}", key, value);
+                    writer.append(key, value);
+                }
+            }
+        } finally {
+            counter.close();
         }
+    }
+
+    public void addValue(String value){
+        valuesToStore.add(value);
+    }
+
+    public void addValues(Collection<? extends String> values){
+        valuesToStore.addAll(values);
     }
 
     /**
@@ -179,13 +165,9 @@ public class SortedIndexCache  {
         return dataMap.get(key);
     }
 
-    /**
-     * Prints the contents of the cache to stdout
-     */
-    public void printCache(){
-        for(Map.Entry<IntWritable, String> entry : dataMap.entrySet()){
-            System.out.println(entry.getKey().toString() + " : " + entry.getValue());
-        }
+    @Override
+    public String toString(){
+        return dataMap.toString();
     }
 
 }
