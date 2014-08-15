@@ -109,6 +109,7 @@ public class SortedIndexCache  {
         final String connectString = conf.get("dataloader.zookeepers"); // TODO UNDO MAGIC STRING
         Preconditions.checkNotNull(connectString, "Could not find Zookeepers in the config");
         final CuratorFramework client = CuratorFrameworkFactory.newClient(connectString, new ExponentialBackoffRetry(1000, 3));
+        client.start();
         final SharedCount counter = new SharedCount(client, LOCK_PATH, 0);
         counter.start();
 
@@ -125,7 +126,9 @@ public class SortedIndexCache  {
             }
         } finally {
             counter.close();
+            client.close();
         }
+
     }
 
     public void addValue(String value){
