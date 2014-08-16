@@ -64,7 +64,6 @@
         <dependency>
             <groupId>org.apache.accumulo</groupId>
             <artifactId>accumulo-core</artifactId>
-            <version>1.6.0</version>
             <scope>compile</scope>
             <exclusions>
                <exclusion>

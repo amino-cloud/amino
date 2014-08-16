@@ -14,17 +14,6 @@
     <artifactId>amino-accumulo</artifactId>
     <description>All of the projects related to interacting with Accumulo</description>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.apache.accumulo</groupId>
-                <artifactId>accumulo-core</artifactId>
-                <version>1.6.0</version>
-                <scope>provided</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <modules>
         <module>common</module>
         <module>iterators</module>
