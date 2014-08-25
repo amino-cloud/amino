@@ -57,24 +57,23 @@ public class SortedIndexCache  {
         final IntWritable key = new IntWritable();
         final Text value = new Text();
 
-        try(FileSystem fs = FileSystem.get(conf)){
-            for(String cachePath : PathUtils.getCachePaths(conf)) {
-                final String cacheFolder = PathUtils.concat(cachePath, subFolder);
-                if(fs.exists(new Path(cacheFolder))){
-                    try(MapFile.Reader reader = new MapFile.Reader(FileSystem.get(conf), cacheFolder, conf)) {
-                        while(reader.next(key, value)){
-                            final IntWritable mfdKey = new IntWritable(key.get());
-                            if(mapFromDisk.containsKey(mfdKey)){
-                                logger.error("Index collision.  Attempting to load {}:{} but there is already the value {}:{}",
-                                        key.toString(), value.toString(), key.toString(), mapFromDisk.get(mfdKey));
-                                throw new IOException("Index collision");
-                            }
-                            mapFromDisk.put(mfdKey, value.toString());
+        final FileSystem fs = FileSystem.get(conf);
+        for(String cachePath : PathUtils.getCachePaths(conf)) {
+            final String cacheFolder = PathUtils.concat(cachePath, subFolder);
+            if(fs.exists(new Path(cacheFolder))){
+                try(MapFile.Reader reader = new MapFile.Reader(FileSystem.get(conf), cacheFolder, conf)) {
+                    while(reader.next(key, value)){
+                        final IntWritable mfdKey = new IntWritable(key.get());
+                        if(mapFromDisk.containsKey(mfdKey)){
+                            logger.error("Index collision.  Attempting to load {}:{} but there is already the value {}:{}",
+                                    key.toString(), value.toString(), key.toString(), mapFromDisk.get(mfdKey));
+                            throw new IOException("Index collision");
                         }
+                        mapFromDisk.put(mfdKey, value.toString());
                     }
-                } else {
-                    fs.mkdirs(new Path(cacheFolder));
                 }
+            } else {
+                fs.mkdirs(new Path(cacheFolder));
             }
         }
 
