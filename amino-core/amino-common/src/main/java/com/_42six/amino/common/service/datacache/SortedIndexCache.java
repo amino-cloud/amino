@@ -5,7 +5,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.framework.recipes.shared.SharedCount;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.hadoop.conf.Configuration;
@@ -24,7 +23,7 @@ import java.util.*;
  * A lookup table for helping to compress data in the MapReduce jobs.  This takes a SortedSet of String values, creates
  * an index number for each one, and persists the map to HDFS.  This allows the user to compress strings to integer values
  * and at the same time allows the the sorters to work properly by sorting the indexes based on how the underlying value
- * would have been lexigraphically sorted.
+ * would have been lexicographically sorted.
  *
  * NOTE!
  * Serializing the cache to HDFS is not thread safe.  You must do this as a singleton operation or you will get incorrect results
@@ -39,8 +38,6 @@ public class SortedIndexCache  {
     protected SortedSet<String> valuesToStore = new TreeSet<>();
     protected String subFolder;
     protected Configuration conf;
-
-    private InterProcessMutex lock;
 
     public SortedIndexCache(String subFolder, Configuration conf) throws IOException {
         Preconditions.checkNotNull(subFolder);
@@ -59,9 +56,10 @@ public class SortedIndexCache  {
 
         final FileSystem fs = FileSystem.get(conf);
         for(String cachePath : PathUtils.getCachePaths(conf)) {
-            final String cacheFolder = PathUtils.concat(cachePath, subFolder);
-            if(fs.exists(new Path(cacheFolder))){
-                try(MapFile.Reader reader = new MapFile.Reader(FileSystem.get(conf), cacheFolder, conf)) {
+            final Path cacheFolder = new Path(PathUtils.concat(cachePath, subFolder));
+            if(fs.exists(cacheFolder)){
+                try(MapFile.Reader reader = new MapFile.Reader(cacheFolder, conf)){
+//                try(MapFile.Reader reader = new MapFile.Reader(FileSystem.get(conf), cacheFolder, conf)) {
                     while(reader.next(key, value)){
                         final IntWritable mfdKey = new IntWritable(key.get());
                         if(mapFromDisk.containsKey(mfdKey)){
@@ -73,7 +71,7 @@ public class SortedIndexCache  {
                     }
                 }
             } else {
-                fs.mkdirs(new Path(cacheFolder));
+                fs.mkdirs(cacheFolder);
             }
         }
 
@@ -89,7 +87,7 @@ public class SortedIndexCache  {
     private int fetchUniqueKey(SharedCount counter) throws Exception {
         int retVal;
         int newCount;
-        boolean updated = false;
+        boolean updated;
         do{
             retVal = counter.getCount();
             newCount = retVal + 1;
@@ -110,24 +108,23 @@ public class SortedIndexCache  {
         final CuratorFramework client = CuratorFrameworkFactory.newClient(connectString, new ExponentialBackoffRetry(1000, 3));
         client.start();
         final SharedCount counter = new SharedCount(client, LOCK_PATH, 0);
-        counter.start();
 
-        try(FileSystem fs = FileSystem.get(conf)){
-            try(MapFile.Writer writer = new MapFile.Writer(conf, fs, PathUtils.getCachePath(conf) + subFolder, IntWritable.class, Text.class)) {
-                final Text value = new Text();
-                final IntWritable key = new IntWritable();
-                for(String v : valuesToStore){
-                    key.set(fetchUniqueKey(counter));
-                    value.set(v);
-                    logger.debug("Storing {} : {}", key, value);
-                    writer.append(key, value);
-                }
+        try(MapFile.Writer writer = new MapFile.Writer(conf, new Path(PathUtils.getCachePath(conf) + subFolder),
+                MapFile.Writer.keyClass(IntWritable.class), MapFile.Writer.valueClass(Text.class))){
+//            try(MapFile.Writer writer = new MapFile.Writer(conf, fs, PathUtils.getCachePath(conf) + subFolder, IntWritable.class, Text.class)) {
+            counter.start();
+            final Text value = new Text();
+            final IntWritable key = new IntWritable();
+            for(String v : valuesToStore){
+                key.set(fetchUniqueKey(counter));
+                value.set(v);
+                logger.debug("Storing {} : {}", key, value);
+                writer.append(key, value);
             }
         } finally {
             counter.close();
             client.close();
         }
-
     }
 
     public void addValue(String value){
