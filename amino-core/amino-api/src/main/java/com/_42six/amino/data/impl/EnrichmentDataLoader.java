@@ -77,9 +77,9 @@ public class EnrichmentDataLoader implements DataLoader {
 			if (bucketCache == null) {
 				bucketCache = new BucketCache(conf);
 			}
-			BucketStripped b = (BucketStripped)this.reader.getCurrentKey();
+			BucketStripped b = (BucketStripped) this.reader.getCurrentKey();
 			
-			MapWritable mw = (MapWritable)reader.getCurrentValue();
+			MapWritable mw = (MapWritable) reader.getCurrentValue();
 			mw.put(bucketCache.getBucketName(b), b.getBucketValue());
 			
 			return mw;
@@ -90,33 +90,30 @@ public class EnrichmentDataLoader implements DataLoader {
 	
 	@Override
 	public MapWritable getNextKey(MapWritable currentKey) throws IOException, InterruptedException {
-		
-		BucketStripped bucket = (BucketStripped)this.reader.getCurrentKey();
+		final BucketStripped bucket = (BucketStripped)this.reader.getCurrentKey();
 		
 		if (bucketCache == null) {
 			bucketCache = new BucketCache(conf);
 		}
 		
-		MapWritable mw = bucketCache.getBucketAsKey(bucket);
-		
-		return mw;
+		return  bucketCache.getBucketAsKey(bucket);
 	}
 
 	@Override
 	public List<Text> getBuckets() {
-		//will overriden by getNextKey(MapWritable currentKey)
-		return new ArrayList<Text>();
+		// will be overridden by getNextKey(MapWritable currentKey)
+		return new ArrayList<>();
 	}
 
 	@Override
 	public Hashtable<Text, Text> getBucketDisplayNames() {
-		//will overriden by getNextKey(MapWritable currentKey)
-		return new Hashtable<Text, Text>();
+		// will be overridden by getNextKey(MapWritable currentKey)
+		return new Hashtable<>();
 	}
 
 	@Override
 	public String getDataSourceName() {
-		//will be overriden by getNextKey
+		// will be overridden by getNextKey
 		return WILL_BE_OVERRIDDEN;
 	}
 
@@ -138,13 +135,13 @@ public class EnrichmentDataLoader implements DataLoader {
 
 	@Override
 	public String getVisibility() {
-		//will be overriden by getNextKey
+		// will be overridden by getNextKey
 		return WILL_BE_OVERRIDDEN;
 	}
 
 	@Override
 	public String getHumanReadableVisibility() {
-		//will be overriden by getNextKey
+		// will be overridden by getNextKey
 		return WILL_BE_OVERRIDDEN;
 	}
 

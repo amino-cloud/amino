@@ -17,9 +17,9 @@ import java.util.*;
 
 public final class FrameworkReducer extends Reducer<BucketStripped, MapWritable, Bucket, AminoWritable> {
 
-    private List<AminoReducer> reducerList = new ArrayList<AminoReducer>();
+    private List<AminoReducer> reducerList = new ArrayList<>();
     private Map<String, Text> sortFields;
-    private Set<String> dedupDatasets = new HashSet<String>();
+    private Set<String> dedupDatasets = new HashSet<>();
     private long timestamp;
     private BucketCache bucketCache;
 
@@ -40,7 +40,7 @@ public final class FrameworkReducer extends Reducer<BucketStripped, MapWritable,
         }
 
         //to enable sorting, sort name and fields need to have the same number of values
-        sortFields = new HashMap<String, Text>();
+        sortFields = new HashMap<>();
         if (sortDatasetName != null && sortDatasetField != null
                 && sortDatasetName.length > 0 && sortDatasetName.length == sortDatasetField.length) {
             for (int i = 0; i < sortDatasetName.length; ++i) {

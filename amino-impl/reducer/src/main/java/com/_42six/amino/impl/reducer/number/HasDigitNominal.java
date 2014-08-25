@@ -26,7 +26,7 @@ public class HasDigitNominal extends AminoConfiguredReducer implements AminoRedu
 			if (number != null && number.length() > 0) {
 				for (char c : number.toCharArray()) {
                     final int charVal = Character.getNumericValue(c);
-                    if(digitSeen[charVal] == false){
+                    if(!digitSeen[charVal]){
                         digitSeen[charVal] = true;
                         result.add(new AminoWritable(feature, new NominalFeatureFact(String.valueOf(c))));
                     }

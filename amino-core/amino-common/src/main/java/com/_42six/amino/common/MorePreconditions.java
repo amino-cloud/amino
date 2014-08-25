@@ -1,9 +1,9 @@
 package com._42six.amino.common;
 
-import java.util.Collection;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+
+import java.util.Collection;
 
 /**
  * A helpful set of utility functions to check preconditions on arguments.  This utility class supplements (@link com.google.common.base.Preconditions}.
@@ -94,7 +94,7 @@ public class MorePreconditions {
 	 * @throws IllegalArgumentException - if expression is false 
 	 */
 	public static void checkArgument(Boolean expression) {
-		Preconditions.checkArgument(expression.booleanValue());
+		Preconditions.checkArgument(expression);
 	}
 	
 	/**
@@ -106,7 +106,7 @@ public class MorePreconditions {
 	 * @throws IllegalArgumentException if the expression is false
 	 */
 	public static void checkArgument(Boolean expression, Object errorMessage) {
-		Preconditions.checkArgument(expression.booleanValue(), errorMessage);
+		Preconditions.checkArgument(expression, errorMessage);
 	}
 	
 	/**
@@ -128,6 +128,6 @@ public class MorePreconditions {
 	 *                              or {@code errorMessageArgs} is null ( don't let this happen)
 	 */
 	public static void checkArugment(Boolean expression, String errorMessageTemplate, Object ... args) {
-		Preconditions.checkArgument(expression.booleanValue(), errorMessageTemplate, args);
+		Preconditions.checkArgument(expression, errorMessageTemplate, args);
 	}
 }

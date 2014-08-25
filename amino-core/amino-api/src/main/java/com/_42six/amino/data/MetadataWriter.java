@@ -55,9 +55,9 @@ public class MetadataWriter {
         }
     }
 
-    private final Map<String, FeatureHolder> featureList = new HashMap<String, FeatureHolder>();
-    private final Map<String, BucketHolder> bucketList = new HashMap<String, BucketHolder>();
-	private final Map<String, DatasourceMetadata> datasources = new HashMap<String, DatasourceMetadata>();
+    private final Map<String, FeatureHolder> featureList = new HashMap<>();
+    private final Map<String, BucketHolder> bucketList = new HashMap<>();
+	private final Map<String, DatasourceMetadata> datasources = new HashMap<>();
 
     public MetadataWriter(Configuration conf) {
         this.conf = conf;
@@ -162,8 +162,8 @@ public class MetadataWriter {
             datasourceMetadata.featureIds.add(featureMeta.id);
             datasourceMetadata.bucketIds.add(bucketId);
 	    } else {
-		    final Set<String> bucketIds = new HashSet<String>();
-		    final Set<String> featureIds = new HashSet<String>();
+		    final Set<String> bucketIds = new HashSet<>();
+		    final Set<String> featureIds = new HashSet<>();
 		    bucketIds.add(bucketId);
 		    featureIds.add(featureMeta.id);
 

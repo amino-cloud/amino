@@ -6,13 +6,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A class for keeping track what the lexographically first and last values are for a given entry
+ * A class for keeping track what the lexicographically first and last values are for a given entry
  */
 public class FirstLastTracker {
 
     public enum StoreGoal {
         FIRST, LAST
-    };
+    }
 
     /**
      * Updates the backing store with the key/vaue
@@ -73,5 +73,5 @@ public class FirstLastTracker {
         return (retVal != null) ? retVal.toString() : null;
     }
 
-    final Map<String, Map<StoreGoal, Text>> backingStore = new HashMap<String, Map<StoreGoal, Text>>();
+    final Map<String, Map<StoreGoal, Text>> backingStore = new HashMap<>();
 }

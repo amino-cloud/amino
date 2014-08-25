@@ -87,7 +87,7 @@ public class JobUtilities
      */
     public static int failureDirHasFiles(Configuration conf, String failureDir) throws IOException
     {
-        int fileCount = 1;
+        int fileCount;
         try(FileSystem fs = FileSystem.get(conf)) {
             final FileStatus[] status = fs.listStatus(new Path(failureDir));
             fileCount = status.length;

@@ -87,40 +87,40 @@ public class FeatureMetadata extends Metadata{
         this.namespace = that.namespace;
         this.type = that.type;
         if (that.datasources != null) {
-            this.datasources = new HashSet<String>(that.datasources);
+            this.datasources = new HashSet<>(that.datasources);
         }
         if (that.min != null) {
-            this.min = new Hashtable<String, Double>(that.min);
+            this.min = new Hashtable<>(that.min);
         }
         if (that.max != null) {
-            this.max = new Hashtable<String, Double>(that.max);
+            this.max = new Hashtable<>(that.max);
         }
         if (that.allowedValues != null) {
-            this.allowedValues = new TreeSet<String>(that.allowedValues);
+            this.allowedValues = new TreeSet<>(that.allowedValues);
         }
         if (that.featureFactCount != null) {
-            this.featureFactCount = new Hashtable<String, Long>(that.featureFactCount);
+            this.featureFactCount = new Hashtable<>(that.featureFactCount);
         }
         if (that.bucketValueCount != null) {
-            this.bucketValueCount = new Hashtable<String, Long>(that.bucketValueCount);
+            this.bucketValueCount = new Hashtable<>(that.bucketValueCount);
         }
         if (that.averages != null) {
-            this.averages = new Hashtable<String, Double>(that.averages);
+            this.averages = new Hashtable<>(that.averages);
         }
         if (that.standardDeviations != null) {
-            this.standardDeviations = new Hashtable<String, Double>(that.standardDeviations);
+            this.standardDeviations = new Hashtable<>(that.standardDeviations);
         }
         if (that.ratioBins != null) {
-            this.ratioBins = new Hashtable<String, ArrayList<Hashtable<String, Double>>>(that.ratioBins);
+            this.ratioBins = new Hashtable<>(that.ratioBins);
         }
         if (that.topN != null) {
-            this.topN = new Hashtable<String, ArrayList<String>>(that.topN);
+            this.topN = new Hashtable<>(that.topN);
         }
     }
     
     public void incrementFeatureFactCount(String bucketName)
     {
-    	if (featureFactCount == null) featureFactCount = new Hashtable<String,Long>();
+    	if (featureFactCount == null) featureFactCount = new Hashtable<>();
     	if (featureFactCount.containsKey(bucketName))
     	{
     		Long count = featureFactCount.get(bucketName);
@@ -137,7 +137,7 @@ public class FeatureMetadata extends Metadata{
     public void addToBucketValueCount(String bucketName, Long count)
     {
     	if (bucketValueCount == null) {
-    		bucketValueCount = new Hashtable<String,Long>();
+    		bucketValueCount = new Hashtable<>();
     	}
     	
     	if (bucketValueCount.containsKey(bucketName))
@@ -234,7 +234,7 @@ public class FeatureMetadata extends Metadata{
             if(this.datasources != null) {
                 this.datasources.addAll(that.datasources);
             } else {
-                this.datasources = new HashSet<String>(that.datasources);
+                this.datasources = new HashSet<>(that.datasources);
             }
         }
 
@@ -242,7 +242,7 @@ public class FeatureMetadata extends Metadata{
             if(this.allowedValues != null) {
                 this.allowedValues.addAll(that.allowedValues);
             } else {
-                this.allowedValues = new TreeSet<String>(that.allowedValues);
+                this.allowedValues = new TreeSet<>(that.allowedValues);
             }
         }
 

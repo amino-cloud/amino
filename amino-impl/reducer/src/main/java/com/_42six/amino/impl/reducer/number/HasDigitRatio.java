@@ -19,14 +19,14 @@ public class HasDigitRatio extends AminoConfiguredReducer implements AminoReduce
 
 	@Override
 	public Iterable<AminoWritable> reduce(DatasetCollection datasets) {
-		ArrayList<AminoWritable> result = new ArrayList<AminoWritable>();
+		final ArrayList<AminoWritable> result = new ArrayList<AminoWritable>();
         for (Row row : datasets.getAllDatasets()) {
             final boolean digitSeen[] = new boolean[10];
 			String number = row.get("number");
 			if (number != null && number.length() > 0) {
 				for (char c : number.toCharArray()) {
                     final int charVal = Character.getNumericValue(c);
-                    if(digitSeen[charVal] == false){
+                    if(!digitSeen[charVal]){
                         digitSeen[charVal] = true;
 					    result.add(new AminoWritable(feature, new RatioFeatureFact(charVal)));
                     }

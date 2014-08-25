@@ -38,7 +38,7 @@ public class CoordinateWritable extends SpatialWritable
 	public int compareTo(SpatialWritable o) 
 	{
 		CoordinateWritable cw = (CoordinateWritable)o;
-		return new Double(this.latitudey).compareTo(new Double(cw.latitudey));
+		return new Double(this.latitudey).compareTo(cw.latitudey);
 	}
 
 	@Override

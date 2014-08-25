@@ -1,13 +1,12 @@
 package com._42six.amino.common;
 
-import java.io.DataInput;
-import java.io.IOException;
-import com._42six.amino.common.FeatureFact;
-
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+
+import java.io.DataInput;
+import java.io.IOException;
 
 
 //public class OrdinalFeatureFact<E extends Enum<E>> extends FeatureFact
@@ -33,7 +32,7 @@ public class OrdinalFeatureFact extends FeatureFact
 		//return ((EnumWritable<E>)this.fact).getValue().compareTo(((EnumWritable<E>)ff.fact).getValue());
 		int myKey = ((IntWritable)((MapWritable)this.fact).keySet().iterator().next()).get();
 		int otherKey = ((IntWritable)((MapWritable)ff.fact).keySet().iterator().next()).get();
-		return new Integer(myKey).compareTo(new Integer(otherKey));
+		return new Integer(myKey).compareTo(otherKey);
 	}
 	
 	@Override

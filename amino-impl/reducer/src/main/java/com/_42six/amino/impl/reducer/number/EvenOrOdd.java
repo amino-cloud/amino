@@ -1,7 +1,5 @@
 package com._42six.amino.impl.reducer.number;
 
-import java.util.ArrayList;
-
 import com._42six.amino.api.job.AminoConfiguredReducer;
 import com._42six.amino.api.job.AminoReducer;
 import com._42six.amino.api.model.DatasetCollection;
@@ -9,6 +7,8 @@ import com._42six.amino.api.model.Row;
 import com._42six.amino.common.AminoWritable;
 import com._42six.amino.common.Feature;
 import com._42six.amino.common.NominalFeatureFact;
+
+import java.util.ArrayList;
 
 public class EvenOrOdd extends AminoConfiguredReducer implements AminoReducer
 {
@@ -24,7 +24,7 @@ public class EvenOrOdd extends AminoConfiguredReducer implements AminoReducer
 			String number = row.get("number");
 			if (number != null && number.length() > 0) {
 				Integer integer = Integer.parseInt(number);
-				String evenOdd = null;
+				String evenOdd;
 				if (integer % 2 == 0) {
 					evenOdd = "even";
 				}

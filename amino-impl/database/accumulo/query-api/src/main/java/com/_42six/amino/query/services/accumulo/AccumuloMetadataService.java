@@ -84,7 +84,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 	}
 
 	public List<DatasourceMetadata> listDataSources(String[] visibility) throws IOException {
-		final List<DatasourceMetadata> dataSources = new ArrayList<DatasourceMetadata>();
+		final List<DatasourceMetadata> dataSources = new ArrayList<>();
 
         Scanner metaScanner;
         try{
@@ -106,7 +106,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 	public List<FeatureMetadata> listFeatures(String datasourceId, String[] visibility) throws IOException {
 
 		final Gson gson = new Gson();
-		final List<FeatureMetadata> results = new ArrayList<FeatureMetadata>();
+		final List<FeatureMetadata> results = new ArrayList<>();
 		final Authorizations auths = new Authorizations(visibility);
 
         Scanner metaScanner;
@@ -128,7 +128,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		ArrayList<String> featureIds = gson.fromJson(metaScanner.iterator().next().getValue().toString(),
                 new TypeToken<ArrayList<String>>(){}.getType());
 
-		final List<Range> featureRanges = new ArrayList<Range>();
+		final List<Range> featureRanges = new ArrayList<>();
 		for(String featureId : featureIds){
 			featureRanges.add(new Range(TableConstants.FEATURE_PREFIX + featureId));
 		}
@@ -144,12 +144,12 @@ public class AccumuloMetadataService implements AminoMetadataService {
 			featuresScanner.fetchColumnFamily(TableConstants.JSON_FIELD);
 			featuresScanner.fetchColumnFamily(TableConstants.TYPE_FIELD);
 
-            HashMap<Text, HashMap<Text, String>> featuresValues = new HashMap<Text, HashMap<Text, String>>();
+            HashMap<Text, HashMap<Text, String>> featuresValues = new HashMap<>();
 			for(Map.Entry<Key, Value> entry : featuresScanner){
                 // Get the hashmap for this row
                 HashMap<Text, String> featureValue = featuresValues.get(entry.getKey().getRow());
                 if (featureValue == null) {
-                    featureValue = new HashMap<Text, String>();
+                    featureValue = new HashMap<>();
                 }
 
                 // Add the JSON value/Type value
@@ -176,8 +176,8 @@ public class AccumuloMetadataService implements AminoMetadataService {
 	}
 
 	public List<BucketMetadata> listBuckets(String datasourceId, String[] visibility) throws IOException {
-		final List<BucketMetadata> buckets = new ArrayList<BucketMetadata>();
-		final Set<Range> bucketRanges = new HashSet<Range>();
+		final List<BucketMetadata> buckets = new ArrayList<>();
+		final Set<Range> bucketRanges = new HashSet<>();
 		final Authorizations auths = new Authorizations(visibility);
 
 		// Find all of the buckets that are associated with the datasource
@@ -301,7 +301,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		Hypothesis hypothesis = new Hypothesis();
 		hypothesis.owner = owner;
 		hypothesis.id = hypothesisId;
-		hypothesis.hypothesisFeatures = new HashSet<HypothesisFeature>();
+		hypothesis.hypothesisFeatures = new HashSet<>();
 		Map.Entry<Key, Value> nextEntry = null;
 		while (itr.hasNext()) {
 			nextEntry = itr.next();
@@ -336,7 +336,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		// Restrict the rows that we get back to just the ones the userId should be able to see
 		scan.setRange(new Range(userId));
 
-		List<Hypothesis> entities = new ArrayList<Hypothesis>();
+		List<Hypothesis> entities = new ArrayList<>();
 		Hypothesis activeEntity = null;
 
 		// Loop through the hypotheses until we've collected our row amount or run out
@@ -351,7 +351,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 				activeEntity = new Hypothesis();
 				activeEntity.id = id;
         activeEntity.owner = owner;
-				activeEntity.hypothesisFeatures = new HashSet<HypothesisFeature>();
+				activeEntity.hypothesisFeatures = new HashSet<>();
 				entities.add(activeEntity);
 			}
 
@@ -450,7 +450,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 			Scanner scanner = persistenceService.createScanner(hypothesisTable, auths);
 			scanner.setRange(new Range(owner));
 			scanner.fetchColumn(new Text(id), new Text("canView"));
-			final List<Range> groupRanges = new ArrayList<Range>();
+			final List<Range> groupRanges = new ArrayList<>();
 			for(Map.Entry<Key, Value> entry : scanner) {
                 @SuppressWarnings("serial")
 				ArrayList<String> groups = gson.fromJson(entry.getValue().toString(),
@@ -462,7 +462,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 
 			// Remove the hypothesis from the hypothesis table
 			deleter = persistenceService.createBatchDeleter(hypothesisTable, auths);
-			deleter.setRanges(new ArrayList<Range>(Arrays.asList(new Range(owner))));
+			deleter.setRanges(new ArrayList<>(Arrays.asList(new Range(owner))));
 			deleter.fetchColumnFamily(new Text(id));
 			deleter.delete();
 
@@ -473,9 +473,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 				groupLutDeleter.fetchColumn(new Text(owner), new Text(id));
 				groupLutDeleter.delete();
 			}
-		}  catch (TableNotFoundException ex){
-            throw new IOException(ex);
-        }  catch (MutationsRejectedException ex){
+		}  catch (TableNotFoundException | MutationsRejectedException ex){
             throw new IOException(ex);
         }  finally {
 			// Close up any of the deleters we might have created
@@ -576,7 +574,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
         }
 
 		// TODO use the map<String, String> until we refactor the code the right way
-		ArrayList<Mutation> hypothesisMutations = new ArrayList<Mutation>(12);
+		ArrayList<Mutation> hypothesisMutations = new ArrayList<>(12);
 
 		// Add required parameters
 		hypothesisMutations.add(persistenceService.createInsertMutation(ownerId, uuid, "bucket", hypothesis.btVisibility, hypothesis.bucketid));
@@ -603,7 +601,7 @@ public class AccumuloMetadataService implements AminoMetadataService {
 
 		// And now we need to add this hypothesis to the group LUT
 		if(hypothesis.canView != null && hypothesis.canView.size() > 0){
-			final ArrayList<Mutation> lutList = new ArrayList<Mutation>();
+			final ArrayList<Mutation> lutList = new ArrayList<>();
 			for (String it : hypothesis.canView){
 				lutList.add(persistenceService.createInsertMutation(it, ownerId, uuid, hypothesis.btVisibility, ""));
 			}
@@ -624,33 +622,50 @@ public class AccumuloMetadataService implements AminoMetadataService {
 		String value = entry.getValue().toString();
 
 		if ((fieldsToAdd == null || fieldsToAdd.contains(cq)) && !value.equals("null")){
-			if (cq.equals("features")) {
-				hypothesis.hypothesisFeatures = new Gson().fromJson(value, new TypeToken<Set<HypothesisFeature>>(){}.getType());
-			} else if (cq.equals("bucket")) {
-				hypothesis.bucketid = value;
-			} else if (cq.equals("datasource")) {
-				hypothesis.datasourceid = value;
-			} else if (cq.equals("justification")) {
-				hypothesis.justification = value;
-			} else if (cq.equals("name")) {
-				hypothesis.name = value;
-			} else if (cq.equals("visibility")) {
-				hypothesis.visibility = value;
-			} else if (cq.equals("canEdit")) {
-				hypothesis.canEdit =  new Gson().fromJson(value, new TypeToken<ArrayList<String>>(){}.getType());
-			} else if (cq.equals("canView")) {
-				hypothesis.canView = new Gson().fromJson(value, new TypeToken<ArrayList<String>>(){}.getType());
-			} else if (cq.equals("created")) {
-				hypothesis.created = Long.parseLong(value);
-			} else if (cq.equals("executed")) {
-				hypothesis.executed = Long.parseLong(value);
-			} else if (cq.equals("updated")) {
-				hypothesis.updated = Long.parseLong(value);
-			} else if (cq.equals("queries")) {
-				hypothesis.queries = new Gson().fromJson(value, TreeSet.class);
-			} else {
-				log.warn("Don't know how to add a '" + cq + "' Hypothesis component");
-			}
+            switch (cq) {
+                case "features":
+                    hypothesis.hypothesisFeatures = new Gson().fromJson(value, new TypeToken<Set<HypothesisFeature>>() {
+                    }.getType());
+                    break;
+                case "bucket":
+                    hypothesis.bucketid = value;
+                    break;
+                case "datasource":
+                    hypothesis.datasourceid = value;
+                    break;
+                case "justification":
+                    hypothesis.justification = value;
+                    break;
+                case "name":
+                    hypothesis.name = value;
+                    break;
+                case "visibility":
+                    hypothesis.visibility = value;
+                    break;
+                case "canEdit":
+                    hypothesis.canEdit = new Gson().fromJson(value, new TypeToken<ArrayList<String>>() {
+                    }.getType());
+                    break;
+                case "canView":
+                    hypothesis.canView = new Gson().fromJson(value, new TypeToken<ArrayList<String>>() {
+                    }.getType());
+                    break;
+                case "created":
+                    hypothesis.created = Long.parseLong(value);
+                    break;
+                case "executed":
+                    hypothesis.executed = Long.parseLong(value);
+                    break;
+                case "updated":
+                    hypothesis.updated = Long.parseLong(value);
+                    break;
+                case "queries":
+                    hypothesis.queries = new Gson().fromJson(value, TreeSet.class);
+                    break;
+                default:
+                    log.warn("Don't know how to add a '" + cq + "' Hypothesis component");
+                    break;
+            }
 		}
 	}
 

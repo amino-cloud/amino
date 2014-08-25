@@ -1,12 +1,12 @@
 package com._42six.amino.common;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.util.hash.Hash;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 
 public class Feature implements WritableComparable<Feature> {
 
@@ -70,7 +70,7 @@ public class Feature implements WritableComparable<Feature> {
 
     @Override
     public int compareTo(Feature other) {
-        return Integer.valueOf(this.hashCode()).compareTo(Integer.valueOf(other.hashCode()));
+        return Integer.valueOf(this.hashCode()).compareTo(other.hashCode());
     }
 
     @Override

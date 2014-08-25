@@ -51,9 +51,9 @@ public class QueryStatisticsMap {
 	
 	@Override
 	public String toString() {
-		StringBuffer sb = new StringBuffer();
+		final StringBuilder sb = new StringBuilder();
 		for (TimeRange tr : rangeList) {
-			Integer i = bucketTimeMap.get(tr);
+			final Integer i = bucketTimeMap.get(tr);
 			if (i > 0) {
 				sb.append(tr.start);
 				sb.append("-");

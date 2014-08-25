@@ -122,7 +122,7 @@ public class PathUtils {
 	@SuppressWarnings("serial")
 	public static Set<String> getJobDataPaths(Configuration conf, final String rootPath) throws IOException {
 		if (rootPath.endsWith("*")) {
-			Set<String> pathSet = new HashSet<String>();
+			Set<String> pathSet = new HashSet<>();
 			
 			// go through sub directories and add the job data directories
 			FileSystem fs = FileSystem.get(conf);
@@ -171,7 +171,7 @@ public class PathUtils {
 	public static Set<String> getJobCachePaths(Configuration conf, final String rootPath) throws IOException {
 		logger.info("Getting Job Cache path for root path <" + rootPath + ">");
         if (rootPath.endsWith("*")) {
-			Set<String> pathSet = new HashSet<String>();
+			Set<String> pathSet = new HashSet<>();
 			
 			// go through sub directories and add the job data directories
 			FileSystem fs = FileSystem.get(conf);
@@ -205,10 +205,9 @@ public class PathUtils {
      * @param conf The {@link org.apache.hadoop.conf.Configuration} of the job
      * @param basePaths A ',' separated string of the project base baths to traverse through
      * @return {@link java.util.Set} of all of the metadata directories
-     * @throws IOException
      * @see com._42six.amino.common.util.PathUtils#getJobMetadataPaths(org.apache.hadoop.conf.Configuration, String)
      */
-    public static Set<String> getMultipleJobMetadataPaths(final Configuration conf, final String basePaths) throws IOException {
+    public static Set<String> getMultipleJobMetadataPaths(final Configuration conf, final String basePaths) {
         logger.info("Getting base paths from: " + basePaths);
         final Set<String> metadataPaths = new HashSet<>();
         for(String path : basePaths.split(",")){

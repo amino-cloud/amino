@@ -15,7 +15,7 @@ public class GroovyListOfListParser {
 		// normalize our string
 		listOfLists = nomralizeListOfListString(listOfLists);
 		// TODO: Add error checks
-		ArrayList<AminoBitmap> bitmaps = new ArrayList<AminoBitmap>();
+		ArrayList<AminoBitmap> bitmaps = new ArrayList<>();
 		int openParenCount = 0;
 		String currentCSV = "";
 		for (int i = 0; i < listOfLists.length(); i++) {
@@ -51,7 +51,7 @@ public class GroovyListOfListParser {
 		AminoBitmap retBitmap = null;
 
 		String[] bits = bitCSV.split(",");
-		SortedSet<Integer> bitset = new TreeSet<Integer>();
+		SortedSet<Integer> bitset = new TreeSet<>();
 
 		for (String bit : bits) {
 			Integer intBit = Integer.parseInt(bit.trim());

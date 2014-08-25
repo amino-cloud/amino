@@ -94,15 +94,9 @@ public class HypothesisJob extends BitmapJob
         	RangePartitioner.setSplitFile(job, workingDir + "/splits.txt");
         	
         	//success = true;
-        }
-        catch (AccumuloException e)
-        {
+        } catch (AccumuloException | AccumuloSecurityException e) {
         	e.printStackTrace();
         }
-        catch (AccumuloSecurityException e)
-        {
-			e.printStackTrace();
-		}
         
         int result = 0;
         if (success)
@@ -150,7 +144,7 @@ public class HypothesisJob extends BitmapJob
 		System.out.println("Reading random file: " + status.getPath().toString() + " to determine appropriate splits...");
 		
 		// Grab all the indexes in this sequence file
-		final List<Integer> indexes = new ArrayList<Integer>();
+		final List<Integer> indexes = new ArrayList<>();
 		final SequenceFile.Reader reader = new SequenceFile.Reader(fs, status.getPath(), conf);
 		final BucketCache bucketCache = new BucketCache(conf);
 		final Writable key = new BucketStripped();
@@ -170,7 +164,7 @@ public class HypothesisJob extends BitmapJob
 		IOUtils.closeStream(reader);
 		
 		//Build the percentiles based on the indexes and amount of reducers
-		final SortedSet<Text> splits = new TreeSet<Text>();
+		final SortedSet<Text> splits = new TreeSet<>();
 		final double[] vals = new double[indexes.size()];
 		for (int i = 0; i < indexes.size(); i++)
 		{

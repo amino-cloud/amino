@@ -1,14 +1,13 @@
 package com._42six.amino.common;
 
+import com._42six.amino.common.writable.CoordinateWritable;
+import com._42six.amino.common.writable.PolygonWritable;
+import org.apache.hadoop.io.Writable;
+
 import java.io.DataInput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.hadoop.io.Writable;
-
-import com._42six.amino.common.writable.CoordinateWritable;
-import com._42six.amino.common.writable.PolygonWritable;
 
 public class PolygonFeatureFact extends FeatureFact
 {
@@ -19,7 +18,7 @@ public class PolygonFeatureFact extends FeatureFact
 	
 	public PolygonFeatureFact createInstance(List<PointFeatureFact> orderedPoints)
 	{
-		ArrayList<CoordinateWritable> coords = new ArrayList<CoordinateWritable>();
+		ArrayList<CoordinateWritable> coords = new ArrayList<>();
 		for (PointFeatureFact pff : orderedPoints)
 		{
 			coords.add((CoordinateWritable)pff.getFact());

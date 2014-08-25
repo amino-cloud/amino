@@ -10,8 +10,6 @@ import java.util.List;
 
 public class AminoMultiInputFormat extends AminoInputFormat
 {
-	
-	//public static void setJoinDataLoader(Configuration conf, DataLoader loader)
 	public static void setJoinDataLoaders(Configuration conf, Iterable<Class<? extends DataLoader>> loaders)
 			throws IOException
     {
@@ -22,23 +20,15 @@ public class AminoMultiInputFormat extends AminoInputFormat
 		}
 	}
 	
-	public static void setEnrichWorker(Configuration conf, EnrichWorker ew)
-			throws IOException {
+	public static void setEnrichWorker(Configuration conf, EnrichWorker ew){
 		AminoDataUtils.setEnrichWorker(conf, ew);
 	}
-	
-	//private boolean doLoaderTest(Configuration conf, InputSplit inputSplit, TaskAttemptContext context)
+
 	private boolean doLoaderTest(DataLoader dl, Configuration conf, InputSplit inputSplit, TaskAttemptContext context)
 	{
-		AminoRecordReader test = null;
 		try
 		{
 			//EnrichWorker ew = AminoDataUtils.getEnrichWorker(conf);
-			//----Don't do this, won't work for Accumulo ---------------------------
-			//test = new AminoRecordReader(inputSplit, context); 
-			//Object row = test.getNextRaw();
-			//-----------------------------------------------------------------------
-	
 			//DataLoader testDL = ew.determineDataLoaderFromRawLine(row).newInstance();
 			//AminoDataUtils.setDataLoader(conf, testDL);
 			if (dl.canReadFrom(inputSplit))
@@ -50,28 +40,12 @@ public class AminoMultiInputFormat extends AminoInputFormat
 			{
 				return false;
 			}
-			
-			//return true;
 		}
 		catch (Exception ex)
 		{
-			//This shouldn't happen unless their canReadFrom breaks.  Want to print this out so it's seen...
+			// This shouldn't happen unless their canReadFrom breaks.  Want to print this out so it's seen...
 			ex.printStackTrace();
 			return false;
-		}
-		finally
-		{
-			if (test != null)
-			{
-				try 
-				{
-					test.close();
-				} 
-				catch (IOException e) 
-				{
-					e.printStackTrace();
-				}
-			}
 		}
 	}
 	

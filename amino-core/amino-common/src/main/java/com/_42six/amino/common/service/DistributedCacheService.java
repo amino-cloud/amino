@@ -1,15 +1,15 @@
 package com._42six.amino.common.service;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Utility class for adding files to the distributed cache.
@@ -24,9 +24,9 @@ public class DistributedCacheService {
 	private Set<Integer> cacheFileHashes;
 	private Set<Integer> cacheArchiveHashes;
 	
-	public DistributedCacheService() throws IOException {
-		cacheFileHashes = new HashSet<Integer>();
-		cacheArchiveHashes = new HashSet<Integer>();
+	public DistributedCacheService() {
+		cacheFileHashes = new HashSet<>();
+		cacheArchiveHashes = new HashSet<>();
 	}
 	
 	/**
@@ -97,7 +97,7 @@ public class DistributedCacheService {
 	 * @throws IOException if the path doesn't exist
 	 */
 	private static Set<Path> getHdfsFilePathsRecursively(Path rootPath, Configuration conf, FileSystem fs) throws IOException {
-		Set<Path> pathOut = new HashSet<Path>();
+		Set<Path> pathOut = new HashSet<>();
 		
 		//if path doesn't exist, throw exception
 		if (!fs.exists(rootPath)) {

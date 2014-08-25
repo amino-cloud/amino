@@ -120,7 +120,7 @@ public class BitmapANDIterator extends WrappingIterator implements OptionDescrib
   public IteratorOptions describeOptions() {
     String iterName = "Amino Bitmap AND Iterator";
     String iterDesc = "Generates a bitmap with the bits defined in the option set. It filters bitmap values that do not have all the bits set.";
-    Map<String,String> optionMap = new HashMap<String,String>();
+    Map<String,String> optionMap = new HashMap<>();
     optionMap.put(OPTION_BITS, "List of ConfigBits per hash to check against");
     return new IteratorOptions(iterName, iterDesc, optionMap, null);
   }
@@ -260,7 +260,7 @@ public class BitmapANDIterator extends WrappingIterator implements OptionDescrib
         public CompareBits() {
             nonRangeBitmap = new AminoBitmap();
             nonRangeCardinality = 0;
-            rangeBitmaps = new ArrayList<AminoBitmap>();
+            rangeBitmaps = new ArrayList<>();
         }
 
         public CompareBits(AminoBitmap nonRangeBitmap, int nonRangeCardinality, List<AminoBitmap> rangeBitmaps){

@@ -95,7 +95,7 @@ public final class FrameworkDriver extends Configured implements Tool {
             throw new IOException(path + " does not exist!");
         }
         // We are going to assume that this is a top level directory with configuration files in it, we are not going to recur downwards
-        LinkedList<String> paths = new LinkedList<String>();
+        LinkedList<String> paths = new LinkedList<>();
         if (configPath.isDirectory()) {
             for (File file : configPath.listFiles(new XMLFileNameFilter())) {
                 paths.push(file.getAbsolutePath());

@@ -22,7 +22,7 @@ public final class BitmapValue implements Writable {
 
         public IntArrayWritable(Collection<Integer> ints) {
             super(IntWritable.class);
-            List<IntWritable> iwl = new ArrayList<IntWritable>(ints.size());
+            List<IntWritable> iwl = new ArrayList<>(ints.size());
             for (Integer i : ints) {
                 iwl.add(new IntWritable(i));
             }
@@ -34,11 +34,11 @@ public final class BitmapValue implements Writable {
     private Set<Integer> indexes;
 
     public BitmapValue() {
-    	indexes = new HashSet<Integer>();
+    	indexes = new HashSet<>();
     }
 
     public BitmapValue(Integer index){
-        indexes = new HashSet<Integer>();
+        indexes = new HashSet<>();
         indexes.add(index);
     }
 
@@ -99,7 +99,7 @@ public final class BitmapValue implements Writable {
         indexes.clear();
         IntArrayWritable i = new IntArrayWritable();
         i.readFields(dataInput);
-        Set<Integer> inds = new HashSet<Integer>();
+        Set<Integer> inds = new HashSet<>();
         for (Writable w : i.get()) {
             inds.add(((IntWritable) w).get());
         }

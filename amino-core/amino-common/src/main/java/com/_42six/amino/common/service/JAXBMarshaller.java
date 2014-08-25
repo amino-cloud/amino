@@ -1,14 +1,13 @@
 package com._42six.amino.common.service;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class JAXBMarshaller {
 
@@ -19,13 +18,10 @@ public class JAXBMarshaller {
 	 * @throws JAXBException
 	 */
 	public OutputStream marshal(Object jaxbObject) throws JAXBException {
-		
-		JAXBContext jc = JAXBContext.newInstance(jaxbObject.getClass());
-		
-		//Create marshaller
-		Marshaller m = jc.createMarshaller();
-		
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		final JAXBContext jc = JAXBContext.newInstance(jaxbObject.getClass());
+		final Marshaller m = jc.createMarshaller();
+		final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
 		//Marshal object into file.
 		m.marshal(jaxbObject, outputStream);
 		return outputStream;
@@ -51,16 +47,12 @@ public class JAXBMarshaller {
 	 * @throws IllegalAccessException
 	 */
 	@SuppressWarnings("unchecked")
-	public <T> T unmarshal(InputStream inputStream, Class<T> returnClass) 
-			throws  JAXBException, InstantiationException, IllegalAccessException {
+	public <T> T unmarshal(InputStream inputStream, Class<T> returnClass) throws  JAXBException {
+		final JAXBContext jc = JAXBContext.newInstance(returnClass);
+		final Unmarshaller um = jc.createUnmarshaller();
 		
-		JAXBContext jc = JAXBContext.newInstance(returnClass);
-		
-		//Create unmarshaller
-		Unmarshaller um = jc.createUnmarshaller();
-		
-		//Unmarshal XML contents of inputStream into your Java object instance.
-		return (T)um.unmarshal(inputStream);
+		// Un-marshal XML contents of inputStream into your Java object instance.
+		return (T) um.unmarshal(inputStream);
 	}
 	
 	/**

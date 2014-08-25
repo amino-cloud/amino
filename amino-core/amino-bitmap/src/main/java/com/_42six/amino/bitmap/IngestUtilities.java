@@ -19,7 +19,7 @@ public class IngestUtilities
 	public static ArrayList<FileStatus> grabAllVettedFileStati(Configuration conf, FileSystem fs, String inputDir) throws IOException
 	{
 		//if this is a directory has multiple data paths, choose the subfolder with the largest size
-		FileStatus[] stati = null;
+		FileStatus[] stati;
 		Set<String> pathSet = PathUtils.getMultipleJobDataPaths(conf, inputDir);
 		if (pathSet.size() == 1) {
 			stati = fs.listStatus(new Path(pathSet.toArray(new String[1])[0]));
@@ -55,7 +55,7 @@ public class IngestUtilities
 		}
 		
 		//remove certain files (_SUCCESS and _LOG for example)
-		ArrayList<FileStatus> vettedStatus = new ArrayList<FileStatus>();
+		ArrayList<FileStatus> vettedStatus = new ArrayList<>();
 		for (FileStatus stat : stati) {
 			if (!stat.getPath().getName().startsWith("_")) {
 				vettedStatus.add(stat);

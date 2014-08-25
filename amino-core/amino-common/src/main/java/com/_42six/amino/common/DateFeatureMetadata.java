@@ -1,12 +1,7 @@
 package com._42six.amino.common;
 
-import com.google.gson.Gson;
-
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.Set;
 
 /**
  * Metadata about features to be serialized/deserialized from Accumulo.
@@ -36,7 +31,7 @@ public class DateFeatureMetadata extends FeatureMetadata {
             if (this.minDate != null) {
                 this.minDate.putAll(that.minDate);
             } else {
-                this.minDate = new Hashtable<String, Long>(that.minDate);
+                this.minDate = new Hashtable<>(that.minDate);
             }
         }
 
@@ -44,7 +39,7 @@ public class DateFeatureMetadata extends FeatureMetadata {
             if (this.maxDate != null) {
                 this.maxDate.putAll(that.maxDate);
             } else {
-                this.maxDate = new Hashtable<String, Long>(that.maxDate);
+                this.maxDate = new Hashtable<>(that.maxDate);
             }
         }
 

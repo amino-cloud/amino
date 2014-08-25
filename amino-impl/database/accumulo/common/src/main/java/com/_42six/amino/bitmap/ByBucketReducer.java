@@ -32,7 +32,7 @@ public class ByBucketReducer extends Reducer<ByBucketKey, BitmapValue, Key, Valu
     @Override
     protected void reduce(ByBucketKey key, Iterable<BitmapValue> values, Context context) throws IOException, InterruptedException
     {
-        final SortedSet<Integer> sortedBits = new TreeSet<Integer>();
+        final SortedSet<Integer> sortedBits = new TreeSet<>();
 
         // The bits must be sorted first before they can be added to the AminoBitmap.
         for(BitmapValue value : values){

@@ -192,7 +192,7 @@ public class BitLookupJob extends BitmapJob {
         System.out.println("Reading random file: " + status.getPath().toString() + " to determine appropriate splits...");
 
         // Grab all the indexes in this sequence file
-        final List<Integer> indexes = new ArrayList<Integer>();
+        final List<Integer> indexes = new ArrayList<>();
         final SequenceFile.Reader reader = new SequenceFile.Reader(fs, status.getPath(), conf);
         final BucketCache bucketCache = new BucketCache(conf);
         final Writable key = new BucketStripped();
@@ -212,7 +212,7 @@ public class BitLookupJob extends BitmapJob {
         IOUtils.closeStream(reader);
 
         //Build the percentiles based on the indexes and amount of reducers
-        final SortedSet<Text> splits = new TreeSet<Text>();
+        final SortedSet<Text> splits = new TreeSet<>();
         final double[] vals = new double[indexes.size()];
         for (int i = 0; i < indexes.size(); i++)
         {

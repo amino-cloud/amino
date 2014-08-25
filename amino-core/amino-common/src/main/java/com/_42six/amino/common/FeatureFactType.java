@@ -23,7 +23,7 @@ public enum FeatureFactType
     POINT(7, CoordinateWritable.class);
 	
 	private int code;
-	private static final Map<Integer,FeatureFactType> lookup = new HashMap<Integer,FeatureFactType>();
+	private static final Map<Integer,FeatureFactType> lookup = new HashMap<>();
 	private Class<? extends Writable> clazz;
 
     public static final ImmutableSet<String> intervalTypes;

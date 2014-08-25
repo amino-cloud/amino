@@ -174,7 +174,7 @@ public class AminoAuditRequest  {
 	 */
 	public void addSelector(String selector) {
 		if (selectors == null) {
-			selectors = new HashSet<String>();
+			selectors = new HashSet<>();
 		}
 		selectors.add(selector);
 		numOfSelectors = String.valueOf(selectors.size());

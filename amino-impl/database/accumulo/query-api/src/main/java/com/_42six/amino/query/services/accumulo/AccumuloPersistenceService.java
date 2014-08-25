@@ -18,7 +18,6 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Abstraction of common operations involving interaction with Accumulo such as
@@ -52,9 +51,7 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
         }
         try {
             this.connector = dbInstance.getConnector(accumuloUser, accumuloPassword);
-        } catch (AccumuloException e) {
-            throw new IOException(e);
-        } catch (AccumuloSecurityException e) {
+        } catch (AccumuloException | AccumuloSecurityException e) {
             throw new IOException(e);
         }
     }
@@ -87,11 +84,7 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
     public void createTable(String tableName) throws BigTableException {
         try {
             this.connector.tableOperations().create(tableName);
-        } catch (AccumuloException e) {
-            throw new BigTableException(e);
-        } catch (AccumuloSecurityException e) {
-            throw new BigTableException(e);
-        } catch (TableExistsException e) {
+        } catch (AccumuloException | AccumuloSecurityException | TableExistsException e) {
             throw new BigTableException(e);
         }
     }
@@ -122,7 +115,7 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
     public void insertRow(String rowId, String columnFamily, String columnQualifier, String visibility, String value, String tableName) throws BigTableException {
 		final Mutation row = createInsertMutation(rowId, columnFamily, columnQualifier, visibility, value);
         try {
-            writeCellMutations(new ArrayList<Mutation>(Arrays.asList(row)), tableName);
+            writeCellMutations(new ArrayList<>(Arrays.asList(row)), tableName);
         } catch (Exception e) {
             throw new BigTableException(e);
         }
@@ -251,14 +244,12 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
     public Set<String> getLoggedInUserAuthorizations() throws BigTableException {
         try {
             final List<byte[]> auths = getSecurityOperations().getUserAuthorizations(this.connector.whoami()).getAuthorizations();
-            final Set<String> retVal = new HashSet<String>(auths.size());
+            final Set<String> retVal = new HashSet<>(auths.size());
             for(byte[] auth : auths){
                 retVal.add(new String(auth));
             }
             return retVal;
-        } catch (AccumuloException e) {
-            throw new BigTableException(e);
-        } catch (AccumuloSecurityException e) {
+        } catch (AccumuloException | AccumuloSecurityException e) {
             throw new BigTableException(e);
         }
     }
@@ -303,7 +294,7 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
 		configureBaseScanner(deleter, config);
 	}
 
-	private void configureBaseScanner(ScannerBase scan, AccumuloScanConfig config) throws IOException {
+	private void configureBaseScanner(ScannerBase scan, AccumuloScanConfig config) {
 		if (config.getIteratorSetting() != null){
             scan.addScanIterator(config.iteratorSetting);
 		}
@@ -326,10 +317,10 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
 
 	public List<Range> generateRanges(AccumuloScanConfig config) {
 		if (isFullTableScan(config)) {
-			return new ArrayList<Range>(Arrays.asList(new Range()));
+			return new ArrayList<>(Arrays.asList(new Range()));
 		}
 
-		final ArrayList<Range> ranges = new ArrayList<Range>();
+		final ArrayList<Range> ranges = new ArrayList<>();
 
 		if(config.getRanges() != null){
 			ranges.addAll(config.getRanges());
@@ -396,7 +387,7 @@ public class AccumuloPersistenceService implements AminoPersistenceService {
      * @return Ranges covering all of the shards
      */
 	public List<Range> createShardCountRanges(final AccumuloScanConfig config) {
-		List<Range> ranges = new ArrayList<Range>();
+		List<Range> ranges = new ArrayList<>();
 		if (config.getShardcount() != null) {
 			for(int i = 0; i < config.getShardcount(); i++){
 				ranges.add(createRangeForConfig(config, i + ":"));

@@ -115,7 +115,7 @@ public class ByBucketJob extends BitmapJob {
 
             System.out.println("Setting number of reducers: " + numReducers);
 
-            final SortedSet<Text> splits = new TreeSet<Text>();
+            final SortedSet<Text> splits = new TreeSet<>();
             job.setNumReduceTasks(numReducers);
 
             final FileSystem fs = FileSystem.get(conf);

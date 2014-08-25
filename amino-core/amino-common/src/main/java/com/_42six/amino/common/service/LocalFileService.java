@@ -1,14 +1,10 @@
 package com._42six.amino.common.service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import com._42six.amino.common.exception.LocalFileServiceException;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import com._42six.amino.common.exception.LocalFileServiceException;
 
 /**
  * Service responsible for interacting with the local file system.
@@ -54,7 +50,7 @@ public class LocalFileService {
 			
 			InputStream in = new FileInputStream(inputFile);
 
-			//For Overwrite the file.
+			// For Overwrite the file.
 			OutputStream out = new FileOutputStream(outputFile);
 
 			byte[] buf = new byte[1024];
@@ -65,7 +61,7 @@ public class LocalFileService {
 			in.close();
 			out.close();
 			
-			//set file permissions so others can read and execute
+			// Set file permissions so others can read and execute
 			outputFile.setExecutable(true, false);
 			outputFile.setReadable(true, false);
 			outputFile.setWritable(true);
@@ -103,7 +99,7 @@ public class LocalFileService {
 	 * @return list of matching files
 	 */
 	public List<File> walkFiles(String basePath, String fileNameRegex, boolean recursive, boolean alsoListFolders) {
-		List<File> fileList = new ArrayList<File>();
+		List<File> fileList = new ArrayList<>();
 		File[] faFiles = new File(basePath).listFiles();
 		if (faFiles != null) {
 			for(File file: faFiles){
@@ -111,7 +107,7 @@ public class LocalFileService {
 					if (alsoListFolders) {
 						fileList.add(file);
 					}
-					fileList.addAll(walkFiles(file.getAbsolutePath(), fileNameRegex, recursive, alsoListFolders));
+					fileList.addAll(walkFiles(file.getAbsolutePath(), fileNameRegex, true, alsoListFolders));
 				}
 				else if (fileNameRegex == null || file.getName().matches(fileNameRegex)){
 					fileList.add(file);

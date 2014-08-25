@@ -1,11 +1,12 @@
 package com._42six.amino.common;
 
 import com._42six.amino.common.index.BitmapIndex;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.WritableComparable;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import org.apache.hadoop.io.Text;
-import org.apache.hadoop.io.WritableComparable;
 
 /**
  * Class to represent a bucket of data for a particular data source.
@@ -29,14 +30,12 @@ public final class Bucket implements WritableComparable<Bucket> {
 	private int hash;
 	private final static String SEPARATOR = ".";
 	
-	public Bucket() throws IOException {
+	public Bucket() {
+        // EMPTY
 	}
 	
-	//public Bucket(final Text bucketDataSource, final Text bucketName, final Text bucketValue, final Text visibility) throws IOException {
-   //             this(bucketDataSource, bucketName, bucketValue, new Text(""), visibility);
-	//}
-	
-	public Bucket(final Text bucketDataSource, final Text bucketName, final Text bucketValue, final Text bucketDisplayName, final Text visibility, final Text humanReadableVisibility) throws IOException {
+	public Bucket(final Text bucketDataSource, final Text bucketName, final Text bucketValue, final Text bucketDisplayName,
+                  final Text visibility, final Text humanReadableVisibility) throws IOException {
 		this.bucketName = bucketName;
 		this.bucketDataSource = bucketDataSource;
 		this.bucketValue = bucketValue;
@@ -47,14 +46,13 @@ public final class Bucket implements WritableComparable<Bucket> {
 		domainDescription = new Text();
 		this.computeHash();
 	}
-	
-	//public Bucket(String source, String name, String value, String visibility) throws IOException{
-	//  this(new Text(source.getBytes()), new Text(name.getBytes()), new Text(value.getBytes()), new Text(visibility.getBytes()));
-	//}
-	
-	public Bucket(String source, String name, String value, String displayName, String visibility, String humanReadableVisibility) throws IOException{
-		  this(new Text(source.getBytes()), new Text(name.getBytes()), new Text(value.getBytes()), new Text(displayName.getBytes()), new Text(visibility.getBytes()), new Text(humanReadableVisibility.getBytes()));
-		}
+
+	public Bucket(String source, String name, String value, String displayName, String visibility,
+                  String humanReadableVisibility) throws IOException {
+		  this(new Text(source.getBytes()), new Text(name.getBytes()), new Text(value.getBytes()),
+                  new Text(displayName.getBytes()), new Text(visibility.getBytes()),
+                  new Text(humanReadableVisibility.getBytes()));
+    }
 	
 	public Bucket(Bucket other) throws IOException{
 	  this.bucketName = new Text(other.bucketName);
@@ -206,14 +204,13 @@ public final class Bucket implements WritableComparable<Bucket> {
 	
 	/**
 	 * This method computes the hash for the bucket using the assigned algorithm, and stores the value in the internal ByteBuffer.
-	 * @throws IOException if the value can not be serialized, or if the hashing algorithm can not be found
 	 */
-	public void computeHash() throws IOException {
+	public void computeHash() {
             this.hash = BitmapIndex.getBucketValueIndex(this);
 	}
 	
 	/**
-	 * This method will be used by the HashParitioner to figure out which reducer partition a given key should go to which reducer
+	 * This method will be used by the HashPartitioner to figure out which reducer partition a given key should go to which reducer
 	 */
 	@Override
 	public int hashCode() {

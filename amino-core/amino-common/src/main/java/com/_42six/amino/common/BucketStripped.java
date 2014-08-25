@@ -77,9 +77,8 @@ public class BucketStripped implements WritableComparable<BucketStripped> {
 	
 	/**
 	 * This method computes the hash for the bucket using the assigned algorithm, and stores the value in the internal ByteBuffer.
-	 * @throws IOException if the value can not be serialized, or if the hashing algorithm can not be found
 	 */
-	private void computeHash() throws IOException {
+	private void computeHash() {
             this.hashcode = BitmapIndex.getBucketValueIndex(this);
 	}
 	

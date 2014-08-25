@@ -17,15 +17,15 @@ public class ColumnUtil
 	 */
 	public static boolean keyHasColumn(Key key, Column column) 
 	{
-		ByteSequence keyCf = key.getColumnFamilyData();		
-		ByteSequence colCf = new ArrayByteSequence(column.getColumnFamily());
-		if(keyCf.equals(colCf) == false) 
+		final ByteSequence keyCf = key.getColumnFamilyData();
+		final ByteSequence colCf = new ArrayByteSequence(column.getColumnFamily());
+		if(!keyCf.equals(colCf))
 		{
 			return false;
 		}
 
-		ByteSequence keyCq = key.getColumnQualifierData();
-		ByteSequence colCq = new ArrayByteSequence(column.getColumnQualifier());
+		final ByteSequence keyCq = key.getColumnQualifierData();
+		final ByteSequence colCq = new ArrayByteSequence(column.getColumnQualifier());
 	
 		return keyCq.equals(colCq);	
 	}		

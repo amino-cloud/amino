@@ -1,19 +1,12 @@
 package com._42six.amino.api.model;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
+import com._42six.amino.common.Bucket;
+import com._42six.amino.data.DataLoader;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
-import com._42six.amino.common.Bucket;
-import com._42six.amino.data.DataLoader;
+import java.util.*;
 
 public class DatasetCollection {
 
@@ -26,16 +19,16 @@ public class DatasetCollection {
 	public DatasetCollection(Bucket key, Iterable<MapWritable> values, Map<String, Text> sortFields, Set<String> dedupDatasources) {
 		bucketKey = key;
 		
-		unsortedDatasets = new HashMap<String, Collection<Row>>();
-		sortedDatasets = new HashMap<String, Collection<Row>>();
-		HashMap<String, Collection<RowComparable>> sortedDatasetsTemp = new HashMap<String, Collection<RowComparable>>();
+		unsortedDatasets = new HashMap<>();
+		sortedDatasets = new HashMap<>();
+		HashMap<String, Collection<RowComparable>> sortedDatasetsTemp = new HashMap<>();
 		
 		//add each mapwritable to its dataset, based on the dataset key
 		for (MapWritable mw : values) {
 			Writable datasetKeyWritable = mw.get(DataLoader.DATASET_NAME);
 			
-			//add to default dataset key value if no dataset key exists
-			String datasetKey = null;
+			// add to default dataset key value if no dataset key exists
+			String datasetKey;
 			if (datasetKeyWritable == null) {
 				datasetKey = DATASET_KEY_VALUE_DEFAULT;
 			}
@@ -43,15 +36,15 @@ public class DatasetCollection {
 				datasetKey = datasetKeyWritable.toString();
 			}
 			
-			//if dataset exists in sorted collection add it to that
+			// if dataset exists in sorted collection add it to that
 			if (sortedDatasetsTemp.containsKey(datasetKey)) {
 				sortedDatasetsTemp.get(datasetKey).add(new RowComparable(mw, sortFields.get(datasetKey)));
 			}
-			//if dataset exists in unsorted collection, add it to that
+			// if dataset exists in unsorted collection, add it to that
 			else if (unsortedDatasets.containsKey(datasetKey)) {
 				unsortedDatasets.get(datasetKey).add(new Row(mw));
 			}
-			//if sortKey and sortField was passed, and it corresponds to this row, put it in the sorted datasets
+			// if sortKey and sortField was passed, and it corresponds to this row, put it in the sorted datasets
 			else if (sortFields.containsKey(datasetKey)) {
 				//if we dedup this dataset, use a HashSet, otherwise use an ArrayList
 				Collection<RowComparable> newCollection = 
@@ -59,7 +52,7 @@ public class DatasetCollection {
 				newCollection.add(new RowComparable(mw, sortFields.get(datasetKey)));
 				sortedDatasetsTemp.put(datasetKey, newCollection);
 			}
-			//otherwise, this must be an unsorted row, so add it to the unsorted datasets
+			// otherwise, this must be an unsorted row, so add it to the unsorted datasets
 			else {
 				//if we dedup this dataset, use a HashSet, otherwise use an ArrayList
 				Collection<Row> newCollection = 
@@ -69,7 +62,7 @@ public class DatasetCollection {
 			}
 		}
 
-		//sort everything in sortedDatasets
+		// sort everything in sortedDatasets
 		for (String sourceKey : sortedDatasetsTemp.keySet()) {
 			
 			Collection<RowComparable> dataset = sortedDatasetsTemp.get(sourceKey);
@@ -78,7 +71,7 @@ public class DatasetCollection {
 				Collections.sort((ArrayList<RowComparable>)dataset);
 			}
 			else {
-				ArrayList<RowComparable> newList = new ArrayList<RowComparable>(dataset.size());
+				ArrayList<RowComparable> newList = new ArrayList<>(dataset.size());
 				for (RowComparable row : dataset) {
 					newList.add(row);
 				}
@@ -86,7 +79,7 @@ public class DatasetCollection {
 				dataset = newList;
 			}
 			
-			Collection<Row> sortedDataset = new ArrayList<Row>(dataset.size());
+			Collection<Row> sortedDataset = new ArrayList<>(dataset.size());
 			for (RowComparable row : dataset) {
 				sortedDataset.add(row);
 			}
@@ -103,7 +96,7 @@ public class DatasetCollection {
 	}
 	
 	public Collection<Row> getAllDatasets() {
-		Collection<Row> allDatasets = new ArrayList<Row>();
+		Collection<Row> allDatasets = new ArrayList<>();
 		for (String key : sortedDatasets.keySet()) {
 			allDatasets.addAll(sortedDatasets.get(key));
 		}

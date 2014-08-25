@@ -46,7 +46,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
      * All of the buckets that this DataLoader knows about
      */
     // TODO - Load configurations from the setConfig method
-    protected static final Hashtable<Text, Text> bucketsAndDisplayNames = new Hashtable<Text, Text>();
+    protected static final Hashtable<Text, Text> bucketsAndDisplayNames = new Hashtable<>();
 
     @SuppressWarnings("rawtypes")
     RecordReader recordReader = null;
@@ -99,7 +99,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
                 RegExFilter.setRegexs(regexSetting, rowIds, null, null, null, false);
                 AccumuloInputFormat.addIterator(job, regexSetting);
             } else {
-                final List<Range> ranges = new ArrayList<Range>();
+                final List<Range> ranges = new ArrayList<>();
 
                 // If the rowIds was empty (or not provided at all) then fetch all of the rows
                 if(rowIds.isEmpty()){
@@ -162,7 +162,7 @@ public abstract class AccumuloDataLoader implements DataLoader {
 
     @Override
     public List<Text> getBuckets() {
-        return new LinkedList<Text>(bucketsAndDisplayNames.keySet());
+        return new LinkedList<>(bucketsAndDisplayNames.keySet());
     }
 
     @Override

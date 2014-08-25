@@ -8,14 +8,11 @@ import org.apache.accumulo.core.iterators.IteratorEnvironment;
 import org.apache.accumulo.core.iterators.SortedKeyValueIterator;
 import org.apache.accumulo.core.iterators.WrappingIterator;
 import org.apache.hadoop.io.Text;
-import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.*;
 
 public class PartialRowIterator extends WrappingIterator {
-
-	private static final Logger logger = Logger.getLogger(PartialRowIterator.class);	
 	
 	public static final String OPTION_COLUMNS_TO_KEEP = "columns_to_keep";
 	public static final String OPTION_COLUMN_VALUE_TO_FILTER_BY = "column_value_to_filter_by";
@@ -28,14 +25,15 @@ public class PartialRowIterator extends WrappingIterator {
 	
 	public static SortedMap<Key, Value> decodeFromKeyValue(Key key, Value value) throws IOException
 	{
-		TreeMap<Key, Value> retVal = new TreeMap<Key, Value>();
-		ByteArrayInputStream bais = new ByteArrayInputStream(value.get());
-		DataInputStream dis = new DataInputStream(bais);
-		while(dis.available() > 0) 
+		final TreeMap<Key, Value> retVal = new TreeMap<>();
+		final ByteArrayInputStream bais = new ByteArrayInputStream(value.get());
+		final DataInputStream dis = new DataInputStream(bais);
+
+        while(dis.available() > 0)
 		{
-			Key k = new Key();
+			final Key k = new Key();
+			final Value v = new Value();
 			k.readFields(dis);
-			Value v = new Value();
 			v.readFields(dis);
 			retVal.put(k, v);
 		}
@@ -113,13 +111,13 @@ public class PartialRowIterator extends WrappingIterator {
 		Key top = source.getTopKey();
 		Text curRow = top.getRow();
 		boolean discardRow = true;
-		ArrayList<KeyValue> toKeep = new ArrayList<KeyValue>();
+		ArrayList<KeyValue> toKeep = new ArrayList<>();
 		while(source.hasTop()) {
 			top = source.getTopKey();
 
 			if(!sameRow(top, curRow)) 
 			{
-				if(discardRow == true) 
+				if(discardRow)
 				{
 					toKeep.clear();	
 					curRow = topKey.getRow();
@@ -158,10 +156,10 @@ public class PartialRowIterator extends WrappingIterator {
 		byte [] cq = k.getColumnQualifierData().getBackingArray();
 		byte [] cv = k.getColumnVisibilityData().getBackingArray();
 		String vis = new String(cv);
+
 		// TODO (soup) Look into turning this into a null when inserting columns
 		if(vis.isEmpty()) 
 		{
-		  
 			cv = null;
 		}
 		return new Column(cf, cq, cv);
@@ -191,13 +189,15 @@ public class PartialRowIterator extends WrappingIterator {
 
 	private byte [] encodeKeyValueList(ArrayList<KeyValue> keysAndValues) throws IOException 
 	{
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		DataOutputStream dos = new DataOutputStream(baos);
-		for(KeyValue kv : keysAndValues) 
+		final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		final DataOutputStream dos = new DataOutputStream(baos);
+
+        for(KeyValue kv : keysAndValues)
 		{
 			kv.getKey().write(dos);
 			kv.getValue().write(dos);
 		}
+
 		return baos.toByteArray();
 	}
 }

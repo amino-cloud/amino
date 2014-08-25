@@ -58,14 +58,14 @@ public class ReverseByBucketCombiner extends WrappingIterator implements OptionD
     // holding bitmaps in memory.  Default to 100MB
 
     // The cf/cq pairs of features to be AND'ed
-    private Set<AbstractMap.SimpleImmutableEntry<String, String>> andIDs = new HashSet<AbstractMap.SimpleImmutableEntry<String, String>>();
+    private Set<AbstractMap.SimpleImmutableEntry<String, String>> andIDs = new HashSet<>();
 
     // The cf of features to be OR'd
-    private Set<String> orIds = new HashSet<String>();
+    private Set<String> orIds = new HashSet<>();
 
     // To keep track of which features we actually got back to make sure we got back values of every feature type
-    private HashMap<AbstractMap.SimpleImmutableEntry<String, String>, Boolean> andFeatureIds = new HashMap<AbstractMap.SimpleImmutableEntry<String, String>, Boolean>();
-    private HashMap<String, Boolean> orFeatureIds = new HashMap<String, Boolean>();
+    private HashMap<AbstractMap.SimpleImmutableEntry<String, String>, Boolean> andFeatureIds = new HashMap<>();
+    private HashMap<String, Boolean> orFeatureIds = new HashMap<>();
 
 
     private Key topKey = null;
@@ -167,7 +167,7 @@ public class ReverseByBucketCombiner extends WrappingIterator implements OptionD
     public IteratorOptions describeOptions() {
         final String iterName = "Amino Reverse ByBucket Combiner Iterator";
         final String iterDesc = "Looks up bucket values for the reverse job based on requested features. ";
-        final Map<String,String> optionMap = new HashMap<String,String>();
+        final Map<String,String> optionMap = new HashMap<>();
 
         optionMap.put(OPTION_AND_IDS, "Feature IDs that just need to be AND'ed together with other features");
         optionMap.put(OPTION_OR_IDS, "Feature IDs that need to first be OR togeter before AND'ing with other features");
@@ -245,7 +245,7 @@ public class ReverseByBucketCombiner extends WrappingIterator implements OptionD
         // Keep track of how many Ranges we've combined
         rangesCounted++;
 
-        Key compareKey = null;
+        Key compareKey;
         while(sourceIter.hasTop()) {
             // Get the row information
             compareKey = sourceIter.getTopKey();
@@ -267,7 +267,7 @@ public class ReverseByBucketCombiner extends WrappingIterator implements OptionD
                 type = FeatureType.OR;
                 orFeatureIds.put(compareColumnFamily.toString(), true);
             } else {
-                final AbstractMap.SimpleImmutableEntry<String, String> e = new AbstractMap.SimpleImmutableEntry<String, String>(compareColumnFamily.toString(), cq);
+                final AbstractMap.SimpleImmutableEntry<String, String> e = new AbstractMap.SimpleImmutableEntry<>(compareColumnFamily.toString(), cq);
                 if(andIDs.contains(e)){
                     type = FeatureType.AND;
                     andFeatureIds.put(e, true);
@@ -279,14 +279,14 @@ public class ReverseByBucketCombiner extends WrappingIterator implements OptionD
 
             AminoBitmap runningBitmap = null; // The culmination to combine with the topValueBitmap
             long currentBytes = 0;
-            final HashSet<EWAHCompressedBitmap> currentBitmaps = new HashSet<EWAHCompressedBitmap>();
+            final HashSet<EWAHCompressedBitmap> currentBitmaps = new HashSet<>();
 
             // Loop through all of the rows of the feature type
             while(sourceIter.hasTop() && compareColumnFamily.equals(sourceIter.getTopKey().getColumnFamily())){
                 AminoBitmap currentBitmap = BitmapUtils.fromValue(sourceIter.getTopValue());
                 if(type == FeatureType.AND){
                     // Since we are looping over just similar cf's, need to note when we got a new cq
-                    andFeatureIds.put(new AbstractMap.SimpleImmutableEntry<String, String>(compareColumnFamily.toString(),
+                    andFeatureIds.put(new AbstractMap.SimpleImmutableEntry<>(compareColumnFamily.toString(),
                             sourceIter.getTopKey().getColumnQualifier().toString()), true);
 
                     // Set topValueBitmap here if it's null.  Pre-initializing causes problems when trying to AND

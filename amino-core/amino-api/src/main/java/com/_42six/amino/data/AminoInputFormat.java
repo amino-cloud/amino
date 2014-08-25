@@ -14,8 +14,7 @@ public class AminoInputFormat extends InputFormat<MapWritable, MapWritable> {
 
     private static final Logger logger = LoggerFactory.getLogger(AminoInputFormat.class);
 
-    public static void setDataLoader(Configuration conf, DataLoader loader)
-            throws IOException {
+    public static void setDataLoader(Configuration conf, DataLoader loader) {
         logger.info("Setting DataLoader to: {}", loader.getClass().getCanonicalName());
         AminoDataUtils.setDataLoader(conf, loader);
     }

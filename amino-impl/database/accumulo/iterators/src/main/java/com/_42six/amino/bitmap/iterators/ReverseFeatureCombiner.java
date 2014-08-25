@@ -120,7 +120,7 @@ public class ReverseFeatureCombiner extends WrappingIterator implements OptionDe
     public IteratorOptions describeOptions() {
         String iterName = "Amino Reverse Feature Combiner Iterator";
         String iterDesc = "Looks up bucket values for the reverse job, deconflicting any collisions that might have occurred";
-        Map<String,String> optionMap = new HashMap<String,String>();
+        Map<String,String> optionMap = new HashMap<>();
         optionMap.put(OPTION_SALTS, "Number of salts in use.  Default is one");
         optionMap.put(OPTION_MAX_RESULTS, "Maximum number of results to return");
 

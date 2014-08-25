@@ -1,18 +1,17 @@
 package com._42six.amino.api.framework.enrichment;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-
+import com._42six.amino.api.framework.AminoDriverUtils;
+import com._42six.amino.common.BucketStripped;
+import com._42six.amino.data.DataLoader;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.Reducer;
 
-import com._42six.amino.api.framework.AminoDriverUtils;
-import com._42six.amino.common.BucketStripped;
-import com._42six.amino.data.DataLoader;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 public class FrameworkEnrichmentJoinReducer extends Reducer<EnrichmentJoinKey, MapWritable, BucketStripped, MapWritable> {
 	
@@ -29,8 +28,8 @@ public class FrameworkEnrichmentJoinReducer extends Reducer<EnrichmentJoinKey, M
 
 	@Override
 	public void reduce(EnrichmentJoinKey key, Iterable<MapWritable> values, Context context) throws IOException, InterruptedException {
-		Map<Writable, HashSet<MapWritable>> enrichMap = new HashMap<Writable, HashSet<MapWritable>>();
-		BucketStripped bucket = null;
+		Map<Writable, HashSet<MapWritable>> enrichMap = new HashMap<>();
+		BucketStripped bucket;
 
 		for (MapWritable value : values) {
 			Writable enrichBucket = value.get(enrichBucketKey);
@@ -39,7 +38,7 @@ public class FrameworkEnrichmentJoinReducer extends Reducer<EnrichmentJoinKey, M
 			if (enrichBucket == null) {
 				Writable dataset = value.get(datasetKey);
 				if (!enrichMap.containsKey(dataset)) {
-					HashSet<MapWritable> enrichSet = new HashSet<MapWritable>();
+					HashSet<MapWritable> enrichSet = new HashSet<>();
 					enrichSet.add(new MapWritable(value));
 					enrichMap.put(dataset,  enrichSet);
 				}

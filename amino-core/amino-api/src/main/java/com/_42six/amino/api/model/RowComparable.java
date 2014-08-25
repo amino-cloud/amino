@@ -25,8 +25,8 @@ public class RowComparable extends Row implements Comparable<RowComparable> {
 	
 	@Override
 	public int compareTo(RowComparable row) {
-		//this logic ensures that when sorting, null sort fields show up at the beginning
-		if (comparable == row.comparable) {
+		// This logic ensures that when sorting, null sort fields show up at the beginning
+		if (comparable.equals(row.comparable)) {
 			return 0;
 		}
 		else if (row.comparable == null) {

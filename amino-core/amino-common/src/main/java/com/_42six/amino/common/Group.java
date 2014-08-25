@@ -71,25 +71,25 @@ public class Group {
 	public void setMembers(Set<GroupMember> members){ this.members = members;}
 	
 	public Group() {
-		this.members = new HashSet<GroupMember>();
+		this.members = new HashSet<>();
 	}
 
     public Group(String name){
         this.groupName = name;
-        this.members = new HashSet<GroupMember>();
+        this.members = new HashSet<>();
     }
 
     public Group(String name, String createdBy){
         this.groupName = name;
         this.createdBy = createdBy;
-        this.members = new HashSet<GroupMember>();
+        this.members = new HashSet<>();
     }
 
     public Group(String name, String createdBy, long dateCreated){
         this.groupName = name;
         this.createdBy = createdBy;
         this.dateCreated = dateCreated;
-        this.members = new HashSet<GroupMember>();
+        this.members = new HashSet<>();
     }
 
     public Group(String name, String createdBy, long dateCreated, Set<GroupMember> members){

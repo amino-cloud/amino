@@ -189,5 +189,5 @@ public class Hypothesis implements Comparable<Hypothesis> {
 	/**
 	 * A sorted set of QueryResult ID's, sorted by time
 	 */
-	public SortedSet<String> queries = new TreeSet<String>();
+	public SortedSet<String> queries = new TreeSet<>();
 }

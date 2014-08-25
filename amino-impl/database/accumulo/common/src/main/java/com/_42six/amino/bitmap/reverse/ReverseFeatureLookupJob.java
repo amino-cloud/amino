@@ -75,7 +75,7 @@ public class ReverseFeatureLookupJob extends BitmapJob
         final FileSystem fs = FileSystem.get(conf);
 
         // Create the splits for the splitfile
-        final SortedSet<Text> splits = new TreeSet<Text>();
+        final SortedSet<Text> splits = new TreeSet<>();
         for (int shard = 0; shard < numberOfShards; shard++)
         {
             splits.add(new Text(Integer.toString(shard)));

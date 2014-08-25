@@ -1,27 +1,16 @@
 package com._42six.amino.common.util.concurrent;
 
+import com.google.common.base.Preconditions;
+import com.google.common.util.concurrent.*;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 //import org.apache.log4j.Logger;
-
-import com.google.common.base.Preconditions;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * ExecutionService that limits both the number of concurrently running tasks  
@@ -143,7 +132,7 @@ public class TimedUserExecutionService {
 	public TimedUserExecutionService(int maxTasksPerUser, int corePoolSize, int maxPoolSize, long keepAliveTime, TimeUnit units)
 	{
 		this.maxTasksPerUser = maxTasksPerUser;
-		this.tpeQueue = new SynchronousQueue<Runnable>();
+		this.tpeQueue = new SynchronousQueue<>();
 		this.executor = new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, units, this.tpeQueue );
 		this.service = MoreExecutors.listeningDecorator(this.executor);
 		this.currentUsageTable = Collections.synchronizedMap(new HashMap<String, AtomicInteger>());
@@ -279,15 +268,12 @@ public class TimedUserExecutionService {
 			}
 			
 			result = futureTask.get(time, timeUnit);
-		} catch(InterruptedException ex){
+		} catch(InterruptedException | ExecutionException ex){
 			futureTask.cancel(mayInterruptIfRunning); 
 			throw ex;
 		} catch(TimeoutException ex){
 			futureTask.cancel(mayInterruptIfRunning); 
 			throw new TimeoutException("The Task could not be completed before the timeout of " + Long.toString(timeout) + " " + unit.toString());
-		} catch (ExecutionException ex) {
-			futureTask.cancel(mayInterruptIfRunning);
-			throw ex;
 		}
 
 		return result;		

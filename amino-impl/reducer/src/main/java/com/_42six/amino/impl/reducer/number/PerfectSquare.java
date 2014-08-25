@@ -1,9 +1,5 @@
 package com._42six.amino.impl.reducer.number;
 
-import java.util.ArrayList;
-
-import java.lang.Math;
-
 import com._42six.amino.api.job.AminoConfiguredReducer;
 import com._42six.amino.api.job.AminoReducer;
 import com._42six.amino.api.model.DatasetCollection;
@@ -11,6 +7,8 @@ import com._42six.amino.api.model.Row;
 import com._42six.amino.common.AminoWritable;
 import com._42six.amino.common.Feature;
 import com._42six.amino.common.NominalFeatureFact;
+
+import java.util.ArrayList;
 
 public class PerfectSquare extends AminoConfiguredReducer implements AminoReducer
 {
@@ -26,7 +24,7 @@ public class PerfectSquare extends AminoConfiguredReducer implements AminoReduce
 			String number = row.get("number");
 			if (number != null && number.length() > 0) {
 				Integer integer = Integer.parseInt(number);
-				String perfectSquare = null;
+				String perfectSquare;
 				if (Math.pow(Math.sqrt(integer), 2) == integer) {
 					perfectSquare = "perfect square";
 				}

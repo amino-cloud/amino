@@ -22,16 +22,7 @@ public class FeatureUtils
 	{
 		char[] first = range.first.toCharArray();
 		char[] last = range.last.toCharArray();
-		int length = 0;
-		if (first.length < last.length)
-		{
-			length = first.length;
-		}
-		else
-		{
-			length = last.length;
-		}
-		
+		int length = Math.min(first.length, last.length);
 		int dist = 0;
 		int index = 0;
 		while (dist == 0 && index < length)

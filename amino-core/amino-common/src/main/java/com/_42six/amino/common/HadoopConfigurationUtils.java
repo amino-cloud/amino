@@ -1,12 +1,12 @@
 package com._42six.amino.common;
 
+import org.apache.hadoop.conf.Configuration;
+
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Properties;
-
-import org.apache.hadoop.conf.Configuration;
 
 public class HadoopConfigurationUtils {
 	
@@ -19,7 +19,7 @@ public class HadoopConfigurationUtils {
 		
 		Properties fromProps = HadoopConfigurationUtils.configuraitonToProperties(fromConfig);
 		Properties toProps = HadoopConfigurationUtils.configuraitonToProperties(toConfig);
-		LinkedList<String> removeList = new LinkedList<String>();
+		LinkedList<String> removeList = new LinkedList<>();
 		
 		
 		for(Object fromKey : fromProps.keySet()) {

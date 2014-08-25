@@ -11,7 +11,6 @@ import org.apache.accumulo.core.data.Range;
 import org.apache.hadoop.io.Text;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -34,9 +33,7 @@ public class IteratorUtils {
 		try
 		{	
 			connector = instance.getConnector(user, new PasswordToken(password));
-		} catch (AccumuloException e) {
-			throw new IOException(e);
-		} catch(AccumuloSecurityException e) {
+		} catch (AccumuloException | AccumuloSecurityException e) {
 			throw new IOException(e);
 		}
         return connector;
@@ -55,7 +52,9 @@ public class IteratorUtils {
 		{
 			success = executeTableDeletion(tableOps, tableName);
 
-			if (success) success = executeTableCreation(tableOps, tableName, tableContext, splits);
+			if (success) {
+                success = executeTableCreation(tableOps, tableName, tableContext, splits);
+            }
 		}
 		return success;
 	}
@@ -151,7 +150,7 @@ public class IteratorUtils {
 
 
 	private static SortedSet<Text> getDefaultSplits(int numShards){
-		TreeSet<Text> splits = new TreeSet<Text>();
+		TreeSet<Text> splits = new TreeSet<>();
 		for( int ii = 1; ii < numShards; ii++){
 			splits.add( new Text(Integer.toString(ii)+":"));
 		}
@@ -161,9 +160,9 @@ public class IteratorUtils {
 		return splits;
 	}
 
-	private static final Map<String,String> aggOptions = new HashMap<String,String>();
-	private static final Map<String,String> bitAggOptions = new HashMap<String,String>();
-	private static final Map<String,String> idxAggOptions = new HashMap<String,String>();
+	private static final Map<String,String> aggOptions = new HashMap<>();
+	private static final Map<String,String> bitAggOptions = new HashMap<>();
+	private static final Map<String,String> idxAggOptions = new HashMap<>();
 
 	static {
 		String aggIterValue = "10,org.apache.accumulo.core.iterators.AggregatingIterator";
@@ -191,9 +190,7 @@ public class IteratorUtils {
 		for( Entry<String, String> entry : optionsMap.entrySet() ){
 			try {
 				tableOps.setProperty(tableName, entry.getKey(), entry.getValue());
-			} catch (AccumuloException e) {
-				e.printStackTrace();
-			} catch (AccumuloSecurityException e) {
+			} catch (AccumuloException | AccumuloSecurityException e) {
 				e.printStackTrace();
 			}
 		}
@@ -213,7 +210,6 @@ public class IteratorUtils {
 
 	public static void compactTable(TableOperations tableOps, String tableName, boolean fireAndForget) throws IOException {
 		try {
-			String nowStr = (new SimpleDateFormat("yyyyMMddHHmmssz")).format(new Date(System.currentTimeMillis()));
 			tableOps.flush(tableName, null, null, false);
 			tableOps.compact(tableName, null, null, true, false);
 		}
@@ -231,9 +227,7 @@ public class IteratorUtils {
 		for (String tableName : tableNames) {
 			try {
 				tableOperations.setProperty(tableName, property, value);
-			} catch (AccumuloException e) {
-				throw new IOException(e);
-			} catch (AccumuloSecurityException e) {
+			} catch (AccumuloException | AccumuloSecurityException e) {
 				throw new IOException(e);
 			}
 		}

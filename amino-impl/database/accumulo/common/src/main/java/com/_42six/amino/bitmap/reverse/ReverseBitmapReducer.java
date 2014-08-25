@@ -51,7 +51,7 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
         final Text colQualifier = new Text(rbk.getFeatureValue());
 
         // Sort out all of the indexes since we can only add them to the bitmap in sorted order
-        final TreeSet<Integer> sortedIndexes = new TreeSet<Integer>();
+        final TreeSet<Integer> sortedIndexes = new TreeSet<>();
 
         // Gotta pull out the indexes because MR reuses the indexes
         for(IntWritable i : indexes){

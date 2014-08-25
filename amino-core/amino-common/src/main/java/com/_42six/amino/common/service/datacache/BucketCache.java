@@ -21,11 +21,11 @@ public class BucketCache {
 	private static final Text MAPWRITABLE_BUCKET_KEY = new Text("bk");
 	
 	public BucketCache() {
-		bucketCache = new HashMap<IntWritable, Bucket>();
+		bucketCache = new HashMap<>();
 	}
 	
 	public BucketCache(Configuration conf) throws IOException {
-		bucketCache = new HashMap<IntWritable, Bucket>();
+		bucketCache = new HashMap<>();
 		
 		for (String cachePath : PathUtils.getCachePaths(conf)) {
 			String bucketCachePath = cachePath + BUCKET_CACHE_FOLDER;
@@ -59,7 +59,7 @@ public class BucketCache {
 			writer = new MapFile.Writer(conf, new Path(bucketCachePath), MapFile.Writer.keyClass(IntWritable.class),
                     MapFile.Writer.valueClass(Bucket.class));
 			
-			ArrayList<IntWritable> keyList = new ArrayList<IntWritable>();
+			ArrayList<IntWritable> keyList = new ArrayList<>();
 			for (IntWritable i : bucketCache.keySet()) {
 				keyList.add(i);
 			}
@@ -119,7 +119,7 @@ public class BucketCache {
 	}
 	
 	public static Collection<Bucket> getBuckets(MapWritable key) {
-		Collection<Bucket> bucketList = new ArrayList<Bucket>();
+		Collection<Bucket> bucketList = new ArrayList<>();
 		MapWritable bucketMap = (MapWritable)key.get(MAPWRITABLE_BUCKET_KEY);
 		for (Writable w : bucketMap.values()) {
 			bucketList.add((Bucket)w);

@@ -1,20 +1,17 @@
 package com._42six.amino.common;
 
-import java.io.DataInput;
-import java.io.IOException;
-
-import org.apache.hadoop.io.LongWritable;
+import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
+import com._42six.amino.common.translator.FeatureFactTranslatorInt;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
-import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
-import com._42six.amino.common.translator.FeatureFactTranslatorInt;
+import java.io.DataInput;
+import java.io.IOException;
 
 public class DateFeatureFact extends IntervalFeatureFact
 {
     // number of milliseconds to bucket features into
     protected static long constraint = 86400000;
-    //protected long timeInMillis;
 
     /**
      * Default constructor
@@ -39,7 +36,6 @@ public class DateFeatureFact extends IntervalFeatureFact
     protected DateFeatureFact(long timeInMillis, long constraint) {
         super(new FeatureFactTranslatorImpl().fromDate(constrain(timeInMillis, constraint)));
     }
-
 
     /**
      * Constructor to support instantiating from a text

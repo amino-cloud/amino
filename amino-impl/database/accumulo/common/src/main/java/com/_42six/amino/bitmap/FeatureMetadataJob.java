@@ -77,14 +77,14 @@ public final class FeatureMetadataJob extends BitmapJob {
 
     private static class DateHandler extends FeatureHandler {
         private FeatureFactTranslatorInt translator = new FeatureFactTranslatorImpl();
-        private Hashtable<String, String> min = new Hashtable<String, String>();
-        private Hashtable<String, String> max = new Hashtable<String, String>();
+        private Hashtable<String, String> min = new Hashtable<>();
+        private Hashtable<String, String> max = new Hashtable<>();
 
         protected DateHandler(FeatureMetadata meta) {
             super(new DateFeatureMetadata(meta));
             DateFeatureMetadata dmeta = (DateFeatureMetadata)this.meta;
-            dmeta.minDate = new Hashtable<String, Long>();
-            dmeta.maxDate = new Hashtable<String, Long>();
+            dmeta.minDate = new Hashtable<>();
+            dmeta.maxDate = new Hashtable<>();
         }
 
         @Override
@@ -153,14 +153,14 @@ public final class FeatureMetadataJob extends BitmapJob {
 	private static class NominalHandler extends FeatureHandler {
 		private boolean overflow = false;
 		private int maxNominals;
-		private Hashtable<String,TreeSet<FeatureFactCount>> counts = new Hashtable<String,TreeSet<FeatureFactCount>>();
-		private Hashtable<String,FeatureFactCount> otherCounts = new Hashtable<String,FeatureFactCount>();
+		private Hashtable<String,TreeSet<FeatureFactCount>> counts = new Hashtable<>();
+		private Hashtable<String,FeatureFactCount> otherCounts = new Hashtable<>();
 		private int maxTopNominals = 50;
 
 		protected NominalHandler(FeatureMetadata meta, int maxNominals, int maxTopNominals) {
 			super(meta);
 			this.maxNominals = maxNominals;
-			meta.allowedValues = new TreeSet<String>();
+			meta.allowedValues = new TreeSet<>();
 			this.maxTopNominals = maxTopNominals;
 		}
 
@@ -200,7 +200,7 @@ public final class FeatureMetadataJob extends BitmapJob {
 					}
 					else
 					{
-						TreeSet<FeatureFactCount> ts = new TreeSet<FeatureFactCount>();
+						TreeSet<FeatureFactCount> ts = new TreeSet<>();
 						ts.add(ffc);
 						counts.put(bucket, ts);
 					}
@@ -229,11 +229,11 @@ public final class FeatureMetadataJob extends BitmapJob {
 				counts.get(key).add(ffc);
 			}
 
-			Hashtable<String,ArrayList<String>> topN = new Hashtable<String,ArrayList<String>>();
+			Hashtable<String,ArrayList<String>> topN = new Hashtable<>();
 			keys = counts.keys();
 			while(keys.hasMoreElements())
 			{
-				ArrayList<String> list = new ArrayList<String>();
+				ArrayList<String> list = new ArrayList<>();
 				String key = keys.nextElement();
 				TreeSet<FeatureFactCount> ffcs = counts.get(key);
 				for (FeatureFactCount ffc : ffcs)
@@ -323,10 +323,10 @@ public final class FeatureMetadataJob extends BitmapJob {
 	private static class IntervalHandler extends FeatureHandler {
 
 		private FeatureFactTranslatorInt translator = new FeatureFactTranslatorImpl();
-		private Hashtable<String,Mean> means = new Hashtable<String,Mean>();
-		private Hashtable<String,StandardDeviation> deviations = new Hashtable<String,StandardDeviation>();
-		//Hashtable<String,ArrayList<Double>> percentiles = new Hashtable<String,ArrayList<Double>>();
-		private Hashtable<String,KMeansSet> ratioBins = new Hashtable<String,KMeansSet>();
+		private Hashtable<String,Mean> means = new Hashtable<>();
+		private Hashtable<String,StandardDeviation> deviations = new Hashtable<>();
+		//Hashtable<String,ArrayList<Double>> percentiles = new Hashtable<>();
+		private Hashtable<String,KMeansSet> ratioBins = new Hashtable<>();
 
 		protected IntervalHandler(FeatureMetadata meta, Hashtable<String,Distribution> distro) {
 			super(meta);
@@ -334,8 +334,8 @@ public final class FeatureMetadataJob extends BitmapJob {
 //			meta.min = new Double(Double.POSITIVE_INFINITY);
 //			meta.max = new Double(Double.NEGATIVE_INFINITY);
 
-			Hashtable<String,Double> mins = new Hashtable<String,Double>();
-			Hashtable<String,Double> maxs = new Hashtable<String,Double>();
+			Hashtable<String,Double> mins = new Hashtable<>();
+			Hashtable<String,Double> maxs = new Hashtable<>();
 			Enumeration<String> keys = distro.keys();
 			while (keys.hasMoreElements())
 			{
@@ -404,10 +404,10 @@ public final class FeatureMetadataJob extends BitmapJob {
 				final String bucket = entry.getKey();
 				final Mean mean = entry.getValue();
 
-				if (meta.averages == null) meta.averages = new Hashtable<String,Double>();
-				if (meta.standardDeviations == null) meta.standardDeviations = new Hashtable<String,Double>();
-				//if (meta.percentiles == null) meta.percentiles = new Hashtable<String,Hashtable<Integer,Double>>();
-				if (meta.ratioBins == null) meta.ratioBins = new Hashtable<String,ArrayList<Hashtable<String,Double>>>();
+				if (meta.averages == null) meta.averages = new Hashtable<>();
+				if (meta.standardDeviations == null) meta.standardDeviations = new Hashtable<>();
+				//if (meta.percentiles == null) meta.percentiles = new Hashtable<>();
+				if (meta.ratioBins == null) meta.ratioBins = new Hashtable<>();
 
 				meta.averages.put(bucket, mean.getResult());
 
@@ -415,10 +415,10 @@ public final class FeatureMetadataJob extends BitmapJob {
 				meta.standardDeviations.put(bucket, sd.getResult());
 
 				KMeansSet set = ratioBins.get(bucket);
-				ArrayList<Hashtable<String,Double>> pinList = new ArrayList<Hashtable<String,Double>>();
+				ArrayList<Hashtable<String,Double>> pinList = new ArrayList<>();
 				for(KMeansPin pin : set.pins)
 				{
-					Hashtable<String,Double> pinData = new Hashtable<String,Double>();
+					Hashtable<String,Double> pinData = new Hashtable<>();
 					//KMeansPin pin = pins.next();
 					pinData.put("count", (double)pin.bucketValueCount);
 					pinData.put("top", pin.max);
@@ -470,12 +470,12 @@ public final class FeatureMetadataJob extends BitmapJob {
 			public KMeansSet(int clusterCount)
 			{
 				this.clusterCount = clusterCount;
-				pins = new ArrayList<KMeansPin>(this.clusterCount);
+				pins = new ArrayList<>(this.clusterCount);
 			}
 
 			public KMeansSet(HashSet<Double> pinList)
 			{
-				this.pins = new ArrayList<KMeansPin>();
+				this.pins = new ArrayList<>();
 				for (double pin : pinList)
 				{
 					KMeansPin kmp = new KMeansPin();
@@ -597,7 +597,7 @@ public final class FeatureMetadataJob extends BitmapJob {
 		{
 			if (!FeatureFactType.numericIntervalTypes.contains(type)) return null;
 
-			Hashtable<String,Distribution> distros = new Hashtable<String,Distribution>();
+			Hashtable<String,Distribution> distros = new Hashtable<>();
 			FeatureFactTranslatorInt trans = new FeatureFactTranslatorImpl();
 
 			Scanner bitLookupScanner = createScanner(conf);
@@ -627,8 +627,8 @@ public final class FeatureMetadataJob extends BitmapJob {
 			}
 
 			//Now go through again to build the pins
-			Hashtable<String,Double> steps = new Hashtable<String,Double>();
-			Hashtable<String,Long> counters = new Hashtable<String,Long>();
+			Hashtable<String,Double> steps = new Hashtable<>();
+			Hashtable<String,Long> counters = new Hashtable<>();
 			Enumeration<String> keys = distros.keys();
 			while (keys.hasMoreElements())
 			{
@@ -717,7 +717,7 @@ public final class FeatureMetadataJob extends BitmapJob {
 		public Double max = Double.MAX_VALUE * -1;
 		public Double total = 0.0;
 		public int ratioBinCount = 20;
-		public HashSet<Double> pins = new HashSet<Double>();
+		public HashSet<Double> pins = new HashSet<>();
 
 		public Distribution(Configuration conf)
 		{
@@ -750,9 +750,7 @@ public final class FeatureMetadataJob extends BitmapJob {
 		Connector connector;
 		try {
 			connector = btInstance.getConnector(user, new PasswordToken(password));
-		} catch (AccumuloException ex) {
-			throw new IOException(ex);
-		} catch (AccumuloSecurityException ex) {
+		} catch (AccumuloException | AccumuloSecurityException ex) {
 			throw new IOException(ex);
 		}
 
@@ -821,7 +819,7 @@ public final class FeatureMetadataJob extends BitmapJob {
 		String reverseLookup = lookupTable.replace("amino_", "amino_reverse_");
 
         // Add all tables to a list for iterating over table operations
-        List<String> tableNames = new ArrayList<String>();
+        List<String> tableNames = new ArrayList<>();
         tableNames.add(metadataTable);
         tableNames.add(lookupTable);
         tableNames.add(bucketTable);

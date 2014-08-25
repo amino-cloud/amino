@@ -39,12 +39,14 @@ public class SortedIndexCache  {
     protected String subFolder;
     protected Configuration conf;
 
-    public SortedIndexCache(String subFolder, Configuration conf) throws IOException {
+    public SortedIndexCache(String subFolder, Configuration conf) {
         Preconditions.checkNotNull(subFolder);
         Preconditions.checkNotNull(conf);
+
         if(!subFolder.startsWith("/")){
             subFolder = "/" + subFolder;
         }
+
         this.subFolder = subFolder;
         this.conf = conf;
     }

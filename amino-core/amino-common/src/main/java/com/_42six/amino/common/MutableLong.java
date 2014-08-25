@@ -12,7 +12,7 @@ public class MutableLong {
 	}
 	
 	public MutableLong(Long initialVal){
-		this.val = initialVal.longValue();
+		this.val = initialVal;
 	}
 	
 	public void increment(){

@@ -95,7 +95,7 @@ public class AccumuloQueryService implements AminoQueryService {
         resultsTable = resultsTable + suffix;
         featureLookupTable = featureLookupTable + suffix;
         groupHypothesisLUT = groupHypothesisLUT + suffix;
-        reverseByBucketTable = reverseByBucketTable + suffix;;
+        reverseByBucketTable = reverseByBucketTable + suffix;
         reverseFeatureLookupTable = reverseFeatureLookupTable + suffix;
     }
 
@@ -226,7 +226,7 @@ public class AccumuloQueryService implements AminoQueryService {
      */
     public List<QueryResult> listResults(Long start, Long count, String userid, String[] visibility) throws IOException {
         checkState();
-        Scanner scan = null;
+        Scanner scan;
         try {
             scan = persistenceService.createScanner(resultsTable, new Authorizations(visibility));
         } catch (TableNotFoundException e) {
@@ -1535,7 +1535,7 @@ public class AccumuloQueryService implements AminoQueryService {
         final QueryResult result = new QueryResult();
         result.id = cf;
         result.timestamp = Long.MAX_VALUE - reverseTimestamp;
-        result.result_count = Long.valueOf(results.size());
+        result.result_count = (long) results.size();
         result.result_set = results;
         result.hypothesisid = hypothesis.id;
         result.hypothesisname = hypothesis.name;

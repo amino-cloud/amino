@@ -156,8 +156,8 @@ public class AccumuloGroupService implements AminoGroupService {
         groupName = groupName.startsWith(TableConstants.GROUP_PREFIX) ? groupName : TableConstants.GROUP_PREFIX + groupName;
         requester = requester.startsWith(TableConstants.USER_PREFIX) ? requester : TableConstants.USER_PREFIX + requester;
 
-		final ArrayList<Mutation> memberEntries = new ArrayList<Mutation>(members.size());
-        final ArrayList<Mutation> metaEntries = new ArrayList<Mutation>();
+		final ArrayList<Mutation> memberEntries = new ArrayList<>(members.size());
+        final ArrayList<Mutation> metaEntries = new ArrayList<>();
 
         // Make sure that the requester is an admin for the group and can perform these admin tasks
         final Scanner scanner = persistenceService.createScanner(groupMetadataTable, auths);
@@ -206,8 +206,8 @@ public class AccumuloGroupService implements AminoGroupService {
         final long createdDate = System.currentTimeMillis() / 1000L;
 
         boolean adminProvided = false;
-        final ArrayList<Mutation> metadataRows = new ArrayList<Mutation>();
-        final ArrayList<Mutation> membershipRows = new ArrayList<Mutation>();
+        final ArrayList<Mutation> metadataRows = new ArrayList<>();
+        final ArrayList<Mutation> membershipRows = new ArrayList<>();
 
         // Check to see if the group already exists
         final Scanner groupScanner = persistenceService.createScanner(groupMetadataTable, auths);
@@ -300,7 +300,7 @@ public class AccumuloGroupService implements AminoGroupService {
         // Make sure prefixes are in place
         if(!requester.startsWith(TableConstants.USER_PREFIX)) { requester = TableConstants.USER_PREFIX + requester; }
         if(!group.startsWith(TableConstants.GROUP_PREFIX)) { group = TableConstants.GROUP_PREFIX + group; }
-        final HashSet<String> internalMembers = new HashSet<String>(members.size());
+        final HashSet<String> internalMembers = new HashSet<>(members.size());
         for(String member : members){
             internalMembers.add(member.startsWith(TableConstants.USER_PREFIX) ? member : TableConstants.USER_PREFIX + member);
         }
@@ -309,7 +309,7 @@ public class AccumuloGroupService implements AminoGroupService {
         final Scanner adminScanner = persistenceService.createScanner(groupMetadataTable, auths);
         adminScanner.setRange(new Range(group));
         adminScanner.fetchColumnFamily(new Text("admin"));
-        HashSet<String> admins = new HashSet<String>();
+        HashSet<String> admins = new HashSet<>();
         for(Map.Entry<Key, Value> entry: adminScanner){
             admins.add(entry.getKey().getColumnQualifier().toString());
         }
@@ -325,14 +325,14 @@ public class AccumuloGroupService implements AminoGroupService {
         }
 
         // Remove the entries from the membership table
-        final List<Mutation> membershipEntries = new ArrayList<Mutation>();
+        final List<Mutation> membershipEntries = new ArrayList<>();
         for(String member : internalMembers){
             membershipEntries.add(persistenceService.createDeleteMutation(member, group, "", ""));
         }
         persistenceService.insertRows(membershipEntries, groupMembershipTable);
 
         // Remove the entries from the metadata table
-        final List<Mutation> metaEntries = new ArrayList<Mutation>();
+        final List<Mutation> metaEntries = new ArrayList<>();
         final Scanner metaScanner = persistenceService.createScanner(groupMetadataTable, auths);
         metaScanner.setRange(new Range(group));
         for(Map.Entry<Key, Value> entry : metaScanner){
@@ -372,20 +372,20 @@ public class AccumuloGroupService implements AminoGroupService {
         MorePreconditions.checkNotNullOrEmpty(requester);
         Preconditions.checkNotNull(auths);
 
-        final Collection<Mutation> groupMembershipMutations = new ArrayList<Mutation>();
-        final Collection<Mutation> groupMetadataMutations = new ArrayList<Mutation>();
-        final Collection<Range> metaGroupsToPurgeFrom = new HashSet<Range>();
+        final Collection<Mutation> groupMembershipMutations = new ArrayList<>();
+        final Collection<Mutation> groupMetadataMutations = new ArrayList<>();
+        final Collection<Range> metaGroupsToPurgeFrom = new HashSet<>();
 
         // Make sure prefixes in place
         if(!requester.startsWith(TableConstants.USER_PREFIX)) { requester = TableConstants.USER_PREFIX + requester; }
         if(!userId.startsWith(TableConstants.USER_PREFIX)) { userId = TableConstants.USER_PREFIX + userId; }
-        Set<String> internalGroups = new HashSet<String>(groups.size());
+        Set<String> internalGroups = new HashSet<>(groups.size());
         for(String group : groups){
             internalGroups.add(group.startsWith(TableConstants.GROUP_PREFIX) ? group : TableConstants.GROUP_PREFIX + group);
         }
 
         // If no groups provided, remove from any group they might be a part of
-        if(internalGroups == null || internalGroups.size() == 0){
+        if(internalGroups.size() == 0){
             internalGroups = getGroupsForUser(userId, auths);
         }
 
@@ -520,25 +520,29 @@ public class AccumuloGroupService implements AminoGroupService {
 
                 member = member.startsWith(TableConstants.USER_PREFIX) ? member.substring(TableConstants.USER_PREFIX.length()) : member;
 
-                if(role.equals("created_by")){
-                    returnGroup.setCreatedBy(member);
-                } else if(role.equals("created_date")){
-                    returnGroup.setDateCreated(Long.parseLong(member));
-                } else {
-                    // See if the member already exists, and if so, add the role, otherwise create a new member
-                    // TODO - Could make this faster if need be
-                    boolean found = false;
-                    for(GroupMember m : members){
-                        if(m.getName().equals(member)){
-                            Set<Group.GroupRole> roles = m.getRoles();
-                            roles.add(Group.GroupRole.fromString(role));
-                            found = true;
-                            break;
+                switch (role) {
+                    case "created_by":
+                        returnGroup.setCreatedBy(member);
+                        break;
+                    case "created_date":
+                        returnGroup.setDateCreated(Long.parseLong(member));
+                        break;
+                    default:
+                        // See if the member already exists, and if so, add the role, otherwise create a new member
+                        // TODO - Could make this faster if need be
+                        boolean found = false;
+                        for (GroupMember m : members) {
+                            if (m.getName().equals(member)) {
+                                Set<Group.GroupRole> roles = m.getRoles();
+                                roles.add(Group.GroupRole.fromString(role));
+                                found = true;
+                                break;
+                            }
                         }
-                    }
-                    if(!found){
-                        members.add(new GroupMember(member, Sets.newHashSet(Group.GroupRole.fromString(role))));
-                    }
+                        if (!found) {
+                            members.add(new GroupMember(member, Sets.newHashSet(Group.GroupRole.fromString(role))));
+                        }
+                        break;
                 }
             }
         } catch (TableNotFoundException ex) {
@@ -582,7 +586,7 @@ public class AccumuloGroupService implements AminoGroupService {
         }
 
         // Everybody is part of the public group
-        Set<String> groups = new HashSet<String>();
+        Set<String> groups = new HashSet<>();
         groups.add(TableConstants.PUBLIC_GROUP.substring(TableConstants.GROUP_PREFIX.length()));
 
         Scanner scan;
@@ -615,14 +619,14 @@ public class AccumuloGroupService implements AminoGroupService {
 		Preconditions.checkNotNull(visibilities);
 
 		final Authorizations auths = new Authorizations(visibilities.toArray(new String[visibilities.size()]));
-		List<Range> hypothesesToFind = new ArrayList<Range>();
+		final List<Range> hypothesesToFind = new ArrayList<>();
 
 		// Fetch which groups the userId belongs to
-		Set<String> groups = getGroupsForUser(userId, auths);
-		List<Range> ranges = new ArrayList<Range>(groups.size());
+		final Set<String> groups = getGroupsForUser(userId, auths);
+		final List<Range> ranges = new ArrayList<>(groups.size());
 
 		// Find which Hypotheses are visible for each group
-		if (groups != null && groups.size() > 0) {
+		if (groups.size() > 0) {
 			BatchScanner groupsLutScanner = null;
 			try {
 				groupsLutScanner = persistenceService.createBatchScanner(groupHypothesisLUT, auths);
@@ -652,7 +656,7 @@ public class AccumuloGroupService implements AminoGroupService {
 			hypothesesToFind.add(new Range(userId));
 		}
 
-		final List<Hypothesis> foundHypotheses = new ArrayList<Hypothesis>(hypothesesToFind.size());
+		final List<Hypothesis> foundHypotheses = new ArrayList<>(hypothesesToFind.size());
 		if (hypothesesToFind.size() > 0) {
 			// Now that we know which Hypothesis that we need, go fetch them
 			BatchScanner hypothesesScanner = null;
@@ -660,7 +664,7 @@ public class AccumuloGroupService implements AminoGroupService {
 			try {
 				hypothesesScanner = persistenceService.createBatchScanner(hypothesisTable, auths);
 				hypothesesScanner.setRanges(hypothesesToFind);
-				final ArrayList<String> fieldsToPopulate = new ArrayList<String>(Arrays.asList("name", "created", "updated", "executed", "queries"));
+				final ArrayList<String> fieldsToPopulate = new ArrayList<>(Arrays.asList("name", "created", "updated", "executed", "queries"));
 				for(Map.Entry<Key, Value> entry : hypothesesScanner){
 					final String id = entry.getKey().getColumnFamily().toString();
 

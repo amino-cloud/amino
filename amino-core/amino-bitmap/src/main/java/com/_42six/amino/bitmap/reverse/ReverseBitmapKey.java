@@ -118,10 +118,9 @@ public class ReverseBitmapKey implements WritableComparable
             return false;
         }
 
-		if (salt != other.salt)
-			return false;
-		if (shard != other.shard)
-			return false;
+		if (salt != other.salt || shard != other.shard) {
+            return false;
+        }
 		return true;
 	}
 	
