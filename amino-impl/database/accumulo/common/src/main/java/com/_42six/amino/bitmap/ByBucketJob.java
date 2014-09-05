@@ -133,8 +133,8 @@ public class ByBucketJob extends BitmapJob {
             job.setOutputFormatClass(AccumuloFileOutputFormat.class);
             AccumuloFileOutputFormat.setOutputPath(job, new Path(workingDir + "/files"));
 
-            //job.setPartitionerClass(ByBucketPartitioner.class); // TODO Fix bug in Partitioner
-            //ByBucketPartitioner.setSplitFile(job, splitFile);
+            job.setPartitionerClass(ByBucketPartitioner.class);
+            ByBucketPartitioner.setSplitFile(job, splitFile);
             //job.setSortComparatorClass(BucketKeyComparator.class); // This will ensure the values come in sorted so we don't have to do that TreeMap...
         }
         catch (AccumuloException | AccumuloSecurityException e)

@@ -2,7 +2,8 @@ package com._42six.amino.bitmap.reverse;
 
 import org.apache.commons.lang.builder.CompareToBuilder;
 import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.VIntWritable;
 import org.apache.hadoop.io.WritableComparable;
 
 import java.io.DataInput;
@@ -15,16 +16,16 @@ public class ReverseBitmapKey implements WritableComparable
 	private int salt;
 	private int featureId;
 	private String featureValue;
-	private IntWritable visibility;
-    private IntWritable datasource;
-    private IntWritable bucketName;
+	private VIntWritable visibility;
+    private VIntWritable datasource;
+    private Text bucketName;
 
     public ReverseBitmapKey()
 	{
 		// Empty
 	}
 	
-	public ReverseBitmapKey(int shard, int salt, IntWritable datasource, IntWritable bucketName, int featureId, String featureValue, IntWritable visibility)
+	public ReverseBitmapKey(int shard, int salt, VIntWritable datasource, Text bucketName, int featureId, String featureValue, VIntWritable visibility)
 	{
 		this.shard = shard;
 		this.salt = salt;
@@ -51,9 +52,9 @@ public class ReverseBitmapKey implements WritableComparable
 	@Override
 	public void readFields(DataInput input) throws IOException 
 	{
-        if(datasource == null){ datasource = new IntWritable();}
-        if(bucketName == null){ bucketName = new IntWritable();}
-        if(visibility == null){ visibility = new IntWritable();}
+        if(datasource == null){ datasource = new VIntWritable();}
+        if(bucketName == null){ bucketName = new Text();}
+        if(visibility == null){ visibility = new VIntWritable();}
 
 		shard = input.readInt();
 		salt = input.readInt();
@@ -168,27 +169,27 @@ public class ReverseBitmapKey implements WritableComparable
 		this.featureValue = featureValue;
 	}
 
-	public IntWritable getVisibility() {
+	public VIntWritable getVisibility() {
 		return visibility;
 	}
 
-	public void setVisibility(IntWritable visibility) {
+	public void setVisibility(VIntWritable visibility) {
 		this.visibility = visibility;
 	}
 
-    public IntWritable getDatasource() {
+    public VIntWritable getDatasource() {
         return datasource;
     }
 
-    public void setDatasource(IntWritable datasource) {
+    public void setDatasource(VIntWritable datasource) {
         this.datasource = datasource;
     }
 
-    public IntWritable getBucketName() {
+    public Text getBucketName() {
         return bucketName;
     }
 
-    public void setBucketName(IntWritable bucketName) {
+    public void setBucketName(Text bucketName) {
         this.bucketName = bucketName;
     }
 

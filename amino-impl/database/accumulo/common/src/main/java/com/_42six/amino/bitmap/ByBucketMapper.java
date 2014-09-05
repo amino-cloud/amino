@@ -7,6 +7,7 @@ import com._42six.amino.common.service.datacache.SortedIndexCache;
 import com._42six.amino.common.service.datacache.SortedIndexCacheFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.VIntWritable;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
@@ -14,7 +15,7 @@ import java.io.IOException;
 public class ByBucketMapper extends Mapper<BucketStripped, AminoWritable, ByBucketKey, BitmapValue> {
 
     private BucketCache bucketCache;
-    private SortedIndexCache bucketNameCache;
+//    private SortedIndexCache bucketNameCache;
     private SortedIndexCache dataSourceCache;
     private SortedIndexCache visibilityCache;
     private int numberOfHashes;
@@ -29,7 +30,7 @@ public class ByBucketMapper extends Mapper<BucketStripped, AminoWritable, ByBuck
         super.setup(context);
         final Configuration conf = context.getConfiguration();
         bucketCache = new BucketCache(conf);
-        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, conf);
+//        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, conf);
         dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, conf);
         visibilityCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Visibility, conf);
         numberOfHashes = conf.getInt(AminoConfiguration.NUM_HASHES, 1);
@@ -45,19 +46,15 @@ public class ByBucketMapper extends Mapper<BucketStripped, AminoWritable, ByBuck
 
             bucket = bucketCache.getBucket(bucketStripped);
             final int binNumber = BitmapIndex.getBucketValueIndex(bucketStripped) % numberOfShards;
-            final int bucketNameIndex = bucketNameCache.getIndexForValue(bucket.getBucketName());
-            if(bucketNameIndex < 0){
-                throw new IOException("Could not find index in cache for bucket value: " + bucket.getBucketName());
-            }
-            final int datasourceNameIndex = dataSourceCache.getIndexForValue(bucket.getBucketDataSource());
-            if(datasourceNameIndex < 0){
+            final VIntWritable datasourceNameIndex = dataSourceCache.getIndexForValue(bucket.getBucketDataSource());
+            if(datasourceNameIndex == null){
                 throw new IOException("Could not find index in cache for datasource: " + bucket.getBucketDataSource());
             }
-            final int visibilityIndex = visibilityCache.getIndexForValue(bucket.getBucketVisibility());
-            if(visibilityIndex < 0){
+            final VIntWritable visibilityIndex = visibilityCache.getIndexForValue(bucket.getBucketVisibility());
+            if(visibilityIndex == null){
                 throw new IOException("Could not find index in cache for visibility: " + bucket.getBucketVisibility());
             }
-            byBucketKey = new ByBucketKey(bucket.getBucketValue(), binNumber, bucketNameIndex, datasourceNameIndex, visibilityIndex);
+            byBucketKey = new ByBucketKey(bucket.getBucketValue(), binNumber, bucket.getBucketName(), datasourceNameIndex, visibilityIndex);
         }
 
         final Feature feature = aw.getFeature();

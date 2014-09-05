@@ -10,9 +10,9 @@ import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.MapFile;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.VIntWritable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,8 +34,8 @@ public class SortedIndexCache  {
     private static final String LOCK_PATH = "/ezbatch/amino/LUTLock";
 
     /** The map indexed map of values */
-    protected ImmutableMap<IntWritable, String> dataMap;
-    protected SortedSet<String> valuesToStore = new TreeSet<>();
+    protected ImmutableMap<VIntWritable, String> dataMap; // TODO - This should either be a bimap or indexed backwards
+    protected SortedSet<String> valuesToStore = new TreeSet<>(); // TODO This probably doesn't need to be sorted anymore
     protected String subFolder;
     protected Configuration conf;
 
@@ -52,8 +52,8 @@ public class SortedIndexCache  {
     }
 
     public void loadFromStorage() throws IOException {
-        final HashMap<IntWritable, String> mapFromDisk = new HashMap<>();
-        final IntWritable key = new IntWritable();
+        final HashMap<VIntWritable, String> mapFromDisk = new HashMap<>();
+        final VIntWritable key = new VIntWritable();
         final Text value = new Text();
 
         final FileSystem fs = FileSystem.get(conf);
@@ -63,7 +63,7 @@ public class SortedIndexCache  {
                 try(MapFile.Reader reader = new MapFile.Reader(cacheFolder, conf)){
 //                try(MapFile.Reader reader = new MapFile.Reader(FileSystem.get(conf), cacheFolder, conf)) {
                     while(reader.next(key, value)){
-                        final IntWritable mfdKey = new IntWritable(key.get());
+                        final VIntWritable mfdKey = new VIntWritable(key.get());
                         if(mapFromDisk.containsKey(mfdKey)){
                             logger.error("Index collision.  Attempting to load {}:{} but there is already the value {}:{}",
                                     key.toString(), value.toString(), key.toString(), mapFromDisk.get(mfdKey));
@@ -112,11 +112,10 @@ public class SortedIndexCache  {
         final SharedCount counter = new SharedCount(client, LOCK_PATH, 0);
 
         try(MapFile.Writer writer = new MapFile.Writer(conf, new Path(PathUtils.getCachePath(conf) + subFolder),
-                MapFile.Writer.keyClass(IntWritable.class), MapFile.Writer.valueClass(Text.class))){
-//            try(MapFile.Writer writer = new MapFile.Writer(conf, fs, PathUtils.getCachePath(conf) + subFolder, IntWritable.class, Text.class)) {
+                MapFile.Writer.keyClass(VIntWritable.class), MapFile.Writer.valueClass(Text.class))){
             counter.start();
             final Text value = new Text();
-            final IntWritable key = new IntWritable();
+            final VIntWritable key = new VIntWritable();
             for(String v : valuesToStore){
                 key.set(fetchUniqueKey(counter));
                 value.set(v);
@@ -140,19 +139,24 @@ public class SortedIndexCache  {
     /**
      * Returns the index for the given value
      * @param value The value to look up
-     * @return The cache index for this value, Integer.MIN_VALUE otherwise
+     * @return The cache index for this value, null if it was not found
      */
-    public int getIndexForValue(String value){
-        for(Map.Entry<IntWritable, String> entry : dataMap.entrySet()){
+    public VIntWritable getIndexForValue(String value){
+        for(Map.Entry<VIntWritable, String> entry : dataMap.entrySet()){
             if(entry.getValue().compareTo(value) == 0){
-                // Return the int instead of the key so that users don't accidentally modify the key
-                return entry.getKey().get();
+                // TODO - Make it so that users don't accidentally modify the key
+                return entry.getKey();
             }
         }
-        return Integer.MIN_VALUE;
+        return null;
     }
 
-    public int getIndexForValue(Text value){
+    /**
+     * Returns the index for the given value
+     * @param value The value to look up
+     * @return The cache index for this value, null if it was not found
+     */
+    public VIntWritable getIndexForValue(Text value){
         return getIndexForValue(value.toString());
     }
 
@@ -161,7 +165,7 @@ public class SortedIndexCache  {
      * @param key The lookup key for the cache
      * @return The value associated with the key, or null if the key is not in the map
      */
-    public String getItem(IntWritable key){
+    public String getItem(VIntWritable key){
         // Strings are immutable so we can just return the
         return dataMap.get(key);
     }

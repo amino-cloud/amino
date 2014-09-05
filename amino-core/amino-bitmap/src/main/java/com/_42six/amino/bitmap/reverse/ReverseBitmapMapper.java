@@ -12,6 +12,7 @@ import com._42six.amino.common.translator.FeatureFactTranslatorImpl;
 import com._42six.amino.common.translator.FeatureFactTranslatorInt;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.VIntWritable;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.io.IOException;
 public class ReverseBitmapMapper extends Mapper<BucketStripped, AminoWritable, ReverseBitmapKey, IntWritable>
 {
 	private BucketCache bucketCache;
-    private SortedIndexCache bucketNameCache;
+//    private SortedIndexCache bucketNameCache;
     private SortedIndexCache dataSourceCache;
     private SortedIndexCache visibilityCache;
     private FeatureFactTranslatorInt ffTranslator = new FeatureFactTranslatorImpl();
@@ -31,9 +32,9 @@ public class ReverseBitmapMapper extends Mapper<BucketStripped, AminoWritable, R
     private int currentShard;
     private int firstIndex; // Could probably cache the other ones too
 
-    private IntWritable bucketNameIndex;
-    private IntWritable datasourceIndex;
-    private IntWritable visibilityIndex;
+//    private IntWritable bucketNameIndex;
+    private VIntWritable datasourceIndex;
+    private VIntWritable visibilityIndex;
 
     public void setFfTranslator(FeatureFactTranslatorInt ffTranslator) {
         this.ffTranslator = ffTranslator;
@@ -44,7 +45,7 @@ public class ReverseBitmapMapper extends Mapper<BucketStripped, AminoWritable, R
     	super.setup(context);
         final Configuration configuration = context.getConfiguration();
     	bucketCache = new BucketCache(configuration);
-        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, configuration);
+//        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, configuration);
         dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, configuration);
         visibilityCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Visibility, configuration);
 		numberOfShards = context.getConfiguration().getInt(AminoConfiguration.NUM_SHARDS, 10);
@@ -58,9 +59,9 @@ public class ReverseBitmapMapper extends Mapper<BucketStripped, AminoWritable, R
             previousBS = new BucketStripped(bs);
 		    bucket = bucketCache.getBucket(bs);
             currentShard = BitmapIndex.getValueIndex(bucket, 0) % numberOfShards;
-            bucketNameIndex = new IntWritable(bucketNameCache.getIndexForValue(bucket.getBucketName()));
-            datasourceIndex = new IntWritable(dataSourceCache.getIndexForValue(bucket.getBucketDataSource()));
-            visibilityIndex = new IntWritable(visibilityCache.getIndexForValue(bucket.getBucketVisibility()));
+//            bucketNameIndex = new IntWritable(bucketNameCache.getIndexForValue(bucket.getBucketName()));
+            datasourceIndex = dataSourceCache.getIndexForValue(bucket.getBucketDataSource());
+            visibilityIndex = visibilityCache.getIndexForValue(bucket.getBucketVisibility());
         }
 
         final int featureIndex = BitmapIndex.getFeatureIndex(aw.getFeature());
@@ -70,7 +71,7 @@ public class ReverseBitmapMapper extends Mapper<BucketStripped, AminoWritable, R
 
         // Base the shard on the first index.  This way all salted values end up in the same shard.
         final ReverseBitmapKey rbKey = new ReverseBitmapKey(currentShard, 0, datasourceIndex,
-                bucketNameIndex, featureIndex, featureValue, visibilityIndex);
+                bucket.getBucketName(), featureIndex, featureValue, visibilityIndex);
 
         // Create the rest of the salt values
         for (int salt = 0; salt < numberOfHashes; salt++)

@@ -16,7 +16,7 @@ import java.util.TreeSet;
 
 public class ByBucketReducer extends Reducer<ByBucketKey, BitmapValue, Key, Value>
 {
-    private SortedIndexCache bucketNameCache;
+//    private SortedIndexCache bucketNameCache;
     private SortedIndexCache dataSourceCache;
     private SortedIndexCache visibilityCache;
 
@@ -24,7 +24,7 @@ public class ByBucketReducer extends Reducer<ByBucketKey, BitmapValue, Key, Valu
     protected void setup(Context context) throws IOException, InterruptedException {
         super.setup(context);
         final Configuration conf = context.getConfiguration();
-        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, conf);
+//        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, conf);
         dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, conf);
         visibilityCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Visibility, conf);
     }
@@ -47,11 +47,11 @@ public class ByBucketReducer extends Reducer<ByBucketKey, BitmapValue, Key, Valu
 
         final int binNumber = key.getBinNumber();
         final String dataSource = dataSourceCache.getItem(key.getDatasourceNameIndex());
-        final String bucketName = bucketNameCache.getItem(key.getBucketNameIndex());
+//        final Text bucketName = bucketNameCache.getItem(key.getBucketName());
         final String bucketValue = key.getBucketValue().toString();
         final String vis = visibilityCache.getItem(key.getVisibilityIndex());
 
-        final Key outKey = new Key(String.format("%d:%s:%s", binNumber, dataSource, bucketName), bucketValue,
+        final Key outKey = new Key(String.format("%d:%s:%s", binNumber, dataSource, key.getBucketName()), bucketValue,
                 Integer.toString(key.getSalt()), vis);
 
         context.write(outKey, BitmapUtils.toValue(bitmap));

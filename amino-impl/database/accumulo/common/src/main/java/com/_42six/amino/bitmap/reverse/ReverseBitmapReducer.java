@@ -19,7 +19,7 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
 {
     private Text RB_BUCKET_TABLE;
 
-    private SortedIndexCache bucketNameCache;
+//    private SortedIndexCache bucketNameCache;
     private SortedIndexCache dataSourceCache;
     private SortedIndexCache visibilityCache;
 
@@ -30,7 +30,7 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
         String tableName = configuration.get(AminoConfiguration.TABLE_BUCKET);
         tableName = tableName.replace("amino_", "amino_reverse_") + AminoConfiguration.TEMP_SUFFIX;
         RB_BUCKET_TABLE = new Text(tableName);
-        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, configuration);
+//        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, configuration);
         dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, configuration);
         visibilityCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Visibility, configuration);
         super.setup(context);
@@ -40,7 +40,7 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
     protected void reduce(ReverseBitmapKey rbk, Iterable<IntWritable> indexes, Context context) throws IOException, InterruptedException
     {
         final String datasource = dataSourceCache.getItem(rbk.getDatasource());
-        final String bucketName = bucketNameCache.getItem(rbk.getBucketName());
+        final Text bucketName = rbk.getBucketName();
         final String visibility = visibilityCache.getItem(rbk.getVisibility());
 
         final AminoBitmap bitmap = new AminoBitmap();

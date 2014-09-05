@@ -1,8 +1,8 @@
 package com._42six.amino.common;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.VIntWritable;
 import org.apache.hadoop.io.WritableComparable;
 
 import java.io.DataInput;
@@ -13,9 +13,9 @@ public class ByBucketKey implements WritableComparable<ByBucketKey>{
 
     private Text bucketValue;
     private int binNumber = -1;
-    private IntWritable bucketNameIndex;
-    private IntWritable datasourceNameIndex;
-    private IntWritable visibilityIndex;
+    private Text bucketName;
+    private VIntWritable datasourceNameIndex;
+    private VIntWritable visibilityIndex;
     private int salt = -1;
 
     public Text getBucketValue() {
@@ -34,19 +34,19 @@ public class ByBucketKey implements WritableComparable<ByBucketKey>{
         this.binNumber = binNumber;
     }
 
-    public IntWritable getBucketNameIndex() {
-        return bucketNameIndex;
+    public Text getBucketName() {
+        return bucketName;
     }
 
-    public void setBucketNameIndex(IntWritable bucketNameIndex) {
-        this.bucketNameIndex = bucketNameIndex;
+    public void setBucketName(Text bucketName) {
+        this.bucketName = bucketName;
     }
 
-    public IntWritable getDatasourceNameIndex() {
+    public VIntWritable getDatasourceNameIndex() {
         return datasourceNameIndex;
     }
 
-    public void setDatasourceNameIndex(IntWritable datasourceNameIndex) {
+    public void setDatasourceNameIndex(VIntWritable datasourceNameIndex) {
         this.datasourceNameIndex = datasourceNameIndex;
     }
 
@@ -58,11 +58,11 @@ public class ByBucketKey implements WritableComparable<ByBucketKey>{
         this.salt = salt;
     }
 
-    public IntWritable getVisibilityIndex() {
+    public VIntWritable getVisibilityIndex() {
         return visibilityIndex;
     }
 
-    public void setVisibilityIndex(IntWritable visibilityIndex) {
+    public void setVisibilityIndex(VIntWritable visibilityIndex) {
         this.visibilityIndex = visibilityIndex;
     }
 
@@ -70,20 +70,23 @@ public class ByBucketKey implements WritableComparable<ByBucketKey>{
         // EMPTY
     }
 
-    public ByBucketKey(Text bucketValue, int binNumber, IntWritable bucketNameIndex, IntWritable datasourceNameIndex, IntWritable visibilityIndex){
+    public ByBucketKey(Text bucketValue, int binNumber, Text bucketName, VIntWritable datasourceNameIndex,
+                       VIntWritable visibilityIndex){
         this.bucketValue = bucketValue;
         this.binNumber = binNumber;
-        this.bucketNameIndex = bucketNameIndex;
+        this.bucketName = bucketName;
         this.datasourceNameIndex = datasourceNameIndex;
         this.visibilityIndex = visibilityIndex;
     }
 
-    public ByBucketKey(Text bucketValue, int binNumber, int bucketNameIndex, int datasourceNameIndex, int visibilityIndex){
-        this(bucketValue, binNumber, new IntWritable(bucketNameIndex), new IntWritable(datasourceNameIndex), new IntWritable(visibilityIndex));
+    public ByBucketKey(Text bucketValue, int binNumber, Text bucketName, int datasourceNameIndex, int visibilityIndex){
+        this(bucketValue, binNumber, bucketName, new VIntWritable(datasourceNameIndex),
+                new VIntWritable(visibilityIndex));
     }
 
-    public ByBucketKey(Text bucketValue, int binNumber, IntWritable bucketNameIndex, IntWritable datasourceNameIndex, IntWritable visibilityIndex, int salt){
-        this(bucketValue,binNumber, bucketNameIndex, datasourceNameIndex, visibilityIndex);
+    public ByBucketKey(Text bucketValue, int binNumber, Text bucketName, VIntWritable datasourceNameIndex,
+                       VIntWritable visibilityIndex, int salt){
+        this(bucketValue,binNumber, bucketName, datasourceNameIndex, visibilityIndex);
         this.salt = salt;
     }
 
@@ -94,12 +97,12 @@ public class ByBucketKey implements WritableComparable<ByBucketKey>{
     @Override
     public void readFields(DataInput dataIn) throws IOException {
         if(this.bucketValue == null) { this.bucketValue = new Text(); }
-        if(this.bucketNameIndex == null) { this.bucketNameIndex = new IntWritable(); }
-        if(this.datasourceNameIndex == null) { this.datasourceNameIndex = new IntWritable(); }
-        if(this.visibilityIndex == null) { this.visibilityIndex = new IntWritable(); }
+        if(this.bucketName == null) { this.bucketName = new Text(); }
+        if(this.datasourceNameIndex == null) { this.datasourceNameIndex = new VIntWritable(); }
+        if(this.visibilityIndex == null) { this.visibilityIndex = new VIntWritable(); }
 
         this.bucketValue.readFields(dataIn);
-        this.bucketNameIndex.readFields(dataIn);
+        this.bucketName.readFields(dataIn);
         this.datasourceNameIndex.readFields(dataIn);
         this.binNumber = dataIn.readInt();
         this.visibilityIndex.readFields(dataIn);
@@ -113,7 +116,7 @@ public class ByBucketKey implements WritableComparable<ByBucketKey>{
     @Override
     public void write(DataOutput dataOut) throws IOException {
         this.bucketValue.write(dataOut);
-        this.bucketNameIndex.write(dataOut);
+        this.bucketName.write(dataOut);
         this.datasourceNameIndex.write(dataOut);
         dataOut.writeInt(this.binNumber);
         this.visibilityIndex.write(dataOut);
@@ -145,13 +148,13 @@ public class ByBucketKey implements WritableComparable<ByBucketKey>{
             }
         }
 
-        if(this.bucketNameIndex == null){
+        if(this.bucketName == null){
             return -1;
         } else {
-            if(other.bucketNameIndex == null){
+            if(other.bucketName == null){
                 return 1;
             } else {
-                comparison = this.bucketNameIndex.compareTo(other.bucketNameIndex);
+                comparison = this.bucketName.compareTo(other.bucketName);
                 if(comparison != 0){ return comparison; }
             }
         }
@@ -208,11 +211,11 @@ public class ByBucketKey implements WritableComparable<ByBucketKey>{
             }
         }
 
-        // bucketNameIndex
-        if (bucketNameIndex == null) {
-            if (other.bucketNameIndex != null)
+        // bucketName
+        if (bucketName == null) {
+            if (other.bucketName != null)
                 return false;
-        } else if (!bucketNameIndex.equals(other.bucketNameIndex))
+        } else if (!bucketName.equals(other.bucketName))
             return false;
 
         // datasourceNameIndex
@@ -254,7 +257,7 @@ public class ByBucketKey implements WritableComparable<ByBucketKey>{
     public String toString() {
         return new ToStringBuilder(this).append("binNumber", binNumber)
                 .append("datasourceNameIndex", datasourceNameIndex)
-                .append("bucketNameIndex", bucketNameIndex)
+                .append("bucketName", bucketName)
                 .append("salt", salt)
                 .append("bucketValue", bucketValue)
                 .append("visibilityIndex", visibilityIndex).toString();
