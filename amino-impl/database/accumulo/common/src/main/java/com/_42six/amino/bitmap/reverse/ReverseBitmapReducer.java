@@ -19,9 +19,7 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
 {
     private Text RB_BUCKET_TABLE;
 
-//    private SortedIndexCache bucketNameCache;
     private SortedIndexCache dataSourceCache;
-    private SortedIndexCache visibilityCache;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException
@@ -30,9 +28,7 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
         String tableName = configuration.get(AminoConfiguration.TABLE_BUCKET);
         tableName = tableName.replace("amino_", "amino_reverse_") + AminoConfiguration.TEMP_SUFFIX;
         RB_BUCKET_TABLE = new Text(tableName);
-//        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, configuration);
         dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, configuration);
-        visibilityCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Visibility, configuration);
         super.setup(context);
     }
 
@@ -41,11 +37,10 @@ public class ReverseBitmapReducer extends Reducer<ReverseBitmapKey, IntWritable,
     {
         final String datasource = dataSourceCache.getItem(rbk.getDatasource());
         final Text bucketName = rbk.getBucketName();
-        final String visibility = visibilityCache.getItem(rbk.getVisibility());
 
         final AminoBitmap bitmap = new AminoBitmap();
         final Mutation mutation = new Mutation(rbk.getShard() + ":" + rbk.getSalt());
-        final ColumnVisibility colVis = new ColumnVisibility(visibility);
+        final ColumnVisibility colVis = new ColumnVisibility(rbk.getVisibility());
 
         final Text colFamily = new Text(datasource + "#" + bucketName + "#" + Integer.toString(rbk.getFeatureId()));
         final Text colQualifier = new Text(rbk.getFeatureValue());

@@ -16,7 +16,7 @@ public class ReverseBitmapKey implements WritableComparable
 	private int salt;
 	private int featureId;
 	private String featureValue;
-	private VIntWritable visibility;
+	private Text visibility;
     private VIntWritable datasource;
     private Text bucketName;
 
@@ -25,7 +25,7 @@ public class ReverseBitmapKey implements WritableComparable
 		// Empty
 	}
 	
-	public ReverseBitmapKey(int shard, int salt, VIntWritable datasource, Text bucketName, int featureId, String featureValue, VIntWritable visibility)
+	public ReverseBitmapKey(int shard, int salt, VIntWritable datasource, Text bucketName, int featureId, String featureValue, Text visibility)
 	{
 		this.shard = shard;
 		this.salt = salt;
@@ -54,7 +54,7 @@ public class ReverseBitmapKey implements WritableComparable
 	{
         if(datasource == null){ datasource = new VIntWritable();}
         if(bucketName == null){ bucketName = new Text();}
-        if(visibility == null){ visibility = new VIntWritable();}
+        if(visibility == null){ visibility = new Text();}
 
 		shard = input.readInt();
 		salt = input.readInt();
@@ -169,11 +169,11 @@ public class ReverseBitmapKey implements WritableComparable
 		this.featureValue = featureValue;
 	}
 
-	public VIntWritable getVisibility() {
+	public Text getVisibility() {
 		return visibility;
 	}
 
-	public void setVisibility(VIntWritable visibility) {
+	public void setVisibility(Text visibility) {
 		this.visibility = visibility;
 	}
 

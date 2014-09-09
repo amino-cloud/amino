@@ -10,9 +10,7 @@ import java.io.IOException;
  */
 public class SortedIndexCacheFactory {
     public enum CacheTypes{
-//        BucketName,
         Datasource,
-        Visibility
     }
 
     /**
@@ -24,14 +22,8 @@ public class SortedIndexCacheFactory {
     public static SortedIndexCache getCache(CacheTypes type, Configuration conf) throws IOException {
         final SortedIndexCache retVal;
         switch (type){
-//            case BucketName:
-//                retVal = new SortedIndexCache("/bucketNames", conf);
-//                break;
             case Datasource:
                 retVal = new SortedIndexCache("/dataSources", conf);
-                break;
-            case Visibility:
-                retVal = new SortedIndexCache("/visibilities", conf);
                 break;
             default:
                 throw new NotImplementedException("Cache type " + type + " is not implemented yet");

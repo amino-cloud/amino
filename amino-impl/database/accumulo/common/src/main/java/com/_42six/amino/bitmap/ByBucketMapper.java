@@ -15,9 +15,7 @@ import java.io.IOException;
 public class ByBucketMapper extends Mapper<BucketStripped, AminoWritable, ByBucketKey, BitmapValue> {
 
     private BucketCache bucketCache;
-//    private SortedIndexCache bucketNameCache;
     private SortedIndexCache dataSourceCache;
-    private SortedIndexCache visibilityCache;
     private int numberOfHashes;
     private int numberOfShards;
 
@@ -30,9 +28,7 @@ public class ByBucketMapper extends Mapper<BucketStripped, AminoWritable, ByBuck
         super.setup(context);
         final Configuration conf = context.getConfiguration();
         bucketCache = new BucketCache(conf);
-//        bucketNameCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.BucketName, conf);
         dataSourceCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Datasource, conf);
-        visibilityCache = SortedIndexCacheFactory.getCache(SortedIndexCacheFactory.CacheTypes.Visibility, conf);
         numberOfHashes = conf.getInt(AminoConfiguration.NUM_HASHES, 1);
         numberOfShards = conf.getInt(AminoConfiguration.NUM_SHARDS, 10);
     }
@@ -50,11 +46,8 @@ public class ByBucketMapper extends Mapper<BucketStripped, AminoWritable, ByBuck
             if(datasourceNameIndex == null){
                 throw new IOException("Could not find index in cache for datasource: " + bucket.getBucketDataSource());
             }
-            final VIntWritable visibilityIndex = visibilityCache.getIndexForValue(bucket.getBucketVisibility());
-            if(visibilityIndex == null){
-                throw new IOException("Could not find index in cache for visibility: " + bucket.getBucketVisibility());
-            }
-            byBucketKey = new ByBucketKey(bucket.getBucketValue(), binNumber, bucket.getBucketName(), datasourceNameIndex, visibilityIndex);
+            final Text visibility = bucket.getBucketVisibility();
+            byBucketKey = new ByBucketKey(bucket.getBucketValue(), binNumber, bucket.getBucketName(), datasourceNameIndex, visibility);
         }
 
         final Feature feature = aw.getFeature();
