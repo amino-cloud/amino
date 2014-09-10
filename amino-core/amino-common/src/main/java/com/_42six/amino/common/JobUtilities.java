@@ -7,11 +7,15 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FsShell;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 public class JobUtilities
 {
+    private static final Logger logger = LoggerFactory.getLogger(JobUtilities.class);
+
     /**
      * Resets the working directory to a clean state
      *
@@ -73,6 +77,7 @@ public class JobUtilities
         final Path dir = new Path(dirToDelete);
         try(FileSystem fs = FileSystem.get(conf)) {
             if (fs.exists(dir)) {
+                logger.info("Recursively deleting {}", dir);
                 fs.delete(dir, true);
             }
         }

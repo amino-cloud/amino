@@ -191,6 +191,11 @@ public final class FrameworkDriver extends Configured implements Tool {
         // Create the file if it doesn't exist and overwrite whatever might have been in it
         try(FileSystem fs = FileSystem.get(conf); FSDataOutputStream os = fs.create(pidFile, true) ){
             os.writeUTF(status.toString());
+            os.flush();
+            logger.info("Updated status file {} to: {}", pidFile.toString(), status);
+        } catch (Exception e) {
+            logger.warn("Could not update status", e);
+            throw e;
         }
     }
 
@@ -373,7 +378,7 @@ public final class FrameworkDriver extends Configured implements Tool {
             System.out.println("Output will be written to: " + PathUtils.getJobDataPath(output));
 
             SequenceFileOutputFormat.setOutputPath(job, new Path(PathUtils.getJobDataPath(output)));
-            JobUtilities.deleteDirectory(conf, output);
+            JobUtilities.deleteDirectory(conf, output); // TODO - see if this erases the needed status.pid
 
             CacheBuilder.buildCaches(AminoDataUtils.createDataLoader(conf), aj, output, conf);
 
@@ -409,7 +414,6 @@ public final class FrameworkDriver extends Configured implements Tool {
             final String outputPaths = PathUtils.getJobDataPath(output);
             System.out.println("Output will be written to: " + outputPaths);
             AminoOutputFormat.setOutputPath(job, new Path(outputPaths));
-            JobUtilities.deleteDirectory(conf, output);
 
             CacheBuilder.buildCaches(AminoDataUtils.createDataLoader(conf), aj, output, conf);
             return JOB_TYPE_NORMAL;
