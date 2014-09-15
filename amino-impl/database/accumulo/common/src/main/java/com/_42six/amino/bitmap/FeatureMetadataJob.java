@@ -1,5 +1,6 @@
 package com._42six.amino.bitmap;
 
+import com._42six.amino.api.framework.FrameworkDriver;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.DateFeatureMetadata;
 import com._42six.amino.common.FeatureFactType;
@@ -27,6 +28,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -956,6 +958,16 @@ public final class FeatureMetadataJob extends BitmapJob {
         else
         {
             cleanupFromUpdate(conf, inst, user, password.getBytes());
+        }
+
+        // TODO - This is hack.  We moved the PID setting in here since the FeatureMetadataJob runs last by itself.
+        // There is a problem when parallelizing the jobs because the jobs all try to access the same PID file which is
+        // a no no.
+        try {
+            FrameworkDriver.updateStatus(conf, complete ? FrameworkDriver.JobStatus.COMPLETE : FrameworkDriver.JobStatus.FAILED,
+                    new Path(conf.get(AminoConfiguration.BASE_DIR)));
+        } catch (IOException e) {
+            System.err.println("Could not update the status PID file.");
         }
 
         return complete ? 0 : 1;

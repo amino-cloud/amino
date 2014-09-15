@@ -1,5 +1,6 @@
 package com._42six.amino.bitmap;
 
+import com._42six.amino.api.framework.FrameworkDriver;
 import com._42six.amino.common.AminoConfiguration;
 import com._42six.amino.common.Metadata;
 import com._42six.amino.common.accumulo.*;
@@ -16,6 +17,7 @@ import org.apache.accumulo.core.data.Mutation;
 import org.apache.commons.cli.Option;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -126,60 +128,73 @@ public class DatabasePrepJob extends BitmapJob {
     }
 
     public int run(String[] args) throws Exception {
+        boolean complete;
 
         // Create the command line options to be parsed
         final Option o1 = new Option("o", "outputDir", true, "The output directory");
 
         initializeConfigAndOptions(args, Optional.of(Sets.newHashSet(o1)));
         final Configuration conf = getConf();
+        final Path jobDir = new Path(conf.get(AminoConfiguration.BASE_DIR));
         System.out.println("\n====================="+ conf.get("mapreduce.job.name","DatabasePrepJob") +"====================\n");
+        try{
+            // TODO - This is hack until Azkaban gets it's own EzHadoop class.  We moved the PID setting in here since the
+            // DatabasePrepJob runs first by itself.  There is a problem when parallelizing the jobs because the jobs all
+            // try to access the same PID file which is a no no.  There is also a slight race condition doing it this way,
+            // Since the cleanup job might try to access this directory before the PID can get laid down, though there is
+            // code to mitigate this
+            FrameworkDriver.updateStatus(conf, FrameworkDriver.JobStatus.RUNNING, jobDir);
+            if(commandLine.hasOption("o")){
+                conf.set(AminoConfiguration.OUTPUT_DIR, commandLine.getOptionValue("o"));
+            }
 
-        if(commandLine.hasOption("o")){
-            conf.set(AminoConfiguration.OUTPUT_DIR, commandLine.getOptionValue("o"));
-        }
+            final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino Metadata importer"));
+            job.setJarByClass(this.getClass());
 
+            // Get config values
+            final String instanceName = conf.get(TableConstants.CFG_INSTANCE);
+            final String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
+            final String user = conf.get(TableConstants.CFG_USER);
+            final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes("UTF-8");
+            final String metadataTable = conf.get(AminoConfiguration.TABLE_METADATA) + AminoConfiguration.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
+            final String metadataPaths = StringUtils.join(PathUtils.getMultipleJobMetadataPaths(conf,
+                    conf.get(AminoConfiguration.OUTPUT_DIR)), ',');
 
-        final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino Metadata importer"));
-        job.setJarByClass(this.getClass());
+            System.out.println("Metadata paths: [" + metadataPaths + "].");
+            PathUtils.pathsExists(metadataPaths, conf);
 
-        // Get config values
-        final String instanceName = conf.get(TableConstants.CFG_INSTANCE);
-        final String zooKeepers = conf.get(TableConstants.CFG_ZOOKEEPERS);
-        final String user = conf.get(TableConstants.CFG_USER);
-        final byte[] password = conf.get(TableConstants.CFG_PASSWORD).getBytes("UTF-8");
-        final String metadataTable = conf.get(AminoConfiguration.TABLE_METADATA) + AminoConfiguration.TEMP_SUFFIX; //You want to make sure you use the temp here even if blastIndex is false
-        final String metadataPaths = StringUtils.join(PathUtils.getMultipleJobMetadataPaths(conf,
-                conf.get(AminoConfiguration.OUTPUT_DIR)), ',');
+            // TODO - Verify that all of the params above were not null
 
-        System.out.println("Metadata paths: [" + metadataPaths + "].");
-        PathUtils.pathsExists(metadataPaths, conf);
+            job.setNumReduceTasks(1); // This needs to be 1
 
-        // TODO - Verify that all of the params above were not null
+            // Mapper - use the IdentityMapper
+            job.setMapOutputKeyClass(Text.class);
 
-        job.setNumReduceTasks(1); // This needs to be 1
+            // Reducer
+            job.setReducerClass(MetadataConsolidatorReducer.class);
 
-        // Mapper - use the IdentityMapper
-        job.setMapOutputKeyClass(Text.class);
+            // Inputs
+            SequenceFileInputFormat.setInputPaths(job, metadataPaths);
+            job.setInputFormatClass(SequenceFileInputFormat.class);
 
-        // Reducer
-        job.setReducerClass(MetadataConsolidatorReducer.class);
+            // Outputs
+            job.setOutputFormatClass(AccumuloOutputFormat.class);
 
-        // Inputs
-        SequenceFileInputFormat.setInputPaths(job, metadataPaths);
-        job.setInputFormatClass(SequenceFileInputFormat.class);
+            AccumuloOutputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zooKeepers));
+            AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
+            AccumuloOutputFormat.setCreateTables(job, true);
+            AccumuloOutputFormat.setDefaultTableName(job, metadataTable);
 
-        // Outputs
-        job.setOutputFormatClass(AccumuloOutputFormat.class);
-
-        AccumuloOutputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zooKeepers));
-        AccumuloOutputFormat.setConnectorInfo(job, user, new PasswordToken(password));
-        AccumuloOutputFormat.setCreateTables(job, true);
-        AccumuloOutputFormat.setDefaultTableName(job, metadataTable);
-
-        // Create the tables if they don't exist
-        boolean complete = createTables(conf);
-        if(complete){
-            complete = job.waitForCompletion(true);
+            // Create the tables if they don't exist
+            complete = createTables(conf);
+            if(complete){
+                complete = job.waitForCompletion(true);
+            } else {
+                FrameworkDriver.updateStatus(conf, FrameworkDriver.JobStatus.FAILED, jobDir);
+            }
+        } catch(Exception ex){
+            FrameworkDriver.updateStatus(conf, FrameworkDriver.JobStatus.FAILED, jobDir);
+            throw ex;
         }
 
         return complete ? 0 : 1;

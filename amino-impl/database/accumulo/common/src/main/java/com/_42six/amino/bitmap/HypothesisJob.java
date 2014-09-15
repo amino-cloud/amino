@@ -33,6 +33,9 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
+/**
+ * parses the data and populates the featureLookupTable
+ */
 public class HypothesisJob extends BitmapJob
 {
 
@@ -112,7 +115,7 @@ public class HypothesisJob extends BitmapJob
         	try
         	{
                 final String tb = (!blastIndex) ? tableName : tableName + AminoConfiguration.TEMP_SUFFIX;
-                JobUtilities.setGroupAndPermissions(conf, workingDir);
+                JobUtilities.setupAccumuloBulkImport(conf, workingDir);
         		connector.tableOperations().importDirectory(tb, workingDir + "/files", workingDir + "/failures", false);
         		result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
         	}
@@ -145,7 +148,8 @@ public class HypothesisJob extends BitmapJob
 		
 		// Grab all the indexes in this sequence file
 		final List<Integer> indexes = new ArrayList<>();
-		final SequenceFile.Reader reader = new SequenceFile.Reader(fs, status.getPath(), conf);
+
+        final SequenceFile.Reader reader = new SequenceFile.Reader(conf, SequenceFile.Reader.file(status.getPath()));
 		final BucketCache bucketCache = new BucketCache(conf);
 		final Writable key = new BucketStripped();
 		final Writable val = new AminoWritable();
@@ -214,8 +218,7 @@ public class HypothesisJob extends BitmapJob
         job.setOutputValueClass(Value.class);
 
         int numTablets = Integer.parseInt(fromOptionOrConfig(Optional.of("t"), Optional.<String>absent(), "-1"));
-        final String workingDirectory = fromOptionOrConfig(Optional.of("w"), Optional.of(AminoConfiguration.WORKING_DIR));
-        JobUtilities.resetWorkingDirectory(this.getConf(), workingDirectory);
+        final String workingDirectory = fromOptionOrConfig(Optional.of("w"), Optional.of(AminoConfiguration.WORKING_DIR)) + "/HypothesisJob";
 
         return execute(job, inputDir, workingDirectory, numTablets);
     }

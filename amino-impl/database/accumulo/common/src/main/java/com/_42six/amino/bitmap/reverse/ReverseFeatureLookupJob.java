@@ -46,8 +46,7 @@ public class ReverseFeatureLookupJob extends BitmapJob
 
         final Job job = new Job(conf, conf.get("mapreduce.job.name","Amino reverse_feature_lookup table job"));
         job.setJarByClass(ReverseFeatureLookupJob.class);
-        final String workingDirectory = fromOptionOrConfig(Optional.of("w"), Optional.of(AminoConfiguration.WORKING_DIR));
-        JobUtilities.resetWorkingDirectory(this.getConf(), workingDirectory);
+        final String workingDirectory = fromOptionOrConfig(Optional.of("w"), Optional.of(AminoConfiguration.WORKING_DIR)) + "/ReverseFeatureLookup";
 
         initializeJob(job);
 
@@ -124,7 +123,7 @@ public class ReverseFeatureLookupJob extends BitmapJob
             try
             {
                 final String importTable = (!blastIndex) ? tableName : tableName + AminoConfiguration.TEMP_SUFFIX;
-                JobUtilities.setGroupAndPermissions(conf, workingDirectory);
+                JobUtilities.setupAccumuloBulkImport(conf, workingDirectory);
                 connector.tableOperations().importDirectory(importTable, workingDirectory + "/files", workingDirectory + "/failures", false);
                 result = JobUtilities.failureDirHasFiles(conf, workingDirectory + "/failures");
             }

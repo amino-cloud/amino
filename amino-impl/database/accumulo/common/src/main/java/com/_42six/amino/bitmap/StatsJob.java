@@ -12,6 +12,9 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.ToolRunner;
 
+/**
+ * Adds statistics to the bitmap index table
+ */
 public class StatsJob extends BitmapJob {
 
 	@Override
@@ -41,7 +44,6 @@ public class StatsJob extends BitmapJob {
         else {
         	job.setNumReduceTasks(conf.getInt(AminoConfiguration.NUM_REDUCERS, AminoConfiguration.DEFAULT_NUM_REDUCERS));
         }
-
 
         job.setOutputFormatClass(AccumuloOutputFormat.class);
         AccumuloOutputFormat.setZooKeeperInstance(job, new ClientConfiguration().withInstance(instanceName).withZkHosts(zooKeepers));

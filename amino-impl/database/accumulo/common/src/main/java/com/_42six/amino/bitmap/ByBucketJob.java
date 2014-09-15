@@ -60,8 +60,7 @@ public class ByBucketJob extends BitmapJob {
         job.setOutputValueClass(Value.class);
 
         final int numTablets = Integer.parseInt(fromOptionOrConfig(Optional.of("t"), Optional.<String>absent(), "-1"));
-        final String workingDirectory = fromOptionOrConfig(Optional.of("w"), Optional.of(AminoConfiguration.WORKING_DIR));
-        JobUtilities.resetWorkingDirectory(this.getConf(), workingDirectory);
+        final String workingDirectory = fromOptionOrConfig(Optional.of("w"), Optional.of(AminoConfiguration.WORKING_DIR)) + "/ByBucketJob";
 
         return execute(job, workingDirectory, numTablets);
     }
@@ -160,7 +159,7 @@ public class ByBucketJob extends BitmapJob {
                 final String filesPath = workingDir + "/files";
                 final String failuresPath = workingDir + "/failures";
                 System.out.println("Importing the files in '" + filesPath + "' to the table: " + tb);
-                JobUtilities.setGroupAndPermissions(conf, workingDir);
+                JobUtilities.setupAccumuloBulkImport(conf, workingDir);
                 c.tableOperations().importDirectory(tb, filesPath, failuresPath, false);
                 result = JobUtilities.failureDirHasFiles(conf, workingDir + "/failures");
             }

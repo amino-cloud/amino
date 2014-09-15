@@ -16,47 +16,22 @@ public class JobUtilities
 {
     private static final Logger logger = LoggerFactory.getLogger(JobUtilities.class);
 
-    /**
-     * Resets the working directory to a clean state
-     *
-     * @param conf The Hadoop {@link org.apache.hadoop.conf.Configuration}
-     * @param workingDir The path to the working directory
-     * @throws IOException if the old dir could not be deleted or the new one created
-     */
-    public static void resetWorkingDirectory(Configuration conf, String workingDir) throws IOException
+    public static void setupAccumuloBulkImport(Configuration conf, String workingDir) throws Exception
     {
-        // Remove the old working dir if it exists
-        deleteDirectory(conf, workingDir);
-
-        // Create the new working dir structure
-        try(FileSystem fs = FileSystem.get(conf)) {
-            fs.mkdirs(new Path(PathUtils.concat(workingDir, "failures")), FsPermission.valueOf("-rwxrwxrwx")); // TODO - See what this needs to be
-        }
-
-        // Change the ownership
-        // setGroupAndPermissions(conf, workingDir);
-    }
-
-    public static void setGroupAndPermissions(Configuration conf, String workingDir) throws Exception
-    {
-        final String workingGroup = conf.get("amino.hdfs.workingDirectory.group","accumulo");
-
         final String[] chModCmd = new String[4];
         chModCmd[0] = "-chmod";
         chModCmd[1] = "-R";
         chModCmd[2] = "ugo=rwx"; // TODO - See what this needs to be
         chModCmd[3] = workingDir;
 
-        final String[] chGrpCmd = new String[4];
-        chGrpCmd[0] = "-chgrp";
-        chGrpCmd[1] = "-R";
-        chGrpCmd[2] = workingGroup;
-        chGrpCmd[3] = workingDir;
+        // Create the failures dir
+        try(FileSystem fs = FileSystem.get(conf)) {
+            fs.mkdirs(new Path(PathUtils.concat(workingDir, "failures")), FsPermission.valueOf("-rwxrwxrwx")); // TODO - See what this needs to be
+        }
 
         FsShell shell = null;
         try{
             shell = new FsShell(conf);
-            shell.run(chGrpCmd);
             shell.run(chModCmd);
         } finally {
             if (shell != null){
