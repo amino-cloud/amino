@@ -54,7 +54,10 @@ public class BucketCache {
 
 		FileSystem fs = FileSystem.get(conf);
 		MapFile.Writer writer = null; 
-		
+
+        // Set the umask so that when we create the directories they will be readable by the group so they can be deleted later
+        conf.set("fs.permissions.umask-mode", "002");
+
 		try {
 			writer = new MapFile.Writer(conf, new Path(bucketCachePath), MapFile.Writer.keyClass(IntWritable.class),
                     MapFile.Writer.valueClass(Bucket.class));
