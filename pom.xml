@@ -25,7 +25,7 @@
 
      <distributionManagement>
          <repository>
-            <id>central</id>
+            <id>repo</id>
             <name>Central Repoistory For Maven Artifacts</name>
             <url>${release.repository}</url>
         </repository>
