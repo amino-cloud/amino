@@ -3,6 +3,26 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>amino-security</artifactId>
 	<description>Amino security implementations</description>
+	<dependencies>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.7</version>
+            <optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<version>3.1.0.RELEASE</version>
+            <optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<version>2.5</version>
+            <optional>true</optional>
+		</dependency>
+	</dependencies>
 	<parent>
 		<groupId>com._42six.amino.impl</groupId>
 		<artifactId>amino-impl</artifactId>
